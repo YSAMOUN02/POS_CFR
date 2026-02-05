@@ -1,0 +1,371 @@
+
+/* Khmer */
+@font-face {
+    font-family: 'Noto Serif Khmer';
+    font-style: normal;
+    font-weight: 400;
+    font-stretch: 100%;
+    font-display: swap;
+    src: url('/assets/Font/khmer.woff2') format('woff2');
+    unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
+}
+
+/* Latin Extended */
+@font-face {
+    font-family: 'Noto Serif Khmer';
+    font-style: normal;
+    font-weight: 400;
+    font-stretch: 100%;
+    font-display: swap;
+    src: url('/assets/Font/latinex.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Latin */
+@font-face {
+    font-family: 'Noto Serif Khmer';
+    font-style: normal;
+    font-weight: 400;
+    font-stretch: 100%;
+    font-display: swap;
+    src: url('/assets/Font/latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+
+
+
+
+
+
+*{
+  margin: 0;
+  box-sizing: border-box;
+  font-family: 'Noto Serif Khmer', serif;
+}
+
+
+main{
+    position: relative;
+    max-height: 100vh;
+    overflow: hidden;
+}
+
+
+
+#toggleSidebar {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 1000;
+
+    font-size: 25px;
+
+    width: 20px;
+    height: 60px;
+
+    background: #2563eb; /* blue */
+    color: white;
+
+    border-radius: 30px 0 0 30px; /* round LEFT only */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+}
+#container {
+
+    width: 100%;
+    height: 100vh;
+}
+
+#sidebar {
+    background: #eee;
+
+
+}
+#screen-only{
+    width: 100%;
+
+    overflow: hidden;
+}
+#tab-content{
+    height: 90vh;
+    overflow: auto;
+}
+#inner-sidebar{
+    height: 100%;
+
+}
+#sidebar.hidden {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+
+
+/* collapsed state */
+#sidebar.collapsed {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+#mainContent.expanded {
+    width: 100%;
+}
+
+/* your existing toggle button */
+#toggleSidebar {
+    position: fixed;
+    top: 5%;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 1000;
+}
+.card_style {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    min-height: 150px;
+    transition: transform 0.25s ease,
+                box-shadow 0.25s ease,
+                border-color 0.25s ease,
+                background-color 0.25s ease;
+}
+
+.card_style {
+    position: relative;
+}
+.info {
+    position: absolute;
+    top: 20px;
+    right: 10px;
+    border: #eff6ff;
+    font-size: 20px;
+
+}
+
+.card_style:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.10);
+    background-color: #f8fafc; /* soft */
+}
+
+.card_style:hover img {
+    transform: scale(1.05);
+}
+.card_style.active {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+}
+.card_style:active {
+    transform: scale(0.98);
+}
+.cart-burst {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.cart-icon {
+    position: absolute;
+    font-size: 26px;            /* 🔥 BIGGER */
+    animation: pop 0.8s ease-out forwards;
+}
+
+/* 🛒 Cart = ORANGE */
+.cart-icon.cart {
+    color: #fb923c; /* orange-400 */
+    text-shadow: 0 0 10px rgba(251,146,60,0.8);
+}
+
+/* ➕ Plus = GREEN */
+.cart-icon.plus {
+    color: #22c55e; /* green-500 */
+    text-shadow: 0 0 10px rgba(34,197,94,0.8);
+}
+
+.screen-only{
+    width: 100%;
+    height:80vh;
+
+    position: relative;
+}
+#header_invoice{
+        position: sticky;
+            background-color: rgb(255, 255, 255);
+    top: 0;
+    z-index: 999;
+
+}
+#total{
+    position: sticky;
+    background-color: rgb(255, 255, 255);
+    bottom: 0;
+    width: 100%;
+    height: auto;
+}
+.card{
+    border-bottom: 1px solid rgb(218, 218, 218);
+    background-color: rgb(247, 247, 247);
+}
+.list {
+    position: absolute;   /* make it float over other content */
+    top: 100%;            /* right below input */
+    left: 0;
+    width: 100%;          /* same width as input */
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    background: white;
+    z-index: 9999;        /* high z-index so it's above everything */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);  /* optional shadow */
+}
+
+.list li {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.list li:hover {
+    background: #f0f0f0;
+}
+
+.hidden {
+    display: none;
+}
+
+#list_main {
+    position: relative;    /* needed for absolute ul to position correctly */
+    width: 300px;          /* same width as before */
+}
+.invoice-totals{
+ display: flex;
+ align-items:  center;
+ justify-content: end;
+}
+
+#inner-sidebar{
+    height:90vh !important;
+    overflow: auto;
+    background-color: white;
+
+}
+
+#invoice h1{
+    font-size: 20px;
+}
+
+
+#invoice table th{
+    font-size: 10px;
+}
+
+#invoice table td{
+    font-size: 8px !important;
+}
+table td ,table th{
+    padding: 2px 5px;
+}
+
+
+#logo{
+
+    width: 100px;
+}
+.animate-scaleUp {
+    animation: scaleUp 0.2s ease-out;
+}
+.scroll_content_70 {
+    min-height: 70vh !important;
+    max-height: 70vh !important;
+    width: 100%;
+    overflow-y: auto;
+}
+#toastMessage{
+    z-index: 10000 !important;
+}
+/* sticky header */
+.scroll_content_70 thead th {
+    position: sticky !important;
+    top: 0;
+    background-color: #f3f3f3;
+    z-index: 5;
+}
+#customer-list table thead th {
+     position: sticky !important;
+    top: 0;
+    background-color: #f3f3f3; /* table header bg */
+    z-index: 5;
+}
+#customer-list td, #customer-list th{
+    padding: 8px 12px;
+    border-bottom: 1px solid #ddd;
+}
+.hight_index{
+    z-index: 10000;
+}
+.min_heigh_70{
+    min-width: 70%;
+}
+
+
+#shop_info{
+    display: flex;
+    flex-direction: column;
+}
+
+    @keyframes scaleUp {
+        0% { transform: scale(0.8); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-scaleUp {
+        animation: scaleUp 0.25s ease-out forwards;
+    }
+
+@keyframes pop {
+    0% {
+        transform: translate(0,0) scale(0.3);
+        opacity: 0;
+    }
+    40% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--x), var(--y)) scale(1.2);
+        opacity: 0;
+    }
+}
+/* Hide elements you don’t want in print */
+
+@media print {
+    .screen-only { display: none !important; }
+    .print-only { display: block !important; }
+        .shop-info {
+        display: block;
+        text-align: right;
+    }
+
+    .shop-info div {
+        line-height: 1.4;
+    }
+    .space{
+        margin-bottom: 15px;
+    }
+}
+@media screen {
+    .print-only { display: none; }
+        .space{
+        margin-bottom: 15px;
+    }
+}
+
+
