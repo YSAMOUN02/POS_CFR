@@ -52,6 +52,7 @@ class AdminController extends Controller
         // 5️⃣ Currency
         $currency = Currency::where('code', '<>', 'USD')->get();
 
+     
         return view('backend.pos', compact('categories', 'currency'));
     }
 

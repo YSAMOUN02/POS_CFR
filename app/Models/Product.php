@@ -28,6 +28,7 @@ class Product extends Model
         'allow_discount',
         'allow_return',
         'image',
+              'category_name',
         'unit',
         'Tax',
         'status',
@@ -67,5 +68,24 @@ class Product extends Model
     public function getStockAttribute()
     {
         return $this->warehouses->sum('pivot.qty');
+    }
+      public function tableProducts()
+    {
+        return $this->hasMany(TableProduct::class, 'product_id');
+    }
+
+    public function tables()
+    {
+        return $this->belongsToMany(RestaurantTable::class, 'table_products_tables', 'product_id', 'table_id')
+                    ->withPivot([
+                        'qty',
+                        'price',
+                        'discount_percent',
+                        'vat',
+                        'gross_amount',
+                        'discount_amount',
+                        'net_amount'
+                    ])
+                    ->withTimestamps();
     }
 }

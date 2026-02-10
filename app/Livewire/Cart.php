@@ -5,6 +5,10 @@ namespace App\Livewire;
 use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\RestaurantTable;
+use App\Models\TableProduct;
+use Illuminate\Support\Facades\DB;
+
 use Livewire\Component;
 
 class Cart extends Component
@@ -28,6 +32,156 @@ class Cart extends Component
     public $customer_phone = '';
     public $customer_address = '';
     public $customer_city = '';
+
+
+
+
+    public $tables = [];
+    public $Current_table_id = null;
+    public $Current_table_name = "";
+
+    #[\Livewire\Attributes\On('transferCartToTable')]
+    #[\Livewire\Attributes\On('save-cart-to-table')]
+    public function saveCartToTable($payload)
+    {
+        $tableId = $payload['table_id'] ?? null;
+        if (!$tableId) return;
+
+        $table = RestaurantTable::where('id', $tableId)->first();
+
+        DB::beginTransaction();
+        try {
+            // 🔥 OVERWRITE
+            TableProduct::where('table_id', $tableId)->delete();
+
+            foreach ($this->cart as $item) {
+                TableProduct::create([
+                    'table_id' => $tableId,
+                    'product_id' => $item['id'],
+                    'qty' => $item['qty'],
+                    'price' => $item['price'],
+                    'discount_percent' => $item['discount_percent'],
+                    'vat' => $item['vat'] ?? 0,
+                    'gross_amount' => $item['amount_line'],
+                    'discount_amount' => $item['discount_amount_line'],
+                    'net_amount' => $item['net_amount_line'],
+                ]);
+            }
+
+
+
+            DB::commit();
+            // Reset cart first
+            $this->cart = [];
+            $this->count_cart = 0;
+            // ✅ Notify frontend
+
+            $this->dispatch('serve-table', [
+                'message' => 'success',
+                'name' =>$table->name
+
+            ]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger()->error($e);
+        }
+    }
+    #[\Livewire\Attributes\On('exit_table')]
+    public function exit_table()
+    {
+        $this->cart = [];
+        $this->count_cart = 0;
+        $this->Current_table_id = null;
+        $this->Current_table_name  = "";
+    }
+    #[\Livewire\Attributes\On('loadTableToCart')]
+    public function loadTableToCart($table_id)
+    {
+        // Reset cart first
+        $this->cart = [];
+        $this->count_cart = 0;
+
+        $tableItems = TableProduct::with('product')
+            ->where('table_id', $table_id)
+            ->get();
+
+        $tableItems_assign = RestaurantTable::where('id', $table_id)
+            ->first();
+        $this->Current_table_id = $table_id;
+        $this->Current_table_name = $tableItems_assign->name;
+
+        $order = 1;
+
+        foreach ($tableItems as $row) {
+            if (!$row->product) continue;
+
+            $this->cart[] = [
+                'id' => $row->product->id,
+                'name' => $row->product->name,
+                'price' => $row->price,
+                'qty' => $row->qty,
+                'discount_percent' => $row->discount_percent,
+                'discount_price' => $row->net_amount / max($row->qty, 1),
+                'order_no' => $order++,
+                'amount_line' => $row->gross_amount,
+                'discount_amount_line' => $row->discount_amount,
+                'net_amount_line' => $row->net_amount,
+                'stock' => $row->product->stock ?? 0,
+                'unit' => $row->product->unit ?? 'NA',
+                'track_stock' => $row->product->track_stock ?? false,
+            ];
+        }
+
+        $this->count_cart = count($this->cart);
+    }
+    #[\Livewire\Attributes\On('loadTableToCartPayment')]
+    public function loadTableToCartPayment($table_id)
+    {
+        // Reset cart first
+        $this->cart = [];
+        $this->count_cart = 0;
+
+        $tableItems = TableProduct::with('product')
+            ->where('table_id', $table_id)
+            ->get();
+
+        $tableItems_assign = RestaurantTable::where('id', $table_id)
+            ->first();
+        $this->Current_table_id = $table_id;
+        $this->Current_table_name = $tableItems_assign->name;
+
+        $order = 1;
+
+        foreach ($tableItems as $row) {
+            if (!$row->product) continue;
+
+            $this->cart[] = [
+                'id' => $row->product->id,
+                'name' => $row->product->name,
+                'price' => $row->price,
+                'qty' => $row->qty,
+                'discount_percent' => $row->discount_percent,
+                'discount_price' => $row->net_amount / max($row->qty, 1),
+                'order_no' => $order++,
+                'amount_line' => $row->gross_amount,
+                'discount_amount_line' => $row->discount_amount,
+                'net_amount_line' => $row->net_amount,
+                'stock' => $row->product->stock ?? 0,
+                'unit' => $row->product->unit ?? 'NA',
+                'track_stock' => $row->product->track_stock ?? false,
+            ];
+        }
+
+        $this->count_cart = count($this->cart);
+        // ✅ Notify frontend
+        $this->dispatch('cart-loaded', [
+            'table_id' => $table_id,
+            'count' => $this->count_cart
+        ]);
+    }
+
+
 
     public function updatedCustomerId($value)
     {
@@ -80,87 +234,89 @@ class Cart extends Component
         }
     }
 
-#[\Livewire\Attributes\On('add-product')]
-public function addProduct($productJson)
-{
-    $product = json_decode($productJson, true);
+    #[\Livewire\Attributes\On('add-product')]
+    public function addProduct($productJson)
+    {
+        $product = json_decode($productJson, true);
 
-    $vat = $product['vat'] ?? 0;
-    $price = $product['sell_price'] + ($product['sell_price'] * $vat / 100);
-    $discountPercent = $product['discount_percent'] ?? 0;
-    $discountAmount = ($price * $discountPercent) / 100;
-    $discountPrice = $price - $discountAmount;
-    $stock = $product['stock'] ?? 0;
-    $unit = $product['unit'] ?? 'NA';
-    $trackStock = $product['track_stock'] ?? 0;
+        $vat = $product['vat'] ?? 0;
+        $price = $product['sell_price'] + ($product['sell_price'] * $vat / 100);
+        $discountPercent = $product['discount_percent'] ?? 0;
+        $discountAmount = ($price * $discountPercent) / 100;
+        $discountPrice = $price - $discountAmount;
+        $stock = $product['stock'] ?? 0;
+        $unit = $product['unit'] ?? 'NA';
+        $trackStock = $product['track_stock'] ?? 0;
 
-    // Out-of-stock check only for tracked items
-    if ($trackStock && $stock <= 0) {
-        $this->dispatch('out-of-stock', name: $product['name']);
-        return;
-    }
-
-    // Static variable to prevent accidental double increment for **all items**
-    static $lastAddedId = null;
-    static $lastClickTime = 0;
-
-    $now = microtime(true) * 1000; // ms
-
-    if ($lastAddedId === $product['id'] && $now - $lastClickTime < 300) {
-        return; // block double increment for 300ms
-    }
-
-    $lastAddedId = $product['id'];
-    $lastClickTime = $now;
-
-    // Check if item exists in cart
-    foreach ($this->cart as $index => $item) {
-        if ($item['id'] === $product['id']) {
-            if ($trackStock) {
-                if ($item['qty'] < $stock) $this->cart[$index]['qty']++;
-            } else {
-                // untracked stock, increment only once per click
-                $this->cart[$index]['qty']++;
-            }
-
-            $qty = $this->cart[$index]['qty'];
-            $this->cart[$index]['discount_percent'] = $discountPercent;
-            $this->cart[$index]['discount_price'] = $discountPrice;
-            $this->cart[$index]['amount_line'] = $qty * $price;
-            $this->cart[$index]['discount_amount_line'] = $qty * $discountAmount;
-            $this->cart[$index]['net_amount_line'] = $qty * $discountPrice;
+        // Out-of-stock check only for tracked items
+        if ($trackStock && $stock <= 0) {
+            $this->dispatch('out-of-stock', name: $product['name']);
             return;
         }
+
+        // Static variable to prevent accidental double increment for **all items**
+        static $lastAddedId = null;
+        static $lastClickTime = 0;
+
+        $now = microtime(true) * 1000; // ms
+
+        if ($lastAddedId === $product['id'] && $now - $lastClickTime < 300) {
+            return; // block double increment for 300ms
+        }
+
+        $lastAddedId = $product['id'];
+        $lastClickTime = $now;
+
+        // Check if item exists in cart
+        foreach ($this->cart as $index => $item) {
+            if ($item['id'] === $product['id']) {
+                if ($trackStock) {
+                    if ($item['qty'] < $stock) $this->cart[$index]['qty']++;
+                } else {
+                    // untracked stock, increment only once per click
+                    $this->cart[$index]['qty']++;
+                }
+
+                $qty = $this->cart[$index]['qty'];
+                $this->cart[$index]['discount_percent'] = $discountPercent;
+                $this->cart[$index]['discount_price'] = $discountPrice;
+                $this->cart[$index]['amount_line'] = $qty * $price;
+                $this->cart[$index]['discount_amount_line'] = $qty * $discountAmount;
+                $this->cart[$index]['net_amount_line'] = $qty * $discountPrice;
+                return;
+            }
+        }
+
+        // Add new item
+
+        $this->cart[] = [
+            'id' => $product['id'],
+            'name' => $product['name'],
+            'price' => $price,
+            'qty' => 1,
+            'discount_percent' => $discountPercent,
+            'discount_price' => $discountPrice,
+            'order_no' => count($this->cart) + 1,
+            'amount_line' => $price,
+            'discount_amount_line' => $discountAmount,
+            'net_amount_line' => $discountPrice,
+            'stock' => $stock,
+            'unit' => $unit,
+            'track_stock' => $trackStock,
+        ];
+        $this->count_cart = count($this->cart);
     }
-
-    // Add new item
-
-    $this->cart[] = [
-        'id' => $product['id'],
-        'name' => $product['name'],
-        'price' => $price,
-        'qty' => 1,
-        'discount_percent' => $discountPercent,
-        'discount_price' => $discountPrice,
-        'order_no' => count($this->cart) + 1,
-        'amount_line' => $price,
-        'discount_amount_line' => $discountAmount,
-        'net_amount_line' => $discountPrice,
-        'stock' => $stock,
-        'unit' => $unit,
-        'track_stock' => $trackStock,
-    ];
-    $this->count_cart = count($this->cart);
-
-}
 
 
 
     public function clearCart()
     {
+        $this->Current_table_id = null;
+        $this->Current_table_name = "";
+
         $this->cart = [];
         $this->qty = 0;
-        $this->cound_cart = 0;
+        $this->count_cart = 0;
     }
     // Cart.php (Livewire component)
     public function getTotalsProperty()
@@ -225,7 +381,7 @@ public function addProduct($productJson)
         $currency = Currency::where('code', $code)->first();
         if ($currency) {
             $this->currency = $currency->code;
-                     $this->currency_name = $currency->name;
+            $this->currency_name = $currency->name;
             $this->factor = $currency->factor;
         }
     }
@@ -265,8 +421,9 @@ public function addProduct($productJson)
             $this->cart[$i]['order_no'] = $i + 1;
         }
 
-        $this->cound_cart = count($this->cart);
+        $this->count_cart = count($this->cart);
     }
+
 
 
     public function render()

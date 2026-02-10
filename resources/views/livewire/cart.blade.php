@@ -3,10 +3,18 @@
         <div id="header_invoice"
             class="border-b bg-white border-default pb-2  p-2 flex items-center justify-between sticky top-0">
             <h1 style="font-size: 30px;" class="mb-2 font-bold">
-                <span class="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
-                    {{ $prefix }}
-                </span>
-                {{ $title }}
+                @if (!empty($this->Current_table_id))
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
+                        Editing Data :
+                    </span>
+                    {{ $this->Current_table_name }}
+                @else
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
+                        {{ $prefix }}
+                    </span>
+                    {{ $title }}
+                @endif
+
             </h1>
             <div class="px-4" id="refreshBtn" data-popover-target="popover-user-profile">
                 <i style="font-size: 30px;" class="fa-solid fa-arrows-rotate"></i>
@@ -110,6 +118,11 @@
                 <p class="text-sm">សរុបរង: {{ $this->totals['total_original'] }}$</p>
                 <p class="text-sm">បញ្ចុះតម្លៃ : {{ $this->totals['total_discount'] }}$</p>
                 <p class="font-semibold">តម្លៃសរុប : {{ $this->totals['total_net'], 0 }} $</p>
+                <input type="hidden" id="total_amount" value="{{ $this->totals['total_net'], 0 }}">
+                <input type="hidden" id="currency_name" value="{{ $currency_name }}">
+                <input type="hidden" id="currency_display_symbol" value="{{ $currency }}">
+                <input type="hidden" id="currency_display_factor" value="{{ $factor }}">
+
                 @if ($currency != 'USD')
                     <div class="w-full flex justify-between">
 
@@ -133,6 +146,15 @@
                         </p>
 
                     </div>
+                    <input type="hidden" id="converted_total_amount"
+                        value="{{ floor($this->totals['total_net'] * $factor) == $this->totals['total_net'] * $factor
+                            ? number_format($this->totals['total_net'] * $factor, 0)
+                            : number_format($this->totals['total_net'] * $factor, 2) }}">
+                @else
+                    <input type="hidden" id="converted_total_amount"
+                        value="{{ floor($this->totals['total_net'] * $factor) == $this->totals['total_net'] * $factor
+                            ? number_format($this->totals['total_net'] * $factor, 0)
+                            : number_format($this->totals['total_net'] * $factor, 2) }}">
                 @endif
 
             </div>
@@ -155,6 +177,7 @@
                     </ul>
                 </div>
             </div>
+            <hr>
             <div class="mt-5 grid grid-cols-4 gap-2">
 
 
@@ -164,29 +187,39 @@
                     class="bg-red-300 hover:bg-red-400 text-white font-semibold px-4 py-2 rounded">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
+
+                @if (!empty($this->Current_table_id))
+                    <button style="font-size: 10px;"
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
+                        onclick="showTableModal({{ $count_cart }},'{{ $this->Current_table_id }}')">
+                        Table
+                    </button>
+                @else
+                    <button style="font-size: 10px;"
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
+                        onclick="showTableModal({{ $count_cart }},'ALL')">
+                        Table
+                    </button>
+                @endif
                 <button onclick="print('Receipt')" style="font-size: 10px;"
                     class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
-                    Receipt
+                    Payment
                 </button>
-
-                <button onclick="print('Invoice')" style="font-size: 10px;"
+                {{-- <button onclick="print('Invoice')" style="font-size: 10px;"
                     class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
                     Invoice
-                </button>
+                </button> --}}
 
-                <button onclick="print('Delivery Note')" style="font-size: 10px;"
+                {{-- <button onclick="print('Delivery Note')" style="font-size: 10px;"
                     class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
                     Delivery Note
-                </button>
+                </button> --}}
 
 
 
             </div>
         </div>
-
-
     </div>
-
 
 
 
@@ -233,30 +266,32 @@
             <div id="shop_info">
                 <div class="text-left">
                     <div id="seller_company">Confirel</div>
-                    <div id="seller_address">#57 ,  Street 178, Songkat Chey Chomneas</div>
+                    <div id="seller_address">#57 , Street 178, Songkat Chey Chomneas</div>
                     <div id="seller_address2">Khan Doun Penh , Phnom Penh , Cambodia.</div>
                     <div id="seller_phone">Mobile: +855 93 981 724</div>
                     <div id="seller_email">Email: info@confirel.com</div>
-                    <div id="seller_name" >Seller: Cashier</div>
+                    <div id="seller_name">Seller: Cashier</div>
                 </div>
             </div>
-             <div id="customer_info" >
+            <div id="customer_info">
                 <div class="text-left">
-                    @if ($customer_name != "Walk-in Customer")
-                            <div id="sell_to_name" class="bold">{{ $customer_name }}</div>
-                            <div id="sell_to_company">{{ $customer_name }}</div>
-                            <div id="sell_to_address1">{{ $customer_address }}</div>
-                            <div id="sell_to_address2">{{ $customer_address }}</div>
-                            <div id="sell_to_contact_name">{{ $customer_name }}</div>
-                            <div id="sell_to_phone">Mobile: {{ $customer_phone }}</div>
+                    @if ($customer_name != 'Walk-in Customer')
+                        <div id="sell_to_name" class="bold">{{ $customer_name }}</div>
+                        <div id="sell_to_company">{{ $customer_name }}</div>
+                        <div id="sell_to_address1">{{ $customer_address }}</div>
+                        <div id="sell_to_address2">{{ $customer_address }}</div>
+                        <div id="sell_to_contact_name">{{ $customer_name }}</div>
+                        <div id="sell_to_phone">Mobile: {{ $customer_phone }}</div>
+                    @else
+                        <div id="sell_to_name" class="bold">Walk-in Customer</div>
                     @endif
 
                 </div>
             </div>
             <div id="table_footer">
-                <div  style="width:100%; display:flex; justify-content:center ; margin-top:30px;">
-                     <div id="table_footer_description"></div>
-                  <!-- CURRENCY RATE -->
+                <div style="width:100%; display:flex; justify-content:center ; margin-top:30px;">
+                    <div id="table_footer_description"></div>
+                    <!-- CURRENCY RATE -->
 
                 </div>
             </div>

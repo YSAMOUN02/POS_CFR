@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Request;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\TableController;
 use App\Http\Controllers\WarehouseController;
 
 
@@ -66,5 +67,11 @@ Route::post('/warehouses/update/{id}', [WarehouseController::class, 'update']);
 Route::get('/warehouses/{id}/stock', [WarehouseController::class, 'getStock']);
 
 
+
+Route::post('/products/store', [ProductController::class, 'store'])->name('products.store');
 Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
 Route::get('/products/list_search', [ProductController::class, 'list_search']);
+Route::put('/product/{id}', [ProductController::class, 'update'])->name('product.update');
+
+
+Route::get('/tables', [TableController::class, 'GetTables']);

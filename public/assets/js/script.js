@@ -182,7 +182,7 @@ async function confirmUpdateCustomer() {
         point: parseInt(document.getElementById("cust-point").value) || 0,
         status: parseInt(document.getElementById("cust-status").value),
     };
-    console.log("Updating customer with payload:", payload);
+
     try {
         const res = await fetch(`/customers/${id}`, {
             method: "PUT",
@@ -540,7 +540,7 @@ function renderProductTable(data) {
             return `
         <tr class="border-t hover:bg-neutral-tertiary cursor-pointer text-nowrap"
             data-id="${p.id}"
-                    data-code="${p.bar_code ?? ""}"
+            data-bar_code="${p.bar_code ?? ""}"
             data-code="${p.code ?? ""}"
             data-name="${p.name ?? ""}"
             data-variant="${p.variant ?? ""}"
@@ -552,17 +552,24 @@ function renderProductTable(data) {
             data-vat="${p.vat}"
             data-discount_percent="${p.discount_percent}"
             data-last_purchase_price="${p.last_purchase_price ?? ""}"
-            data-category_name="${p.category?.name ?? ""}"
+            data-category_id="${p.category_id ?? ""}"
+            data-category_name="${p.category_name ?? ""}"
             data-unit="${p.unit ?? ""}"
             data-track_stock="${p.track_stock}"
             data-allow_discount="${p.allow_discount}"
             data-allow_return="${p.allow_return}"
-            data-status="${p.status}">
+            data-status="${p.status}"
+            data-image="${p.image}"
+
+            >
 
             <td><input type="radio" name="product_id" value="${p.id}"></td>
             <td>${p.id}</td>
+            <td>
+                  <img width="300px; padding:5px;" src="/assets/startic_img/${encodeURIComponent(p.image)}" alt="" />
+            </td>
             <td>${p.bar_code ?? "-"}</td>
-                        <td>${p.code ?? "-"}</td>
+            <td>${p.code ?? "-"}</td>
             <td>${p.name}</td>
             <td>${p.variant ?? "-"}</td>
             <td>${p.description ?? "-"}</td>
@@ -575,6 +582,8 @@ function renderProductTable(data) {
             <td>${p.last_purchase_price ? parseFloat(p.last_purchase_price).toFixed(2) : "-"}</td>
             <td>${p.category?.name ?? "-"}</td>
             <td>${p.unit ?? "-"}</td>
+            <td>${p.category_name ?? "-"}</td>
+                            <td>${p.category_id ?? "-"}</td>
             <td>${p.track_stock ? "Yes" : "No"}</td>
             <td>${p.allow_discount ? "Yes" : "No"}</td>
             <td>${p.allow_return ? "Yes" : "No"}</td>
@@ -611,7 +620,7 @@ async function CategoryLoad() {
         // Clear existing options (optional)
         typeSelect_product.innerHTML =
             '<option value="">Select Category</option>';
-        console.log("Fetched categories:", categories);
+
         categories.forEach((cat) => {
             const option = document.createElement("option");
             option.value = cat.id; // adjust to your API field
@@ -723,8 +732,6 @@ document.addEventListener("change", function (e) {
     if (e.target.name === "warehouse_id") {
         const name = e.target.dataset.name;
         const location = e.target.dataset.location;
-
-        console.log("Selected warehouse:", name, location, e);
     }
 });
 function getSelectedWarehouse() {
@@ -894,7 +901,7 @@ async function loadWarehouseStock(warehouseId) {
 
         const res = await fetch(`/warehouses/${warehouseId}/stock?${params}`);
         const data = await res.json();
-        console.log("Warehouse stock data:", data);
+
         renderStockTable(data.products ?? [], data.warehouse.name);
     } catch (err) {
         console.error(err);
@@ -1107,7 +1114,10 @@ function print_document(document_type) {
         // Format using toLocaleDateString
         const options = { day: "2-digit", month: "short", year: "numeric" };
         const formattedDueDate = due_date.toLocaleDateString("en-GB", options);
-           const formattedDocumentDate = document_date.toLocaleDateString("en-GB", options);
+        const formattedDocumentDate = document_date.toLocaleDateString(
+            "en-GB",
+            options,
+        );
         printWindow.document.write(`
                 <html>
                 <head>
@@ -1185,9 +1195,12 @@ function print_document(document_type) {
                 </html>
                 `);
     } else if (document_type === "Receipt") {
-            const options = { day: "2-digit", month: "short", year: "numeric" };
+        const options = { day: "2-digit", month: "short", year: "numeric" };
         const formattedDueDate = due_date.toLocaleDateString("en-GB", options);
-           const formattedDocumentDate = document_date.toLocaleDateString("en-GB", options);
+        const formattedDocumentDate = document_date.toLocaleDateString(
+            "en-GB",
+            options,
+        );
         table_footer_description.innerHTML = `
                     <div class="font-mid" style="line-height:1.5;">
                         <div style="font-weight:bold; text-decoration:underline; margin-bottom:6px;">
@@ -1235,7 +1248,7 @@ function print_document(document_type) {
                             <!-- Left column: Shop info -->
                             <div  class="font-mid"  style="display: grid; gap:3px; text-align: left;">
                                 ${shop_info.innerHTML}
-                                <strong>Qoutation for:</strong>
+                                <strong>Reciept for:</strong>
                                  ${customer_info.innerHTML}
                             </div>
 
@@ -1269,9 +1282,12 @@ function print_document(document_type) {
                 </html>
                 `);
     } else if (document_type === "Delivery Note") {
-            const options = { day: "2-digit", month: "short", year: "numeric" };
+        const options = { day: "2-digit", month: "short", year: "numeric" };
         const formattedDueDate = due_date.toLocaleDateString("en-GB", options);
-           const formattedDocumentDate = document_date.toLocaleDateString("en-GB", options);
+        const formattedDocumentDate = document_date.toLocaleDateString(
+            "en-GB",
+            options,
+        );
         table_footer_description.innerHTML = `
                     <div style=" line-height:1.5;">
 
@@ -1368,6 +1384,7 @@ function print_document(document_type) {
                 </html>
                 `);
     }
+
     printWindow.document.close();
 }
 
@@ -1377,10 +1394,35 @@ let quotationNextAction = null;
 let formattedDocDate = null;
 let formattedDueDate = null;
 
-function openDatePromt_Modal(onConfirm) {
+function openDatePromt_Modal(onConfirm, amount) {
     const modal = document.getElementById("DatePromptModal");
     const dateInput = document.getElementById("document_dateInput");
     const validInput = document.getElementById("due_date");
+
+    const total_amount = document.querySelector("#total_amount").value;
+    const converted_total_amount = document.querySelector(
+        "#converted_total_amount",
+    ).value;
+
+    const currency_display_name = document.querySelector(
+        "#currency_display_name",
+    );
+    const currency_display_name2 = document.querySelector(
+        "#currency_display_name2",
+    );
+    const currency_display_symbol = document.querySelector(
+        "#currency_display_symbol",
+    );
+    const currency = document.querySelector("#currency_name");
+    const currency_factor = document.querySelector("#currency_display_factor");
+    const currency_factor_input = document.querySelector("#currency_factor");
+
+    document.querySelector("#display_pay_amount").value = total_amount + " $";
+    document.querySelector("#display_pay_amount_converted").value =
+        converted_total_amount + " " + currency_display_symbol.value;
+    currency_display_name.textContent = currency.value;
+    currency_display_name2.textContent = currency.value;
+    currency_factor_input.value = currency_factor.value;
 
     const today = new Date();
     const validUntil = new Date();
@@ -1401,7 +1443,7 @@ function openDatePromt_Modal(onConfirm) {
         quotationNextAction = null; // clear
     };
 
-    modal.querySelector("[data-quotation-confirm]").onclick = () => {
+    modal.querySelector("#confirmPayBtn").onclick = () => {
         modal.classList.add("hidden");
 
         // Parse input values
@@ -1434,40 +1476,729 @@ document
         closeDatePromtModal();
     });
 
-// document
-//     .querySelector("[data-quotation-confirm]")
-//     .addEventListener("click", () => {
-//         const input = document.getElementById("document_dateInput").value;
+// Get Category on Click New
+document
+    .getElementById("btnAddProduct")
+    .addEventListener("click", async function () {
+        const select = document.getElementById("categorySelect");
 
-//         if (!input) {
-//             alert("Please select a quotation date");
-//             return;
-//         }
+        // Reset
+        select.innerHTML = `<option value="">Loading categories...</option>`;
 
-//         // Parse selected date
-//         const document_date = new Date(input);
+        try {
+            const response = await fetch("/categories");
+            const categories = await response.json();
 
-//         // Format document date as "12 Jan 2026"
+            select.innerHTML = `<option value="">-- Select Category --</option>`;
 
-//         // Calculate due date (+1 month)
-//         const due_date = new Date(document_date);
-//         due_date.setMonth(due_date.getMonth() + 1);
+            categories.forEach((cat) => {
+                select.innerHTML += `
+                <option value="${cat.id}">
+                    ${cat.name}
+                </option>
+            `;
+            });
+        } catch (error) {
+            console.error(error);
+            select.innerHTML = `<option value="">Failed to load categories</option>`;
+        }
+    });
+document
+    .getElementById("productImage")
+    .addEventListener("change", function (e) {
+        const preview = document.getElementById("imagePreview");
+        const file = e.target.files[0];
 
-//         const formattedDocDate = document_date.toLocaleDateString("en-GB", {
-//             day: "2-digit",
-//             month: "short",
-//             year: "numeric",
-//         });
-//         const formattedDueDate = due_date.toLocaleDateString("en-GB", {
-//             day: "2-digit",
-//             month: "short",
-//             year: "numeric",
-//         });
+        if (!file) {
+            preview.classList.add("hidden");
+            preview.src = "";
+            return;
+        }
 
-//         closeDatePromtModal();
+        if (!file.type.startsWith("image/")) {
+            alert("Please select an image file");
+            e.target.value = "";
+            preview.classList.add("hidden");
+            return;
+        }
 
-//         // Pass formatted dates to your print function
-//         if (quotationNextAction)
-//             console.log("formattedDueDate", formattedDueDate);
-//             quotationNextAction(formattedDocDate, formattedDueDate);
-//     });
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            preview.src = event.target.result;
+            preview.classList.remove("hidden");
+        };
+        reader.readAsDataURL(file);
+    });
+
+// Submit New Product
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("AddProductForm");
+    if (!form) return;
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    // Live image preview
+    const imageInput = document.getElementById("productImage");
+    const imagePreviewContainer = document.createElement("div");
+    imagePreviewContainer.id = "imagePreview";
+    imageInput.parentNode.appendChild(imagePreviewContainer);
+
+    imageInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) {
+            imagePreviewContainer.innerHTML = "";
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            imagePreviewContainer.innerHTML = `<img src="${ev.target.result}" alt="Preview" class="mt-2 w-32 h-32 object-cover rounded" />`;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Async form submit
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Saving...";
+
+        try {
+            const response = await fetch("/products/store", {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'input[name="_token"]',
+                    ).value,
+                },
+                body: new FormData(form),
+            });
+
+            let data;
+            try {
+                data = await response.json();
+            } catch {
+                data = {}; // in case response is not JSON
+            }
+
+            if (!response.ok) {
+                // Show server message if exists, else fallback
+                const message =
+                    data.message ||
+                    `Error ${response.status}: ${response.statusText}`;
+                throw new Error(message);
+            }
+
+            // ✅ SUCCESS
+            showToast({
+                message: data.message || "Product added successfully",
+                type: "success",
+            });
+
+            form.reset();
+            imagePreviewContainer.innerHTML = "";
+
+            document
+                .querySelector('[data-modal-hide="default-modal-add-product"]')
+                ?.click();
+        } catch (err) {
+            // Always show toast
+            showToast({
+                message: err.message || "Server error. Please try again.",
+                type: "error",
+            });
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Save Product";
+        }
+    });
+});
+
+// Hook Edit button
+document.getElementById("btnEditProduct").addEventListener("click", () => {
+    openUpdateProductModal();
+});
+
+let selectedProductId = null;
+
+// Get ID
+function getSelectedProductId() {
+    const selected = document.querySelector('input[name="product_id"]:checked');
+    selectedProductId = selected ? selected.value : null; // store it
+    return selectedProductId;
+}
+async function openUpdateProductModal() {
+    const selected = document.querySelector('input[name="product_id"]:checked');
+
+    if (!selected) {
+        showToast({
+            message: "Please select a product first",
+            type: "warning",
+        });
+        return;
+    }
+
+    const productId = selected.value;
+    const row = document.querySelector(`tr[data-id="${productId}"]`);
+    if (!row) return;
+
+    // Load categories
+    let categories = [];
+    try {
+        const response = await fetch("/categories");
+        categories = await response.json(); // e.g., [{id:1, name:'APPETIZER'}, ...]
+    } catch (error) {
+        console.error("Failed to load categories:", error);
+    }
+
+    // Take ID from Modal
+    const categorySelect = document.getElementById("prod-category");
+
+    categorySelect.innerHTML = ""; // clear previous options
+
+    const currentCategoryId = row.getAttribute("data-category_id") || "";
+
+    // Check if current category exists in the categories list
+    const currentCategoryExists = categories.some(
+        (cat) => String(cat.id) === currentCategoryId,
+    );
+
+    if (currentCategoryExists) {
+        // Render all categories with the current one selected
+        categories.forEach((cat) => {
+            const option = document.createElement("option");
+            option.value = cat.id;
+            option.textContent = cat.name;
+            if (String(cat.id) === currentCategoryId) option.selected = true;
+            categorySelect.appendChild(option);
+        });
+    } else {
+        // Current category not found → add placeholder with previous category name
+        const placeholder = document.createElement("option");
+        placeholder.value = currentCategoryId;
+        placeholder.textContent = row.getAttribute("data-category_name") || "";
+        placeholder.selected = true;
+        categorySelect.appendChild(placeholder);
+
+        // Then add all categories normally
+        categories.forEach((cat) => {
+            const option = document.createElement("option");
+            option.value = cat.id;
+            option.textContent = cat.name;
+            categorySelect.appendChild(option);
+        });
+    }
+
+    document.getElementById("preivew_img").src =
+        `/assets/startic_img/${encodeURIComponent(row.dataset.image)}`;
+
+    const sellPrice = parseFloat(row.dataset.sell_price) || 0; // Selling price
+    const vat = parseFloat(row.dataset.vat) || 0; // VAT %
+    const discount = parseFloat(row.dataset.discount_percent) || 0; // Discount %
+
+    const priceAfterDiscount = sellPrice - (sellPrice * discount) / 100;
+    const finalPrice = priceAfterDiscount - (priceAfterDiscount * vat) / 100;
+    // ID
+    document.getElementById("prod-id").value = productId;
+
+    // BASIC
+    document.getElementById("prod-code").value = row.dataset.code ?? "";
+    document.getElementById("prod-barcode").value = row.dataset.bar_code ?? "";
+    document.getElementById("prod-name").value = row.dataset.name ?? "";
+    document.getElementById("prod-variant").value = row.dataset.variant ?? "";
+    document.getElementById("prod-description").value =
+        row.dataset.description ?? "";
+
+    document.getElementById("prod-price-final").value = finalPrice.toFixed(3);
+
+    // console.log(row.dataset.category_id);
+    // CATEGORY / UNIT
+    // document.getElementById("hidden_category_id").value =
+    //     row.dataset.category_id ?? "";
+
+    document.getElementById("prod-unit").value = row.dataset.unit ?? "";
+
+    // STOCK
+    document.getElementById("prod-min-stock").value =
+        row.dataset.min_stock ?? 0;
+    document.getElementById("prod-max-stock").value =
+        row.dataset.max_stock ?? 0;
+
+    // PRICE
+    document.getElementById("prod-cost").value = row.dataset.cost ?? 0;
+    document.getElementById("prod-price").value = row.dataset.sell_price ?? 0;
+    document.getElementById("prod-vat").value = row.dataset.vat ?? 0;
+    document.getElementById("prod-discount").value =
+        row.dataset.discount_percent ?? 0;
+
+    // CHECKBOXES / STATUS
+    document.getElementById("prod-status").checked =
+        row.dataset.status == "true";
+    document.getElementById("prod-category_name").value =
+        row.dataset.category_name ?? "";
+
+    document.getElementById("prod-track-stock").checked =
+        row.dataset.track_stock === "true";
+
+    document.getElementById("prod-allow-discount").checked =
+        row.dataset.allow_discount === "true";
+
+    let discountInput = document.getElementById("prod-discount");
+    if (row.dataset.allow_discount === "true") {
+        discountInput.disabled = false; // enable
+    } else {
+        discountInput.disabled = true; // disable
+    }
+
+    document.getElementById("prod-allow-return").checked =
+        row.dataset.allow_return === "true";
+
+    // SHOW MODAL
+    document
+        .getElementById("confirm-update-product")
+        .classList.remove("hidden");
+}
+
+function closeUpdateProductModal() {
+    const modal = document.getElementById("confirm-update-product");
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+}
+
+async function confirmUpdateProduct() {
+    const id = document.getElementById("prod-id").value;
+
+    const data = {
+        bar_code: document.getElementById("prod-barcode").value,
+        code: document.getElementById("prod-code").value,
+        name: document.getElementById("prod-name").value,
+        variant: document.getElementById("prod-variant").value,
+        description: document.getElementById("prod-description").value,
+
+        min_stock: document.getElementById("prod-min-stock").value,
+        max_stock: document.getElementById("prod-max-stock").value,
+        cost: document.getElementById("prod-cost").value,
+        sell_price: document.getElementById("prod-price").value,
+        vat: document.getElementById("prod-vat").value,
+        discount: document.getElementById("prod-discount").value,
+
+        category_id: document.getElementById("prod-category").value,
+        category_name: document.getElementById("prod-category_name").value,
+        unit: document.getElementById("prod-unit").value,
+
+        track_stock: document.getElementById("prod-track-stock").checked,
+        allow_discount: document.getElementById("prod-allow-discount").checked,
+        allow_return: document.getElementById("prod-allow-return").checked,
+        status: document.getElementById("prod-status").checked,
+    };
+
+    try {
+        const res = await fetch(`/product/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN":
+                    document.querySelector("input[name=_token]").value,
+            },
+            body: JSON.stringify(data),
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+            loadProducts(1);
+            closeUpdateProductModal();
+
+            showToast({
+                message: "Product updated successfully",
+                type: "success",
+            });
+        } else {
+            alert("❌ Update failed");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("❌ Server error");
+    }
+}
+function calculateFinalPrice() {
+    const priceInput = document.getElementById("prod-price");
+    const vatInput = document.getElementById("prod-vat");
+    const discountInput = document.getElementById("prod-discount");
+
+    const price = parseFloat(priceInput.value) || 0;
+    let vat = parseFloat(vatInput.value) || 0;
+    let discount = parseFloat(discountInput.value) || 0;
+
+    // limit VAT to 30%
+    if (vat > 30) {
+        vat = 30;
+        vatInput.value = 30;
+    }
+    if (vat < 0) {
+        vat = 0;
+        vatInput.value = 0;
+    }
+
+    // limit Discount to 100%
+    if (discount > 100) {
+        discount = 100;
+        discountInput.value = 100;
+    }
+    if (discount < 0) {
+        discount = 0;
+        discountInput.value = 0;
+    }
+
+    const vatAmount = price * (vat / 100);
+    const discountAmount = price * (discount / 100);
+
+    let finalPrice = price + vatAmount - discountAmount;
+
+    // prevent negative sell price
+    finalPrice = Math.max(finalPrice, 0);
+
+    document.getElementById("prod-price-final").value = finalPrice.toFixed(2);
+}
+
+// auto recalc on typing
+["prod-price", "prod-vat", "prod-discount"].forEach((id) => {
+    document.getElementById(id).addEventListener("input", calculateFinalPrice);
+});
+
+document
+    .getElementById("openTableModal")
+    .addEventListener("click", openTableModal);
+
+async function openTableModal() {
+    const tbody = document.getElementById("Table-table-body");
+    tbody.innerHTML =
+        '<tr><td colspan="5" class="text-center py-2">Loading...</td></tr>';
+
+    try {
+        const res = await fetch("/tables"); // Your API route
+        if (!res.ok) throw new Error("Failed to fetch tables");
+
+        const tables = await res.json();
+
+        tbody.innerHTML = ""; // Clear loading
+
+        tables.forEach((table) => {
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td class="px-4 py-2 text-center">
+                    <input type="radio" name="table_id" value="${table.id}">
+                </td>
+                <td class="px-4 py-2">${table.id}</td>
+                <td class="px-4 py-2">${table.name}</td>
+              <td class="px-4 py-2">${table.status ? "Occupied" : "Available"}</td>
+
+            `;
+
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error(err);
+        tbody.innerHTML =
+            '<tr><td colspan="5" class="text-center py-2 text-red-500">Failed to load tables</td></tr>';
+    }
+}
+
+let cart_qty = 0;
+let current_id = null;
+
+async function showTableModal(qty_cart, id) {
+    cart_qty = qty_cart;
+
+    const modal = document.getElementById("default-modal-table-select-list");
+    if (modal) modal.classList.remove("hidden");
+
+    const tbody = document.getElementById("table-modal-body");
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center p-4">Loading...</td></tr>`;
+
+    try {
+        const response = await fetch("/tables");
+        if (!response.ok) throw new Error("Network error fetching tables");
+
+        const tables = await response.json();
+
+        // Filter rows
+        const tablesToShow =
+            id === "ALL" ? tables : tables.filter((table) => table.id == id);
+
+        tbody.innerHTML = "";
+
+        tablesToShow.forEach((table) => {
+            const tr = document.createElement("tr");
+
+            const isOccupied = table.products && table.products.length > 0;
+
+            const statusText = isOccupied ? "Occupied" : "Available";
+            const statusClass = isOccupied
+                ? "text-red-600 font-semibold"
+                : "text-green-600 font-semibold";
+
+            tr.innerHTML = `
+                <td>${table.id}</td>
+                <td>${table.name}</td>
+                <td class="${statusClass}">${statusText}</td>
+                <td></td>
+            `;
+
+            const td = tr.querySelector("td:last-child");
+            td.style.display = "flex";
+            td.style.gap = "0.5rem";
+
+            /* =====================
+               ADD ITEM BUTTON
+            ===================== */
+            const addButton = document.createElement("button");
+            addButton.textContent = "Place Order";
+
+            // 🔥 BLOCK LOGIC BASED ON MODE
+            let blockAdd = false;
+            let bockAdd_occupied = false;
+            if (id === "ALL") {
+                // ALL tables view → block any occupied table
+                blockAdd = isOccupied;
+                bockAdd_occupied = isOccupied;
+            } else {
+                // Specific table view → allow only current table if occupied
+                blockAdd = isOccupied && table.id !== current_id;
+                bockAdd_occupied = isOccupied;
+            }
+
+            if (blockAdd) {
+                addButton.disabled = true;
+                addButton.className =
+                    "bg-gray-400 text-white px-3 py-1 rounded cursor-not-allowed";
+                addButton.title = "This table is occupied";
+            } else {
+                addButton.className =
+                    "bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded";
+
+                addButton.addEventListener("click", () => {
+                    selectTable(table.id);
+                });
+            }
+
+            /* =====================
+               LOAD BUTTON
+            ===================== */
+            const loadButton = document.createElement("button");
+            loadButton.textContent = "Load Order";
+            loadButton.className =
+                "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded";
+
+            const PayButton = document.createElement("button");
+            PayButton.textContent = "Payment";
+            PayButton.className =
+                "bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded";
+            if (bockAdd_occupied) {
+                PayButton.className =
+                    "bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded";
+
+                PayButton.addEventListener("click", () => {
+                    // 🔥 SET CURRENT TABLE HERE
+                    current_id = table.id;
+                    if (id === "ALL" && cart_qty > 0) {
+                        showToast({
+                            message:
+                                "Current cart has items. Cannot load all tables.",
+                            type: "error",
+                        });
+                        return;
+                    }
+                    table_pay(table.id);
+                });
+            } else {
+                PayButton.disabled = true;
+                PayButton.className =
+                    "bg-gray-400 text-white px-3 py-1 rounded cursor-not-allowed";
+                PayButton.title = "This table is occupied";
+            }
+
+            loadButton.addEventListener("click", () => {
+                // 🔥 SET CURRENT TABLE HERE
+                current_id = table.id;
+
+                if (id === "ALL" && cart_qty > 0) {
+                    showToast({
+                        message:
+                            "Current cart has items. Cannot load all tables.",
+                        type: "error",
+                    });
+                    return;
+                }
+
+                LoadTable_product(table.id);
+
+                // Disable all Load buttons
+                modal.querySelectorAll("button").forEach((btn) => {
+                    if (btn.textContent === "Check Out") {
+                        btn.disabled = true;
+                        btn.classList.add("bg-gray-400", "cursor-not-allowed");
+                    }
+                });
+            });
+
+            td.appendChild(addButton);
+            td.appendChild(loadButton);
+            td.appendChild(PayButton);
+
+            tbody.appendChild(tr);
+        });
+
+        // No tables found
+        if (tablesToShow.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center p-4">No tables found</td></tr>`;
+        }
+    } catch (error) {
+        console.error("Error loading tables:", error);
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-600 p-4">Failed to load tables</td></tr>`;
+        showToast({
+            message: "Failed to load tables. See console for details.",
+            type: "error",
+        });
+    }
+}
+
+function selectTable(tableId) {
+    Livewire.dispatch("transferCartToTable", {
+        payload: { table_id: tableId },
+    });
+
+    // Hide modal after adding
+    const modal = document.getElementById("default-modal-table-select-list");
+    if (modal) modal.classList.add("hidden");
+}
+
+function LoadTable_product(tableId) {
+    Livewire.dispatch("loadTableToCart", { table_id: tableId });
+
+    // Hide modal after loading
+    const modal = document.getElementById("default-modal-table-select-list");
+    if (modal) modal.classList.add("hidden");
+}
+function exit_table() {
+    Livewire.dispatch("exit_table");
+
+    // Hide modal after loading
+    showToast({
+        message: `Exit Table Editing Mode.`,
+        type: "success",
+    });
+    const modal = document.getElementById("default-modal-table-select-list");
+    if (modal) modal.classList.add("hidden");
+}
+function table_pay(id) {
+    // close modal
+    const modal = document.getElementById("default-modal-table-select-list");
+    if (modal) modal.classList.add("hidden");
+    // load to cart
+
+    Livewire.dispatch("loadTableToCartPayment", { table_id: id });
+}
+
+
+
+const displayUSD = document.getElementById("total_amount"); // total amount USD
+const payUSDInput = document.getElementById("pay_usd");
+const payOtherInput = document.getElementById("pay_other");
+const currencyFactorInput = document.getElementById("currency_display_factor");
+const returnedInput = document.getElementById("returned_amount");
+const returnedInputOther = document.getElementById("returned_amount_other");
+const confirmPayBtn = document.getElementById("confirmPayBtn");
+
+function formatCurrency(value, symbol) {
+    return `${value} ${symbol}`;
+}
+
+function updatePayment() {
+    const totalAmountUSD = parseFloat(displayUSD.value) || 0;
+
+    // Get numeric values from inputs
+    const payUSD = payUSDInput.value;
+    const payOther = payOtherInput.value;
+    const factor = parseFloat(currencyFactorInput.value) || 1;
+    const corrency_other_symbol = document.querySelector(
+        "#currency_display_symbol",
+    ).value;
+    // Convert other currency to USD
+    const payOtherInUSD = payOther / factor;
+
+    const totalPaidUSD = parseFloat(payUSD) + parseFloat(payOtherInUSD);
+    let returnedUSD = 0;
+    let returnedOther = 0;
+    // Calculate returned
+    returnedUSD = totalPaidUSD - totalAmountUSD;
+    returnedOther = returnedUSD * factor;
+
+    // Update inputs with formatted value
+    if (returnedUSD < 0) {
+        returnedUSD = 0;
+    }
+    if (returnedOther < 0) {
+        returnedOther = 0;
+    }
+    returnedInput.value = formatCurrency(returnedUSD.toFixed(2), "$");
+    returnedInputOther.value = formatCurrency(
+        returnedOther.toFixed(0),
+        corrency_other_symbol,
+    );
+
+    // Update input formatting while typing
+    payUSDInput.value = payUSD;
+
+    payOtherInput.value = payOther;
+
+    // Highlight
+    const isEnough = totalPaidUSD >= totalAmountUSD;
+
+    if (isEnough) {
+        // enable button
+        confirmPayBtn.disabled = false;
+        confirmPayBtn.textContent = "Confirm Payment";
+
+        confirmPayBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
+        confirmPayBtn.classList.add(
+            "bg-emerald-600",
+            "hover:bg-emerald-700",
+            "cursor-pointer",
+        );
+    } else {
+        // disable button
+        confirmPayBtn.disabled = true;
+        confirmPayBtn.textContent = "Enter Amount";
+
+        confirmPayBtn.classList.remove(
+            "bg-emerald-600",
+            "hover:bg-emerald-700",
+            "cursor-pointer",
+        );
+        confirmPayBtn.classList.add("bg-gray-400", "cursor-not-allowed");
+    }
+}
+
+// Attach events
+payUSDInput.addEventListener("input", updatePayment);
+payOtherInput.addEventListener("input", updatePayment);
+
+// Initialize
+updatePayment();
+
+
+window.addEventListener("cart-loaded", (e) => {
+    console.log("Table cart loaded!", e.detail);
+    document.querySelector("#count_cart_input").value = 1;
+    print("Receipt");
+});
+
+window.addEventListener("serve-table", (e) => {
+    showToast({
+        message: `Served ${e.detail[0].name} table success.`,
+        type: "success",
+    });
+});

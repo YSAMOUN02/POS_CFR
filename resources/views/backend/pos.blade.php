@@ -180,8 +180,6 @@
         const productsByCategory = @json($categories);
 
 
-        console.log(productsByCategory); // Access the array directly
-
         // Helper: sort products by total_stock DESC
         function sortByStock(products) {
             return products.sort((a, b) => b.total_stock - a.total_stock);
@@ -225,7 +223,7 @@
                 products.forEach(product => {
                     const imageSrc = product.image ?
                         `assets/startic_img/${product.image}` :
-                        'assets/startic_img/placeholder.jpg';
+                        'assets/defult/placeholder.jpg';
 
                     const price = Number(product.sell_price);
                     const finalPrice = Number(price + (price * Number(product.vat || 0) / 100));
@@ -261,15 +259,15 @@
                                             loading="lazy"
                                             style="max-height: 150px; min-height: 150px;"
                                             src="${imageSrc}"
-                                            onerror="this.src='assets/startic_img/placeholder.jpg'"
+                                            onerror="this.src='assets/defult/placeholder.jpg'"
                                             alt="${product.name}" />
 
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
 
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                    <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                        <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                    </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                            <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                            </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -286,11 +284,11 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                             ${product.track_stock ? `
-                                                                                                                                                                                                <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                <span class="${stockColor}">
-                                                                                                                                                                                                    ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
-                                                                                                                                                                                                </span>
-                                                                                                                                                                                                &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                        <span class="${stockColor}">
+                                                                                                                                                                                                                                                                                                                            ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
+                                                                                                                                                                                                                                                                                                                        </span>
+                                                                                                                                                                                                                                                                                                                        &ensp;` : ''}
 
                                             ${product.discount_percent != 0
                                                 ? `<del class="text-gray-400 text-[10px]">${finalPrice.toFixed(2)} $</del> → <span class="${stockColor} font-semibold text-sm">${discountedPrice.toFixed(2)} $</span>`
@@ -388,7 +386,7 @@
 
             const imageSrc = product.image ?
                 `assets/startic_img/${product.image}` :
-                'assets/startic_img/placeholder.jpg';
+                'assets/defult/placeholder.jpg';
 
             const price = Number(product.sell_price);
             const finalPrice = Number(price + (price * Number(product.vat || 0) / 100));
@@ -411,12 +409,12 @@
                                     <!-- IMAGE -->
                                     <div class="relative w-full">
                                         <img class="object-cover w-full" loading="lazy" style="max-height:150px;min-height:150px;"
-                                            src="${imageSrc}" onerror="this.src='assets/startic_img/placeholder.jpg'" alt="${product.name}" />
+                                            src="${imageSrc}" onerror="this.src='assets/defult/placeholder.jpg'" alt="${product.name}" />
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                    <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                </span>` : ''}
+                                                                                                                                                                                                                                                                                                                        <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                            <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                        </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -429,9 +427,9 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                                 ${product.track_stock ? `
-                                                                                                                                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                        <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
-                                                                                                                                                                                                        &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
+                                                                                                                                                                                                                                                                                                                                &ensp;` : ''}
 
                                                 ${product.discount_percent != 0
                                                     ? `<del class="text-gray-400 text-[10px]">${finalPrice.toFixed(2)} $</del> → <span class="${stockColor} font-semibold text-sm">${discountedPrice.toFixed(2)} $</span>`
@@ -548,7 +546,7 @@
 
         function setPage(page) {
             // send event to Livewire
-            console.log("Setting page to:", page);
+
             Livewire.dispatch('pageSelected', {
                 page: page
             });
@@ -1357,48 +1355,124 @@
     </div>
     <!-- Quotation Date Modal -->
     <div id="DatePromptModal"
-        class="fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm">
 
-        <div class="bg-white rounded-2xl shadow-2xl w-96 max-w-sm p-6 text-left animate-scaleUp">
+        <div class="bg-white rounded-3xl shadow-2xl w-96 max-w-sm p-6 space-y-5 animate-scaleUp">
 
-            <h2 class="text-2xl font-bold mb-4 text-gray-800">
-                Print Dates
-            </h2>
+            <!-- Header -->
+            <div class="flex flex-col items-center text-center">
+                <h2 class="text-2xl font-extrabold text-gray-800">Print Dates & Payment</h2>
+                <p class="text-sm text-gray-500 mt-1">Set dates and choose your payment method</p>
+            </div>
 
-            <!-- Quotation Date -->
-            <label class="block text-gray-700 mb-2 font-medium">
-                Document Date
-            </label>
 
-            <input type="date" id="document_dateInput"
-                class="w-full border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+            <div class="space-y-6">
 
-            <!-- Valid Until -->
-            <label class="block text-gray-700 mt-4 mb-2 font-medium">
-                Due Date
-            </label>
+                <!-- Display Total Amounts -->
+                <div class="bg-gray-50 p-4 rounded-xl space-y-3">
+                    <div>
+                        <label for="display_pay_amount" class="block text-gray-600 font-medium mb-1">Total Amount</label>
+                        <input type="text" id="display_pay_amount" disabled
+                            class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label for="display_pay_amount_converted" class="block text-gray-600 font-medium mb-1">Total in
+                            Khmer</label>
+                        <input type="text" id="display_pay_amount_converted" disabled
+                            class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
+                    </div>
+                </div>
 
-            <input type="date" id="due_date"
-                class="w-full border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <!-- Payment Method Selection -->
+                <div class="space-y-3 px-5">
+                    <label for="payment_method" class="block text-gray-700 font-medium mb-1">Payment Method</label>
+                    <select id="payment_method"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+                        <option value="ABA">ABA</option>
+                        <option value="cash">Cash</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="paypal">PayPal</option>
+                    </select>
+                </div>
 
-            <p class="text-sm text-gray-500 mt-3">
-                Default is <b>+1 month</b>, you can adjust if needed.
-            </p>
+                <!-- Payment Inputs -->
+                <div class="bg-gray-50 p-4 rounded-xl space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- Pay USD -->
+                        <div>
+                            <label for="pay_usd" class="block text-gray-700 font-medium mb-1">Pay as Dollar</label>
+                            <input type="text" id="pay_usd" placeholder="$0.00"
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+                        </div>
 
-            <div class="flex justify-end space-x-3 mt-6">
+                        <!-- Hidden currency factor -->
+                        <input type="hidden" id="currency_factor" value="4000"> <!-- example: 1 USD = 4000 KHR -->
+
+                        <!-- Pay other currency -->
+                        <div>
+                            <label for="pay_other" class="block text-gray-700 font-medium mb-1">
+                                Pay as <span id="currency_display_name">៛</span>
+                            </label>
+                            <input type="text" id="pay_other" placeholder="0 ៛"
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+                        </div>
+
+                        <!-- Returned USD -->
+                        <div>
+                            <label for="returned_amount" class="block text-gray-700 font-medium mb-1">លុយអាប់</label>
+                            <input type="text" id="returned_amount" readonly
+                                class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
+                        </div>
+
+                        <!-- Returned other currency -->
+                        <div>
+                            <label for="returned_amount_other" class="block text-gray-700 font-medium mb-1">
+                                លុយអាប់ជា <span id="currency_display_name2">៛</span>
+                            </label>
+                            <input type="text" id="returned_amount_other" readonly
+                                class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- Date Inputs -->
+            <div class="space-y-4 px-5">
+                <div>
+                    <label for="document_dateInput" class="block text-gray-700 font-medium mb-1">
+                        Document Date
+                    </label>
+                    <input type="date" id="document_dateInput"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+                </div>
+
+                <div>
+                    <label for="due_date" class="block text-gray-700 font-medium mb-1">
+                        Due Date
+                    </label>
+                    <input type="date" id="due_date"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+                    <p class="text-xs text-gray-500 mt-1">Default is <b>+1 month</b>, you can adjust if needed.</p>
+                </div>
+            </div>
+
+            <br>
+            <!-- Buttons -->
+            <div class="flex justify-end space-x-3">
                 <button data-quotation-cancel
                     class="px-5 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition">
                     Cancel
                 </button>
+                &ensp;
+                <button id="confirmPayBtn"
+                    class="px-5 py-2 bg-gray-400 text-black rounded-xl hover:bg-gray-400 transition shadow-md">
+                    Enter Amount
 
-                <button data-quotation-confirm
-                    class="px-5 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition">
-                    Continue
                 </button>
             </div>
         </div>
     </div>
-
 
 
 
@@ -1451,7 +1525,7 @@
                                         class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
                                         <option value="10">10</option>
                                         <option value="15">15</option>
-                                        <option value="25">25</option>
+                                        <option selected value="25">25</option>
                                         <option value="30">30</option>
                                         <option value="100">100</option>
                                     </select>
@@ -1481,7 +1555,9 @@
                                         <th class="px-4 py-3 cursor-pointer" data-column="id">
                                             ID <span class="sort-icon">↕</span>
                                         </th>
-
+                                        <th class="px-4 py-3 cursor-pointer" data-column="image">
+                                            Image <span class="sort-icon">↕</span>
+                                        </th>
                                         <th class="px-4 py-3 cursor-pointer" data-column="bar_code">
                                             Bar Code <span class="sort-icon">↕</span>
                                         </th>
@@ -1511,7 +1587,7 @@
                                         </th>
 
                                         <th class="px-4 py-3 cursor-pointer" data-column="sell_price">
-                                            Sell Price <span class="sort-icon">↕</span>
+                                            Unit Price <span class="sort-icon">↕</span>
                                         </th>
 
                                         <th class="px-4 py-3 cursor-pointer" data-column="cost">
@@ -1536,6 +1612,9 @@
 
                                         <th class="px-4 py-3 cursor-pointer" data-column="unit">
                                             Unit <span class="sort-icon">↕</span>
+                                        </th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="category_name">
+                                            Display On <span class="sort-icon">↕</span>
                                         </th>
 
                                         <th class="px-4 py-3 cursor-pointer" data-column="track_stock">
@@ -1572,18 +1651,18 @@
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Product Category
                             </button>
-                            <button type="button" id="btnEditCustomer"
+                            <button type="button" {{-- id="btnEditCustomer" --}} id="btnEditProduct"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Edit
                             </button>
                             &ensp;
-                            <button type="button" id="btnDeleteCustomer"
+                            <button type="button" {{-- id="btnDeleteCustomer" --}}
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Delete
                             </button>
 
 
-                            <button type="button" data-modal-target="default-modal-add-product"
+                            <button type="button" id="btnAddProduct" data-modal-target="default-modal-add-product"
                                 data-modal-toggle="default-modal-add-product"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 New
@@ -1611,15 +1690,16 @@
 
 
 
-      <!-- Add  Product Main modal -->
+    <!-- Add  Product Main modal -->
     <div id="default-modal-add-product" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-        <div class="relative p-4 w-full max-w-2xl max-h-full">
+        <div class="  relative p-4 w-full max-w-5xl max-h-full ">
+            <!-- Modal content -->
             <!-- Modal content -->
             <div class="relative bg-white border border-slate-600 shadow-md rounded-base p-4 md:p-6">
 
 
-                <form id="AddcustomerForm">
+                <form id="AddProductForm" enctype="multipart/form-data">
                     @csrf
                     <!-- Modal header -->
                     <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
@@ -1643,17 +1723,168 @@
                     <!-- Modal body -->
                     <div class="space-y-4 md:space-y-6 py-4 md:py-6">
 
-                        <div class="grid gap-6 mb-6 md:grid-cols-2">
-                            123
+                        <div class="grid gap-6 mb-6 md:grid-cols-2 mt-2">
+                            <!-- Codes -->
+
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Product Code <span class="text-rose-600">*</span>
+                                </label>
+                                <input type="text" name="code" required placeholder="PRD001"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Barcode
+                                </label>
+                                <input type="text" name="bar_code" placeholder="123456789"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+                        </div>
+
+                        <!-- Name & Variant -->
+                        <div class="grid gap-6 md:grid-cols-2">
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Product Name <span class="text-rose-600">*</span>
+                                </label>
+                                <input type="text" name="name" id="name" required placeholder="Coca Cola"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Variant
+                                </label>
+                                <input type="text" name="variant" placeholder="Can / 330ml"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block mb-2.5 text-sm font-medium text-heading">
+                                Description
+                            </label>
+                            <textarea name="description" rows="3" id="description"
+                                class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5"></textarea>
+                        </div>
+
+                        <!-- Stock -->
+                        <div class="grid gap-6 md:grid-cols-3">
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">Min Stock</label>
+                                <input type="number" name="min_stock" value="0" id="min_stock"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">Max Stock</label>
+                                <input type="number" name="max_stock" value="0"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
 
 
+                        </div>
+
+                        <!-- Pricing -->
+                        <div class="grid gap-6 md:grid-cols-3">
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">Sell Price</label>
+                                <input type="number" step="0.01" name="sell_price" value="0"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">Cost</label>
+                                <input type="number" step="0.01" name="cost" value="0"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">VAT (%)</label>
+                                <input type="number" step="0.01" name="vat" value="0"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+                        </div>
+
+                        <!-- Discount -->
+                        <div class="grid gap-6 md:grid-cols-3">
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">Discount %</label>
+                                <input type="number" step="0.01" name="discount_percent" value="0"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+
+                        </div>
+
+                        <br> <!-- Category & Unit -->
+                        <div class="grid gap-6 md:grid-cols-3 mt-3">
+                            <div>
+                                <label>Category</label>
+                                <select name="category_id" id="categorySelect"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base px-3 py-2.5 w-full">
+                                    <option value="">Loading categories...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="category_name">Display on</label>
+                                <input name="category_name" id="category_name"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base px-3 py-2.5 w-full">
+
+                            </div>
+                            <div>
+                                <label for="unit">Unit</label>
+
+                                <input type="text" name="unit" id="unit" placeholder="Unit (pcs, kg, box)"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base px-3 py-2.5 w-full">
+                            </div>
+                        </div>
+                        <!-- Image -->
+                        <div>
+                            <label class="block mb-2.5 text-sm font-medium text-heading">
+                                Product Image
+                            </label>
+
+                            <input type="file" name="image" id="productImage" accept="image/*"
+                                class="block w-full text-sm text-heading border border-default-medium rounded-base bg-neutral-secondary-medium">
+
+
+                        </div>
+
+                        <!-- Status -->
+                        <div class="grid gap-6 md:grid-cols-4">
+
+                            <div class="flex items-center pt-8">
+                                <input type="checkbox" name="status" checked
+                                    class="w-4 h-4 rounded-xs border border-default-medium">
+                                <label class="ms-2 text-sm font-medium text-heading">Active Product</label>
+                            </div>
+
+                            <div class="flex items-center pt-8">
+                                <input type="checkbox" name="allow_discount" checked
+                                    class="w-4 h-4 rounded-xs border border-default-medium">
+                                <label class="ms-2 text-sm font-medium text-heading">Allow Discount</label>
+                            </div>
+
+                            <div class="flex items-center pt-8">
+                                <input type="checkbox" name="allow_return" checked
+                                    class="w-4 h-4 rounded-xs border border-default-medium">
+                                <label class="ms-2 text-sm font-medium text-heading">Allow Return</label>
+                            </div>
+                            <div class="flex items-center pt-8">
+                                <input type="checkbox" name="track_stock" checked
+                                    class="w-4 h-4 rounded-xs border border-default-medium">
+                                <label class="ms-2 text-sm font-medium text-heading">Track Stock</label>
+                            </div>
                         </div>
                     </div>
                     <!-- Modal footer -->
                     <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
                         <button type="submit"
                             class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                            Save Customer
+                            Save Product
                         </button>
 
                     </div>
@@ -1661,4 +1892,300 @@
             </div>
         </div>
     </div>
+    <div id="confirm-update-product"
+        class="hight_index fixed inset-0 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 text-center">
+
+            <h2 class="text-2xl font-bold mb-3 text-gray-800">Update Product</h2>
+
+            <form id="updateProductForm" class="grid gap-2 grid-cols-4 space-y-3 text-left">
+
+                @csrf
+
+                <!-- Hidden ID -->
+                <input type="hidden" id="prod-id" />
+                <div class="col-span-2">
+                    <img width="300px" style="border-radius: 10px" id="preivew_img" src="" alt="">
+                </div>
+                <div class="grid grid-cols-1 col-span-2">
+                    <div>
+                        <label>Product Code</label>
+                        <input id="prod-code" type="text" class="w-full border rounded px-3 py-2" />
+                    </div>
+
+                    <div>
+                        <label>Barcode</label>
+                        <input id="prod-barcode" type="text" class="w-full border rounded px-3 py-2" />
+                    </div>
+                    <div>
+                        <label>Product Name</label>
+                        <input id="prod-name" type="text" class="w-full border rounded px-3 py-2" />
+                    </div>
+                    <div>
+                        <label>Varaint</label>
+                        <input id="prod-variant" type="text" class="w-full border rounded px-3 py-2" />
+                    </div>
+                </div>
+
+                <div class="col-span-4">
+                    <label>Description</label>
+                    <input id="prod-description" type="text" class="w-full border rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label>Min Stock</label>
+                    <input id="prod-min-stock" type="number" class="w-full border rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label>Max Stock</label>
+                    <input id="prod-max-stock" type="number" class="w-full border rounded px-3 py-2" />
+                </div>
+
+                <div>
+                    <label>Cost Price</label>
+                    <input id="prod-cost" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label>Unit Price</label>
+                    <input id="prod-price" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label>Vat</label>
+                    <input id="prod-vat" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label>Discount (%)</label>
+                    <input id="prod-discount" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label>Sell Price</label>
+                    <input id="prod-price-final" disabled type="number" step="0.01"
+                        class="w-full border rounded px-3 py-2" />
+                </div>
+                <div></div>
+                <div>
+                    <label>Category</label>
+
+                    </input>
+                    <select id="prod-category" class="w-full border rounded px-3 py-2">
+                        <!-- fill dynamically -->
+                    </select>
+                </div>
+
+                <div>
+                    <label>Unit</label>
+                    <input id="prod-unit" type="text" class="w-full border rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label>Display On</label>
+                    <input id="prod-category_name" type="text" class="w-full border rounded px-3 py-2" />
+                </div>
+
+
+
+
+                <div class="grid grid-cols-4 gap-2  col-span-4">
+                    <!-- Track Stock -->
+                    <label class="flex items-center flex-col cursor-pointer gap-3">
+                        <span class="text-sm">Track Stock</span>
+                        <div class="relative">
+                            <input id="prod-track-stock" type="checkbox" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition"></div>
+                            <div
+                                class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5">
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Allow Discount -->
+                    <label class="flex items-center flex-col cursor-pointer gap-3 mt-2">
+                        <span class="text-sm">Allow Discount</span>
+                        <div class="relative">
+                            <input id="prod-allow-discount" type="checkbox" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition"></div>
+                            <div
+                                class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5">
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Allow Return -->
+                    <label class="flex items-center flex-col cursor-pointer gap-3 mt-2">
+                        <span class="text-sm">Allow Return</span>
+                        <div class="relative">
+                            <input id="prod-allow-return" type="checkbox" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition"></div>
+                            <div
+                                class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5">
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Status -->
+                    <label class="flex items-center flex-col cursor-pointer gap-3 mt-2">
+                        <span class="text-sm">Status</span>
+                        <div class="relative">
+                            <input id="prod-status" type="checkbox" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition"></div>
+                            <div
+                                class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5">
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </form>
+
+            <br>
+
+            <div class="flex space-x-4 mt-6">
+                <button type="button" onclick="confirmUpdateProduct()"
+                    class="mt-2 px-5 py-2 bg-emerald-500 text-white rounded-xl">
+                    Update
+                </button>
+                &ensp;
+                <button type="button" onclick="closeUpdateProductModal()"
+                    class="mt-2 px-5 py-2 bg-gray-200 rounded-xl">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <!-- List Table Main modal -->
+    <div id="default-modal-Table-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
+        class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
+
+        {{-- width Custom  --}}
+        <div class="  relative p-4 w-full max-w-10xl max-h-full ">
+            <!-- Modal content -->
+            <div class=" relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
+                <form id="TableFormList">
+                    @csrf
+                    <!-- Modal header -->
+                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                        <div class="w-full flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-medium text-heading">
+                                    Table
+                                </h3>
+                            </div>
+                            <button type="button"
+                                class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                                data-modal-hide="default-modal-Table-list">
+                                <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                    width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                                </svg>
+                                <span class="sr-only">Close modal</span>
+                            </button>
+                        </div>
+
+                    </div>
+                    <!-- Modal body -->
+                    <div id="Table-list" class="scroll_content_70 max-h-[70vh] overflow-y-auto">
+                        <div class="overflow-x-auto">
+                            <table class=" w-full text-sm text-left border border-default rounded-base">
+                                <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
+                                    <tr>
+                                        <th class="px-4 py-3">Select</th>
+
+                                        <th class="px-4 py-3 cursor-pointer" data-column="id">
+                                            ID
+                                        </th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="name">
+                                            Name
+                                        </th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="name">
+                                            Occupied
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="Table-table-body">
+                                    <!-- async rows -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                    <!-- Modal footer -->
+
+                    <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5">
+                        <div>
+                            <button type="button" id="btnEditCustomer"
+                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                                Edit
+                            </button>
+                            &ensp;
+                            <button type="button" id="btnDeleteCustomer"
+                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                                Delete
+                            </button>
+
+
+                            <button type="button" data-modal-target="default-modal-customer"
+                                data-modal-toggle="default-modal-customer"
+                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                                New
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-4">
+                            <div class="flex items-center justify-center gap-1 mt-4 mx-2" id="paginationContainer">
+                                <!-- JS will render buttons here -->
+                            </div>
+                            &ensp;
+                            <span id="pageInfo" class="text-sm text-gray-600"></span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- List Table Main modal -->
+    <div id="default-modal-table-select-list" tabindex="-1" aria-hidden="true"
+        class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
+        <div class="relative p-4 w-full max-w-4xl max-h-full">
+            <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
+                <div class="flex justify-between w-full p-2">
+                    <h3 class="text-lg font-medium text-heading mb-4">Select Table</h3>
+                    <div>
+                        <button onclick="exit_table()"
+                            class="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Exit Table</button>
+                        <button type="button"
+                            onclick="document.getElementById('default-modal-table-select-list').classList.add('hidden')"
+                            class="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                            Close
+                        </button>
+                    </div>
+                </div>
+                <div class="scroll_content_70 max-h-[70vh] overflow-y-auto">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left border rounded-base">
+                            <thead class="bg-neutral-secondary text-xs uppercase">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-modal-body">
+                                <!-- JS will fill rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
 @endpush

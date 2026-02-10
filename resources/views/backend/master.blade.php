@@ -93,7 +93,10 @@
                 </div>
                 <div class="font-medium text-center text-body">គ្រប់គ្រងស្តុក</div>
             </div>
-            <div  id="openProductModal" data-modal-target="default-modal-product-list" data-modal-toggle="default-modal-product-list"
+
+
+            <div id="openProductModal" data-modal-target="default-modal-product-list"
+                data-modal-toggle="default-modal-product-list"
                 class=" p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium lg:block">
                 <div
                     class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
@@ -147,6 +150,18 @@
                         <i class="fa-solid fa-users-between-lines"></i>
                     </div>
                     <div class="font-medium text-center text-body">គ្រប់គ្រងអតិថិជន
+                    </div>
+                </div>
+            </button>
+            <button id="openTableModal" data-modal-target="default-modal-Table-list"
+                data-modal-toggle="default-modal-Table-list">
+                <div
+                    class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+                    <div
+                        class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
+                        <i class="fa-solid fa-users-between-lines"></i>
+                    </div>
+                    <div class="font-medium text-center text-body">គ្រប់គ្រង តុ
                     </div>
                 </div>
             </button>
@@ -267,7 +282,7 @@
 
         function openDeleteCustModal() {
             const customerId = getSelectedCustomerId();
-            console.log("Selected Customer ID:", customerId);
+
             if (!customerId) {
                 showToast({
                     message: "Please select a customer first",
@@ -281,6 +296,8 @@
         function closeDeleteCustModal() {
             document.getElementById("confirm-delete-cust").classList.add("hidden");
         }
+
+
 
         function openUpdateCustModal() {
             const customerId = getSelectedCustomerId();
