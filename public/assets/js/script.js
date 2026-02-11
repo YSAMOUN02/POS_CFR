@@ -566,7 +566,10 @@ function renderProductTable(data) {
             <td><input type="radio" name="product_id" value="${p.id}"></td>
             <td>${p.id}</td>
             <td>
-                  <img width="300px; padding:5px;" src="/assets/startic_img/${encodeURIComponent(p.image)}" alt="" />
+                <div class="img">
+                          <img src="/assets/startic_img/${encodeURIComponent(p.image)}" alt="" />
+                </div>
+            
             </td>
             <td>${p.bar_code ?? "-"}</td>
             <td>${p.code ?? "-"}</td>
@@ -605,6 +608,23 @@ function renderProductTable(data) {
         })
         .join("");
 }
+document.addEventListener("click", function (e) {
+    const row = e.target.closest("tr[data-id]");
+    if (!row) return;
+
+    // Ignore clicks on inputs themselves (optional safety)
+    if (e.target.tagName === "INPUT") return;
+
+    // Select radio
+    const radio = row.querySelector('input[type="radio"]');
+    if (radio) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    // Call your edit logic
+    editProductFromRow(row);
+});
 
 // Load categories on first click
 typeSelect_product.addEventListener("click", async () => {
@@ -1394,7 +1414,7 @@ let quotationNextAction = null;
 let formattedDocDate = null;
 let formattedDueDate = null;
 
-function openDatePromt_Modal(onConfirm, amount) {
+function openDatePromt_Modal(onConfirm) {
     const modal = document.getElementById("DatePromptModal");
     const dateInput = document.getElementById("document_dateInput");
     const validInput = document.getElementById("due_date");
@@ -1638,10 +1658,14 @@ async function openUpdateProductModal() {
         return;
     }
 
+
+
     const productId = selected.value;
     const row = document.querySelector(`tr[data-id="${productId}"]`);
     if (!row) return;
 
+
+    console.log(row);
     // Load categories
     let categories = [];
     try {
@@ -1689,7 +1713,7 @@ async function openUpdateProductModal() {
         });
     }
 
-    document.getElementById("preivew_img").src =
+    document.getElementById("preview_img").src =
         `/assets/startic_img/${encodeURIComponent(row.dataset.image)}`;
 
     const sellPrice = parseFloat(row.dataset.sell_price) || 0; // Selling price
@@ -1766,44 +1790,113 @@ function closeUpdateProductModal() {
     }
 }
 
+    async function confirmUpdateProduct() {
+        const id = document.getElementById("prod-id").value;
+
+        const data = {
+            bar_code: document.getElementById("prod-barcode").value,
+            code: document.getElementById("prod-code").value,
+            name: document.getElementById("prod-name").value,
+            variant: document.getElementById("prod-variant").value,
+            description: document.getElementById("prod-description").value,
+
+            min_stock: document.getElementById("prod-min-stock").value,
+            max_stock: document.getElementById("prod-max-stock").value,
+            cost: document.getElementById("prod-cost").value,
+            sell_price: document.getElementById("prod-price").value,
+            vat: document.getElementById("prod-vat").value,
+            discount: document.getElementById("prod-discount").value,
+
+            category_id: document.getElementById("prod-category").value,
+            category_name: document.getElementById("prod-category_name").value,
+            unit: document.getElementById("prod-unit").value,
+
+            track_stock: document.getElementById("prod-track-stock").checked,
+            allow_discount: document.getElementById("prod-allow-discount").checked,
+            allow_return: document.getElementById("prod-allow-return").checked,
+            status: document.getElementById("prod-status").checked,
+        };
+
+        try {
+            let new_img = document.getElementById("update_image");
+
+            const res = await fetch(`/product/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector("input[name=_token]").value,
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await res.json();
+
+            if (result.success) {
+                loadProducts(1);
+                closeUpdateProductModal();
+
+                showToast({
+                    message: "Product updated successfully",
+                    type: "success",
+                });
+            } else {
+                alert("❌ Update failed");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("❌ Server error");
+        }
+    }
 async function confirmUpdateProduct() {
     const id = document.getElementById("prod-id").value;
 
-    const data = {
-        bar_code: document.getElementById("prod-barcode").value,
-        code: document.getElementById("prod-code").value,
-        name: document.getElementById("prod-name").value,
-        variant: document.getElementById("prod-variant").value,
-        description: document.getElementById("prod-description").value,
-
-        min_stock: document.getElementById("prod-min-stock").value,
-        max_stock: document.getElementById("prod-max-stock").value,
-        cost: document.getElementById("prod-cost").value,
-        sell_price: document.getElementById("prod-price").value,
-        vat: document.getElementById("prod-vat").value,
-        discount: document.getElementById("prod-discount").value,
-
-        category_id: document.getElementById("prod-category").value,
-        category_name: document.getElementById("prod-category_name").value,
-        unit: document.getElementById("prod-unit").value,
-
-        track_stock: document.getElementById("prod-track-stock").checked,
-        allow_discount: document.getElementById("prod-allow-discount").checked,
-        allow_return: document.getElementById("prod-allow-return").checked,
-        status: document.getElementById("prod-status").checked,
-    };
-
     try {
-        const res = await fetch(`/product/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN":
-                    document.querySelector("input[name=_token]").value,
-            },
-            body: JSON.stringify(data),
-        });
+        // Create FormData
+        const formData = new FormData();
 
+        // Append text fields
+        formData.append("bar_code", document.getElementById("prod-barcode").value);
+        formData.append("code", document.getElementById("prod-code").value);
+
+        formData.append("name", document.getElementById("prod-name").value);
+        formData.append("variant", document.getElementById("prod-variant").value);
+        formData.append("description", document.getElementById("prod-description").value);
+
+        formData.append("min_stock", document.getElementById("prod-min-stock").value);
+        formData.append("max_stock", document.getElementById("prod-max-stock").value);
+        formData.append("cost", document.getElementById("prod-cost").value);
+        formData.append("sell_price", document.getElementById("prod-price").value);
+        formData.append("vat", document.getElementById("prod-vat").value);
+        formData.append("discount", document.getElementById("prod-discount").value);
+
+        formData.append("category_id", document.getElementById("prod-category").value);
+        formData.append("category_name", document.getElementById("prod-category_name").value);
+        formData.append("unit", document.getElementById("prod-unit").value);
+
+        formData.append("track_stock", document.getElementById("prod-track-stock").checked ? 1 : 0);
+        formData.append("allow_discount", document.getElementById("prod-allow-discount").checked ? 1 : 0);
+        formData.append("allow_return", document.getElementById("prod-allow-return").checked ? 1 : 0);
+        formData.append("status", document.getElementById("prod-status").checked ? 1 : 0);
+
+        // Append image if user selected one
+        const imageFile = document.getElementById("update_image").files[0];
+        if (imageFile) {
+            formData.append("image", imageFile);
+        }
+
+        // Send request
+        const res = await fetch(`/product/${id}`, {
+            method: "PUT", // use POST with _method=PUT for Laravel
+           headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN":
+                            document.querySelector("input[name=_token]").value,
+                },
+
+            body: formData,
+        });
+        console.log(formData);
         const result = await res.json();
 
         if (result.success) {
@@ -1817,11 +1910,14 @@ async function confirmUpdateProduct() {
         } else {
             alert("❌ Update failed");
         }
+
     } catch (err) {
         console.error(err);
         alert("❌ Server error");
     }
 }
+
+
 function calculateFinalPrice() {
     const priceInput = document.getElementById("prod-price");
     const vatInput = document.getElementById("prod-vat");
@@ -2079,30 +2175,33 @@ function LoadTable_product(tableId) {
     Livewire.dispatch("loadTableToCart", { table_id: tableId });
 
     // Hide modal after loading
-    const modal = document.getElementById("default-modal-table-select-list");
-    if (modal) modal.classList.add("hidden");
+    // const modal = document.getElementById("default-modal-table-select-list");
+    // if (modal) modal.classList.add("hidden");
 }
 function exit_table() {
     Livewire.dispatch("exit_table");
+
 
     // Hide modal after loading
     showToast({
         message: `Exit Table Editing Mode.`,
         type: "success",
     });
-    const modal = document.getElementById("default-modal-table-select-list");
-    if (modal) modal.classList.add("hidden");
+    // openTableModal();
+    showTableModal(0,"ALL");
+
 }
 function table_pay(id) {
     // close modal
     const modal = document.getElementById("default-modal-table-select-list");
     if (modal) modal.classList.add("hidden");
     // load to cart
-
+    payOtherInput.value = '';
+    payUSDInput.value = '';
+    returnedInput.value = '';
+    returnedInputOther.value = '';
     Livewire.dispatch("loadTableToCartPayment", { table_id: id });
 }
-
-
 
 const displayUSD = document.getElementById("total_amount"); // total amount USD
 const payUSDInput = document.getElementById("pay_usd");
@@ -2117,17 +2216,22 @@ function formatCurrency(value, symbol) {
 }
 
 function updatePayment() {
+
+
+
+
     const totalAmountUSD = parseFloat(displayUSD.value) || 0;
 
     // Get numeric values from inputs
-    const payUSD = payUSDInput.value;
-    const payOther = payOtherInput.value;
+    const payUSD = payUSDInput.value || 0;
+    const payOther = payOtherInput.value || 0;
     const factor = parseFloat(currencyFactorInput.value) || 1;
     const corrency_other_symbol = document.querySelector(
         "#currency_display_symbol",
     ).value;
     // Convert other currency to USD
-    const payOtherInUSD = payOther / factor;
+    const convert_float = parseFloat(payOther);
+    const payOtherInUSD = convert_float / factor;
 
     const totalPaidUSD = parseFloat(payUSD) + parseFloat(payOtherInUSD);
     let returnedUSD = 0;
@@ -2148,6 +2252,9 @@ function updatePayment() {
         returnedOther.toFixed(0),
         corrency_other_symbol,
     );
+
+
+
 
     // Update input formatting while typing
     payUSDInput.value = payUSD;
@@ -2189,7 +2296,6 @@ payOtherInput.addEventListener("input", updatePayment);
 // Initialize
 updatePayment();
 
-
 window.addEventListener("cart-loaded", (e) => {
     console.log("Table cart loaded!", e.detail);
     document.querySelector("#count_cart_input").value = 1;
@@ -2201,4 +2307,22 @@ window.addEventListener("serve-table", (e) => {
         message: `Served ${e.detail[0].name} table success.`,
         type: "success",
     });
+});
+
+
+
+const fileInput = document.getElementById("update_image");
+const previewImg = document.getElementById("preview_img");
+
+fileInput.addEventListener("change", function () {
+    const file = this.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewImg.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        previewImg.src = ""; // Reset if no file selected
+    }
 });

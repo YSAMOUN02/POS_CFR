@@ -47,7 +47,7 @@
     <div id="drawer-swipe"
         class="fixed z-40 w-full overflow-y-auto bg-amber-400 border-t border-default rounded-t-base transition-transform bottom-0 left-0 right-0 translate-y-full bottom-[60px]"
         tabindex="-1" aria-labelledby="drawer-swipe-label">
-        <div class="p-4 cursor-pointer hover:bg-amber-500" data-drawer-toggle="drawer-swipe">
+        <div id="drawer-body" class="p-4 cursor-pointer hover:bg-amber-500" data-drawer-toggle="drawer-swipe">
             <span class="absolute w-8 h-1 -translate-x-1/2 bg-neutral-quaternary rounded-lg top-3 left-1/2"></span>
             <h5 id="drawer-swipe-label" class="inline-flex items-center text-base text-body font-medium">
                 <svg class="w-5 h-5 me-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
@@ -58,7 +58,7 @@
                 &ensp; មីនុយ
             </h5>
         </div>
-        <div class="grid grid-cols-3 gap-4 p-4 lg:grid-cols-8">
+        <div id="drawer" class="grid grid-cols-3 gap-4 p-4 lg:grid-cols-8">
             <div
                 class="hidden p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
                 <div
@@ -89,7 +89,7 @@
                 class="hidden p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
                 <div
                     class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
-                    <i style="font-size: 22px;" class="fa-solid fa-boxes-stacked"></i>
+                    <i  class="fa-solid fa-boxes-stacked"></i>
                 </div>
                 <div class="font-medium text-center text-body">គ្រប់គ្រងស្តុក</div>
             </div>
@@ -100,7 +100,7 @@
                 class=" p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium lg:block">
                 <div
                     class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
-                    <i style="font-size: 22px;" class="fa-solid fa-box-open"></i>
+                    <i  class="fa-solid fa-box-open"></i>
                 </div>
                 <div class=" font-medium text-center text-body">គ្រប់គ្រង ផលិតផល</div>
             </div>

@@ -9,7 +9,7 @@
                     </span>
                     {{ $this->Current_table_name }}
                 @else
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
+                    <span id="tittle_span" class="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
                         {{ $prefix }}
                     </span>
                     {{ $title }}

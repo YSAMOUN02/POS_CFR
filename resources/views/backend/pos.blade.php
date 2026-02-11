@@ -1,9 +1,9 @@
 @extends('backend.master')
 
 @section('content')
-    <div id="container" class="w-full grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-2 h-screen overflow-hidden">
+    <div id="container" class="w-full grid grid-cols-1 m lg:grid-cols-8 gap-2 h-screen overflow-hidden">
         <div id="mainContent"
-            class=" tab_control lg:col-span-6  col-span-2  border-1 border-default border-dashed rounded-base">
+            class=" tab_control  lg:col-span-6 md:col-span-4 col-span-2  border-1 border-default border-dashed rounded-base">
 
             <div class=" flex justify-between  mb-2 border-b border-default  mx-5 sticky top-0 bg-amber-400 z-10">
                 <div class="flex items-center gap-2 px-4 py-3">
@@ -218,7 +218,7 @@
                 }
 
                 let html =
-                    '<div class="min_heigh_70 w-full grid grid-cols-1 lg:grid-cols-6 md:grid-cols-4 gap-2 p-3 bg-slate-200 mb-12 pb-16">';
+                    '<div class="min_heigh_70 w-full grid grid-cols-1 lg:grid-cols-6 md:grid-cols-4 gap-1 p-3 bg-slate-200 mb-12 pb-16">';
 
                 products.forEach(product => {
                     const imageSrc = product.image ?
@@ -265,9 +265,9 @@
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
 
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                            <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                            </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                    <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -284,11 +284,11 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                             ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                        <span class="${stockColor}">
-                                                                                                                                                                                                                                                                                                                            ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
-                                                                                                                                                                                                                                                                                                                        </span>
-                                                                                                                                                                                                                                                                                                                        &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                            <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                            <span class="${stockColor}">
+                                                                                                                                                                                                                                                                                                                                ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
+                                                                                                                                                                                                                                                                                                                            </span>
+                                                                                                                                                                                                                                                                                                                            &ensp;` : ''}
 
                                             ${product.discount_percent != 0
                                                 ? `<del class="text-gray-400 text-[10px]">${finalPrice.toFixed(2)} $</del> → <span class="${stockColor} font-semibold text-sm">${discountedPrice.toFixed(2)} $</span>`
@@ -412,9 +412,9 @@
                                             src="${imageSrc}" onerror="this.src='assets/defult/placeholder.jpg'" alt="${product.name}" />
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                        <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                            <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                        </span>` : ''}
+                                                                                                                                                                                                                                                                                                                            <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                            </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -427,9 +427,9 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                                 ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
-                                                                                                                                                                                                                                                                                                                                &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                    <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                    <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
+                                                                                                                                                                                                                                                                                                                                    &ensp;` : ''}
 
                                                 ${product.discount_percent != 0
                                                     ? `<del class="text-gray-400 text-[10px]">${finalPrice.toFixed(2)} $</del> → <span class="${stockColor} font-semibold text-sm">${discountedPrice.toFixed(2)} $</span>`
@@ -878,7 +878,7 @@
         {{-- width Custom  --}}
         <div class="  relative p-4 w-full max-w-10xl max-h-full ">
             <!-- Modal content -->
-            <div class=" relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
+            <div class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
                 <form id="customerFormList">
                     @csrf
                     <!-- Modal header -->
@@ -925,8 +925,9 @@
                         </button>
                     </div>
                     <!-- Modal body -->
-                    <div id="customer-list" class="scroll_content_70 max-h-[70vh] overflow-y-auto">
-                        <div class="overflow-x-auto">
+                    <div id="customer-list" class="max-h-[70vh] overflow-y-auto">
+                        <div class=" scroll_content_70  overflow-x-auto">
+                            
                             <table class=" w-full text-sm text-left border border-default rounded-base">
                                 <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
                                     <tr>
@@ -1181,7 +1182,7 @@
                 <div class="space-y-4 md:space-y-6 py-4 md:py-6">
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left border border-default rounded-base">
-                            <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
+                            <thead class="scroll_content_70  sticky_top text-xs uppercase bg-neutral-secondary">
                                 <tr>
                                     <th class="px-4 py-3">Select</th>
                                     <th class="px-4 py-3">ID</th>
@@ -1489,7 +1490,7 @@
         {{-- width Custom  --}}
         <div class="  relative p-4 w-full max-w-10xl max-h-full ">
             <!-- Modal content -->
-            <div class=" relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
+            <div class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
                 <form id="customerFormList">
                     @csrf
                     <!-- Modal header -->
@@ -1545,8 +1546,8 @@
                         </button>
                     </div>
                     <!-- Modal body -->
-                    <div id="product-list" class="scroll_content_70 max-h-[70vh] overflow-y-auto">
-                        <div class="overflow-x-auto">
+                    <div id="product-list" class=" max-h-[70vh] overflow-y-auto">
+                        <div class="scroll_content_70  overflow-x-auto">
                             <table class=" w-full text-sm text-left border border-default rounded-base">
                                 <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
                                     <tr class="text-nowrap">
@@ -1903,10 +1904,17 @@
                 @csrf
 
                 <!-- Hidden ID -->
+
+                <!-- Hidden ID -->
                 <input type="hidden" id="prod-id" />
+
                 <div class="col-span-2">
-                    <img width="300px" style="border-radius: 10px" id="preivew_img" src="" alt="">
+                <img width="300px" style="border-radius: 10px" id="preview_img" src="" alt="">
+
+
+                    <input type="file" id="update_image" accept="image/*">
                 </div>
+
                 <div class="grid grid-cols-1 col-span-2">
                     <div>
                         <label>Product Code</label>
@@ -2061,7 +2069,7 @@
         {{-- width Custom  --}}
         <div class="  relative p-4 w-full max-w-10xl max-h-full ">
             <!-- Modal content -->
-            <div class=" relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
+            <div class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
                 <form id="TableFormList">
                     @csrf
                     <!-- Modal header -->
@@ -2086,8 +2094,8 @@
 
                     </div>
                     <!-- Modal body -->
-                    <div id="Table-list" class="scroll_content_70 max-h-[70vh] overflow-y-auto">
-                        <div class="overflow-x-auto">
+                    <div id="Table-list" class="max-h-[70vh] overflow-y-auto">
+                        <div class=" scroll_content_70  overflow-x-auto">
                             <table class=" w-full text-sm text-left border border-default rounded-base">
                                 <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
                                     <tr>
@@ -2150,7 +2158,7 @@
 
     <!-- List Table Main modal -->
     <div id="default-modal-table-select-list" tabindex="-1" aria-hidden="true"
-        class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
+        class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center p-4">
         <div class="relative p-4 w-full max-w-4xl max-h-full">
             <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
                 <div class="flex justify-between w-full p-2">
