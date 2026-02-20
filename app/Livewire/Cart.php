@@ -4,9 +4,12 @@ namespace App\Livewire;
 
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\InvoiceHeader;
+use App\Models\InvoiceLine;
 use App\Models\Product;
 use App\Models\RestaurantTable;
 use App\Models\TableProduct;
+use App\Models\TableQueue;
 use Illuminate\Support\Facades\DB;
 
 use Livewire\Component;
@@ -20,6 +23,9 @@ class Cart extends Component
 
 
     public $cart = [];
+    public $cart_queue_no = 0;
+    public $new_cart = true;
+    public $old_queue_no = 0;
     public $qty = 0;
     public $count_cart = 0;
     public $currency = 'USD';
@@ -30,8 +36,12 @@ class Cart extends Component
     public $customer_name = 'Walk-in Customer';
     public $customer_id = null;
     public $customer_phone = '';
-    public $customer_address = '';
+    public $customer_address1 = '';
+    public $customer_address2 = '';
+    public $customer_contact_name = '';
+    public $customer_contact_phone = '';
     public $customer_city = '';
+
 
 
 
@@ -40,53 +50,300 @@ class Cart extends Component
     public $Current_table_id = null;
     public $Current_table_name = "";
 
+
+
+
+
+    #[\Livewire\Attributes\On('paymentConfirmed')]
+    public function paymentConfirmed($payload)
+    {
+        if (empty($this->cart)) {
+            $this->dispatch('payment-error', ['message' => 'Cart is empty']);
+            return;
+        }
+
+        $totalAmount = 0;
+        $totalDiscount = 0;
+        $totalVAT = 0;
+
+        $customer_id_no = Customer::where('customer_code', $this->customer_id)->value('id');
+        DB::transaction(function () use ($payload, &$totalAmount, &$totalDiscount, &$totalVAT, $customer_id_no) {
+
+            // 1️⃣ Create Invoice Header
+            $invoice = InvoiceHeader::create([
+                'invoice_number'  => $this->generateInvoiceNumber(),
+                'invoice_date'    => $payload['document_date'] ?? now(),
+                'due_date'        => $payload['due_date'] ?? null,
+                'customer_id'     => $customer_id_no,
+                'currency_id'     => 1,
+                'total_amount'    => 0, // will update after lines
+                'discount_amount' => 0,
+                'vat_amount'      => 0,
+                'payment_method'          => $payload['paymentMethod'],
+                'return_amount'   => $payload['returnedUSD'] ?? 0,
+                'remarks'         => null,
+            ]);
+
+            // 2️⃣ Create Invoice Lines
+            foreach ($this->cart as $cartItem) {
+                $product = Product::find($cartItem['id']);
+                if (!$product) continue;
+
+
+                $qty = $cartItem['qty'] ?? 1;
+
+                // ✅ Use discount from cart (fallback to 0)
+                $discountPercent = $cartItem['discount_percent'] ?? 0;
+
+                // Base price (including VAT)
+                $price = $product->sell_price + ($product->sell_price * $product->vat / 100);
+
+                // Discount calculations
+                $discountAmountPerUnit = ($price * $discountPercent / 100);
+                $discountedPrice = $price - $discountAmountPerUnit;
+
+                // Line calculations
+                $lineAmount = $price * $qty;
+                $discountAmountLine = $discountAmountPerUnit * $qty;
+                $netAmount = $discountedPrice * $qty;
+                $vatAmount = ($price - $product->sell_price) * $qty;
+
+                $totalAmount += $netAmount;
+                $totalDiscount += $discountAmountLine;
+                $totalVAT += $vatAmount;
+
+
+                InvoiceLine::create([
+                    'sale_invoice_id'  => $invoice->id,
+                    'product_id'       => $product->id,
+                    'barcode'          => $product->bar_code,
+                    'item_code'        => $product->code,
+                    'name'             => $product->name,
+                    'variant'          => $product->variant,
+                    'description'      => $product->description,
+                    'unit'             => $product->unit ?? 'NA',
+                    'category_name'    => $product->category ? $product->category->name : null,
+                    'cost'             => $product->cost,
+                    'unit_price'       => $product->sell_price,
+                    'sell_price'       => $discountedPrice,
+                    'quantity'         => $qty,
+                    'discount_percent' => $discountPercent, // ✅ from cart
+                    'discount_amount'  => $discountAmountLine,
+                    'line_amount'      => $lineAmount,
+                    'vat'              => $product->vat,
+                    'vat_amount'       => $vatAmount,
+                    'total_amount'     => $netAmount,
+                    'remarks'          => null,
+                ]);
+
+                if ($product->track_stock && $product->stock >= $qty) {
+                    $product->decrement('stock', $qty);
+                }
+            }
+
+            // 3️⃣ Update invoice totals
+            $invoice->update([
+                'total_amount'    => $totalAmount,
+                'discount_amount' => $totalDiscount,
+                'vat_amount'      => $totalVAT,
+            ]);
+        });
+
+
+
+
+        $this->dispatch('payment-success', ['message' => 'Payment is successfully']);
+    }
+
+    #[\Livewire\Attributes\On('clearAll_after_payment')]
+    public function clearAll_after_payment()
+    {
+        // 4️⃣ Clear current table products
+        if ($this->Current_table_id) {
+            TableProduct::where('table_id', $this->Current_table_id)->delete();
+        }
+        // Clear cart/session
+        $this->clearCustomer();
+        $this->clearCart();
+        $this->Current_table_id = null;
+        $this->Current_table_name = "";
+    }
+
+
+    protected function generateInvoiceNumber()
+    {
+        $lastInvoice = InvoiceHeader::latest('id')->first();
+
+        // Use 2-digit year
+        $year = date('y'); // '26' for 2026
+
+        if (!$lastInvoice) {
+            return 'SIN' . $year . '-0001';
+        }
+
+        $lastId = $lastInvoice->id;
+        return 'SIN' . $year . '-' . str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);
+    }
     #[\Livewire\Attributes\On('transferCartToTable')]
+
     #[\Livewire\Attributes\On('save-cart-to-table')]
     public function saveCartToTable($payload)
     {
-        $tableId = $payload['table_id'] ?? null;
-        if (!$tableId) return;
 
-        $table = RestaurantTable::where('id', $tableId)->first();
+        $newTableId = $payload['table_id'] ?? null;
+        $oldTableId = $payload['old_table_id'] ?? 0;
+        if (!$newTableId) return;
 
         DB::beginTransaction();
         try {
-            // 🔥 OVERWRITE
-            TableProduct::where('table_id', $tableId)->delete();
+            $customerId = null;
 
-            foreach ($this->cart as $item) {
-                TableProduct::create([
-                    'table_id' => $tableId,
-                    'product_id' => $item['id'],
-                    'qty' => $item['qty'],
-                    'price' => $item['price'],
-                    'discount_percent' => $item['discount_percent'],
-                    'vat' => $item['vat'] ?? 0,
-                    'gross_amount' => $item['amount_line'],
-                    'discount_amount' => $item['discount_amount_line'],
-                    'net_amount' => $item['net_amount_line'],
-                ]);
+            if ($this->customer_id != null) {
+                $customerId = is_numeric($this->customer_id)
+                    ? $this->customer_id
+                    : Customer::where('customer_code', $this->customer_id)->value('id');
             }
 
 
 
+
+            // 1️⃣ Move from another table → keep old items or clear if needed
+            $queueNo = $this->cart_queue_no ?? null;
+
+            // 1️⃣ Handle table transfer
+            if ($oldTableId && $oldTableId != $newTableId) {
+
+                $oldRow = TableProduct::where('table_id', $oldTableId)->first();
+                // Update New Table QUEUE NO only if not set
+                $current_table = RestaurantTable::find($newTableId);
+                if ($current_table->queue_no == 0) {
+                    $current_table->queue_no = $this->cart_queue_no; // keep cart queue
+                    $current_table->save();
+                }
+                // Reset old table queue
+                $old_table = RestaurantTable::find($oldTableId);
+                $old_table->queue_no = 0;
+                $old_table->save();
+
+                // Move old products to new table (if needed)
+                if ($oldRow) {
+                    TableProduct::where('table_id', $oldTableId)->update([
+                        'table_id' => $newTableId,
+                        'queue_no' => $this->cart_queue_no
+                    ]);
+                }
+            } else {
+                // Not transfer (new order or same table)
+                $current_table = RestaurantTable::find($newTableId);
+
+                // Assign queue only if not assigned
+                if ($current_table->queue_no == 0) {
+                    if ($this->cart_queue_no == 0) {
+                        $this->cart_queue_no = $this->incrementQueueTable();
+                        $this->getDocument($this->cart_queue_no); // send queue to front
+                    }
+                    $current_table->queue_no = $this->cart_queue_no;
+                    $current_table->save();
+                }
+            }
+
+
+            // 3️⃣ Process cart items
+            foreach ($this->cart as $item) {
+                $existing = TableProduct::where('table_id', $newTableId)
+                    ->where('product_id', $item['id'])
+                    ->first();
+
+                if ($existing) {
+                    // Update existing item
+                    $existing->qty = $item['qty']; // replace, not add
+                    $existing->order_qty += 1;
+                    $existing->customer_id =  $customerId;
+                    $existing->gross_amount = $existing->qty * $existing->price;
+                    $existing->discount_amount = ($existing->gross_amount * $existing->discount_percent) / 100;
+                    $existing->net_amount = $existing->gross_amount - $existing->discount_amount;
+                    $existing->save();
+                } else {
+
+                    // Add new item
+                    TableProduct::create([
+                        'table_id' => $newTableId,
+                        'product_id' => $item['id'],
+                        'customer_id' => $customerId,
+                        'queue_no' => $queueNo, // ✅ same queue for this table/order
+                        'qty' => $item['qty'],
+                        'order_qty' => 1,
+                        'printed_qty' => 0,
+                        'price' => $item['price'],
+                        'discount_percent' => $item['discount_percent'],
+                        'vat' => $item['vat'] ?? 0,
+                        'gross_amount' => $item['amount_line'],
+                        'discount_amount' => $item['discount_amount_line'],
+                        'net_amount' => $item['net_amount_line'],
+                    ]);
+                }
+            }
+
             DB::commit();
-            // Reset cart first
+
+            $table = RestaurantTable::find($newTableId);
+
+            $this->cart_queue_no = 0;
+            // reset cart
             $this->cart = [];
             $this->count_cart = 0;
-            // ✅ Notify frontend
 
+            $this->customer_id = null;
+            $this->Current_table_id = null;
+
+
+            $this->Current_table_name = "";
             $this->dispatch('serve-table', [
-                'message' => 'success',
-                'name' =>$table->name
-
+                'message' => ($oldTableId && $oldTableId != $newTableId) ? 'Table Transfer Success' : 'Place New Order success',
+                'name' => $table?->name
             ]);
-
+            $this->dispatch('clear-customer');
         } catch (\Throwable $e) {
             DB::rollBack();
             logger()->error($e);
         }
     }
+    public function assignQueueForOrder($isUpdate = false)
+    {
+        // 1️⃣ New cart → always new queue
+        if ($this->new_cart && $this->cart_queue_no == 0) {
+            $this->cart_queue_no = $this->incrementQueueTable();
+            $this->getDocument($this->cart_queue_no);
+            $this->new_cart = false;
+        }
+
+        // 2️⃣ Updating existing order → assign new queue if desired
+        else if ($isUpdate) {
+            // optional: only assign new queue if old queue exists
+            $this->cart_queue_no = $this->incrementQueueTable();
+            $this->getDocument($this->cart_queue_no);
+        }
+
+        // 3️⃣ Otherwise → keep old queue
+    }
+    protected function incrementQueueTable()
+    {
+        $today = now()->toDateString();
+
+        // Get or create today’s queue
+        $queue = TableQueue::firstOrCreate(
+            ['queue_date' => $today],
+            ['last_number' => 0]
+        );
+
+        // Increment properly
+        $queue->last_number += 1;
+        $queue->save();
+
+        return $queue->last_number;
+    }
+
+
     #[\Livewire\Attributes\On('exit_table')]
     public function exit_table()
     {
@@ -98,9 +355,12 @@ class Cart extends Component
     #[\Livewire\Attributes\On('loadTableToCart')]
     public function loadTableToCart($table_id)
     {
+        // update order
+        $this->new_cart = false;
         // Reset cart first
         $this->cart = [];
         $this->count_cart = 0;
+
 
         $tableItems = TableProduct::with('product')
             ->where('table_id', $table_id)
@@ -108,14 +368,16 @@ class Cart extends Component
 
         $tableItems_assign = RestaurantTable::where('id', $table_id)
             ->first();
-        $this->Current_table_id = $table_id;
-        $this->Current_table_name = $tableItems_assign->name;
+
 
         $order = 1;
-
+        $queue_no = 0;
+        $customer_id  = 0;
         foreach ($tableItems as $row) {
             if (!$row->product) continue;
-
+            $customer_id = $row->customer_id;
+            $this->cart_queue_no = $tableItems_assign->queue_no;
+            $this->getDocument($this->cart_queue_no); // send queue to front
             $this->cart[] = [
                 'id' => $row->product->id,
                 'name' => $row->product->name,
@@ -133,11 +395,71 @@ class Cart extends Component
             ];
         }
 
+        $this->Current_table_id = $table_id;
+        $this->Current_table_name = $tableItems_assign->name . '  ' . 'Queue No :' . $this->cart_queue_no;
+
+
+        if ($customer_id != 0) {
+            // Insert Customer
+            $customer = Customer::where('id', $customer_id)->first();
+            $this->customer_name = $customer->name;
+            $this->customer_id = $customer->customer_code;
+            $this->customer_phone = $customer->phone;
+            $this->customer_address1 = $customer->address1;
+            $this->customer_address2 = $customer->address2;
+            $this->customer_contact_name = $customer->contact_name;
+            $this->customer_contact_phone = $customer->contact_phone;
+            $this->customer_city = $customer->city;
+            $this->customer_contact_name = $customer->contact_name;
+            $this->customer_contact_phone = $customer->contact_phone;
+            $display_name =  $customer->customer_code . ' - ' . $customer->name;
+            $this->dispatch('update-customer-input', [
+                'display' => $display_name,
+                'code' =>  $customer->customer_code,
+
+            ]);
+            $this->getDocument($queue_no);
+        } else {
+            $this->clearCustomer();
+            $this->getDocument($queue_no);
+        }
+
+
+
+
+
+
         $this->count_cart = count($this->cart);
+    }
+    public function getDocument($queueNo)
+    {
+        $date = now()->format('Y-m-d'); // 2026-02-13
+
+        $document = $date . '-' . str_pad($queueNo, 4, '0', STR_PAD_LEFT);
+
+        $this->dispatch('get-document', [
+            'document_no' => $this->cart_queue_no,
+        ]);
+    }
+    public function clearCustomer()
+    {
+        $this->customer_name = "";
+        $this->customer_id = null;
+        $this->customer_phone =  "";
+        $this->customer_address1 = "";
+        $this->customer_address2 =  "";
+        $this->customer_city =  "";
+
+        $this->dispatch('update-customer-input', [
+            'display' => "",
+            'code' =>  ""
+        ]);
     }
     #[\Livewire\Attributes\On('loadTableToCartPayment')]
     public function loadTableToCartPayment($table_id)
     {
+        // update cart state
+        $this->new_cart = false;
         // Reset cart first
         $this->cart = [];
         $this->count_cart = 0;
@@ -152,10 +474,15 @@ class Cart extends Component
         $this->Current_table_name = $tableItems_assign->name;
 
         $order = 1;
-
+        $customer_id = 0;
+        $queue_no = 0;
         foreach ($tableItems as $row) {
             if (!$row->product) continue;
+            $queue_no = $tableItems_assign->queue_no;
 
+            $this->cart_queue_no = $queue_no;
+            $this->getDocument($this->cart_queue_no); // send queue to front
+            $customer_id = $row->customer_id;
             $this->cart[] = [
                 'id' => $row->product->id,
                 'name' => $row->product->name,
@@ -172,10 +499,36 @@ class Cart extends Component
                 'track_stock' => $row->product->track_stock ?? false,
             ];
         }
-
+        $this->getDocument($queue_no);
         $this->count_cart = count($this->cart);
         // ✅ Notify frontend
+
+        if ($customer_id != 0) {
+            // Insert Customer
+            $customer = Customer::where('id', $customer_id)->first();
+            $this->customer_name = $customer->name;
+            $this->customer_id = $customer->customer_code;
+            $this->customer_phone = $customer->phone;
+            $this->customer_address1 = $customer->address1;
+            $this->customer_address2 = $customer->address2;
+            $this->customer_city = $customer->city;
+            $this->customer_contact_name = $customer->contact_name;
+            $this->customer_contact_phone = $customer->contact_phone;
+            $display_name =  $customer->customer_code . ' - ' . $customer->name;
+            $this->dispatch('update-customer-input', [
+                'display' => $display_name,
+                'code' =>  $customer->customer_code,
+
+            ]);
+            $this->getDocument($queue_no);
+        } else {
+            $this->clearCustomer();
+            $this->getDocument($queue_no);
+        }
+
+
         $this->dispatch('cart-loaded', [
+
             'table_id' => $table_id,
             'count' => $this->count_cart
         ]);
@@ -195,13 +548,19 @@ class Cart extends Component
         if ($customer) {
             $this->customer_name    = $customer->name;
             $this->customer_phone   = $customer->phone;
-            $this->customer_address = $customer->address;
+            $this->customer_address1 = $customer->address1;
+            $this->customer_address2 = $customer->address2;
             $this->customer_city    = $customer->city;
+            $this->customer_contact_name = $customer->contact_name;
+            $this->customer_contact_phone = $customer->contact_phone;
         } else {
             $this->customer_name    = 'Walk-in Customer';
             $this->customer_phone   = '';
-            $this->customer_address = '';
+            $this->customer_address1 = '';
+            $this->customer_address2 = '';
             $this->customer_city    = '';
+            $this->customer_contact_name = '';
+            $this->customer_contact_phone  = '';
         }
     }
 
@@ -237,6 +596,16 @@ class Cart extends Component
     #[\Livewire\Attributes\On('add-product')]
     public function addProduct($productJson)
     {
+
+        // 1️⃣ Only assign queue if it's a new cart and no queue yet
+        if ($this->new_cart && $this->cart_queue_no == 0) {
+            $this->cart_queue_no = $this->incrementQueueTable();
+            $this->getDocument($this->cart_queue_no); // send queue to front
+            $this->new_cart = false; // lock queue for this cart
+        }
+
+        // Create New
+
         $product = json_decode($productJson, true);
 
         $vat = $product['vat'] ?? 0;
@@ -309,6 +678,11 @@ class Cart extends Component
 
 
 
+    public function clearTable()
+    {
+        $this->customer_id = null;
+        $this->Current_table_id = null;
+    }
     public function clearCart()
     {
         $this->Current_table_id = null;

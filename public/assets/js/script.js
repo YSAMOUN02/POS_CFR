@@ -1,162 +1,168 @@
-function saveCurrencies() {
-    const form = document.getElementById("currencyForm");
-    const formData = new FormData(form);
+// DEVELOP BY Y SAMOUN IT EXECUTIVE
+// DEVELOP AT 2025-2026
+// ASSISTED BY CHAT GPT
 
-    fetch("/currency/update-all", {
-        method: "POST",
-        headers: {
-            "X-CSRF-TOKEN": document.querySelector('input[name="_token"]')
-                .value,
-            Accept: "application/json",
-        },
-        body: formData,
-    })
-        .then((res) => res.json())
-        .then((data) => {
-            if (data.success) {
-                // Alert user to reload page
-                alert(
-                    data.message +
-                        "\nPlease reload the page to see the new currency.",
-                );
+// INFO BEFORE BEGIN
 
-                // Reset new currency inputs
-                form.querySelector('input[name="new_currency[factor]"]').value =
-                    "";
-                form.querySelector('input[name="new_currency[name]"]').value =
-                    "";
-                form.querySelector('input[name="new_currency[code]"]').value =
-                    "";
-            } else {
-                console.error(data.message);
-                alert("Error: " + data.message);
+// LIST =  DATA FETCH AND RENDER
+
+// ADD = CREATE NEW OBJECT
+
+// UPDATE = UPDATE EXISTING OBJECT
+
+// DELETE = DELETE CURRENT OBJECT
+
+// OBJECT  -->
+// PRODUCT  // CUSTOMER // CURRENCY  // WAREHOUSE // WAREHOUSE PRODUCT // TABLE AND QUOTE  // TABLE PRODUCT
+
+// ADD CUSTOMER
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("AddcustomerForm");
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Saving...";
+
+        try {
+            const response = await fetch("/customers/store", {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                },
+                body: new FormData(form),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw data;
             }
-        })
-        .catch((err) => {
-            console.error(err);
-            alert("Server error. Check console for details.");
-        });
-}
 
-// Refresh Button
-const refreshBtn = document.getElementById("refreshBtn");
-const unsaveModal = document.getElementById("unsaveModal");
-const cancelBtn = unsaveModal.querySelector("[data-modal-close]");
-const continueBtn = unsaveModal.querySelector("[data-modal-action]");
+            // ✅ SUCCESS
+            showToast({
+                message: data.message || "Customer created successfully",
+                type: "success",
+            });
 
-// Flag to simulate unsaved work (you can replace this with your real check)
-let hasUnsavedWork = true;
+            form.reset();
 
-refreshBtn.addEventListener("click", () => {
-    if (hasUnsavedWork) {
-        // Show modal
-        unsaveModal.classList.remove("hidden");
-    } else {
-        // No unsaved work, refresh directly
-        location.reload();
-    }
+            document
+                .querySelector('[data-modal-hide="default-modal-customer"]')
+                ?.click();
+        } catch (err) {
+            // ❌ VALIDATION ERRORS
+            if (err.errors) {
+                Object.values(err.errors).forEach((msgs) => {
+                    showToast({
+                        message: msgs[0],
+                        type: "error",
+                    });
+                });
+            } else {
+                showToast({
+                    message: "Server error. Please try again.",
+                    type: "error",
+                });
+            }
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Save Customer";
+        }
+    });
 });
 
-// Close modal
-cancelBtn.addEventListener("click", () => {
-    unsaveModal.classList.add("hidden");
+// DELETE CUSTOMER
+document.getElementById("btnDeleteCustomer").addEventListener("click", () => {
+    openDeleteCustModal();
 });
-
-// Confirm refresh
-continueBtn.addEventListener("click", () => {
-    unsaveModal.classList.add("hidden");
-    location.reload(); // actually refresh the page
-});
-
-// How to use Toast
-// // Success
-// showToast({ message: 'Customer deleted successfully', type: 'success' });
-
-// // Error
-// showToast({ message: 'Failed to delete customer', type: 'error' });
-
-// // Warning
-// showToast({ message: 'Please select a customer first', type: 'warning' });
-
-let toastTimeout;
-
-function showToast({ message, type = "success", duration = 3000 }) {
-    const toast = document.getElementById("toastMessage");
-    const text = document.getElementById("toastText");
-    const icon = document.getElementById("toastIcon");
-
-    // Set message
-    text.innerText = message;
-
-    // Set icon and color
-    switch (type) {
-        case "success":
-            toast.classList.remove("bg-red-500", "bg-yellow-500");
-            icon.innerText = "✔️";
-            icon.classList.add("text-green-500");
-            break;
-        case "error":
-            toast.classList.remove("bg-green-500", "bg-yellow-500");
-            icon.innerText = "❌";
-            icon.classList.add("text-red-500");
-            break;
-        case "warning":
-            toast.classList.remove("bg-green-500", "bg-red-500");
-            icon.innerText = "⚠️";
-            icon.classList.add("text-yellow-500");
-            break;
-    }
-
-    toast.classList.remove("hidden");
-
-    // Auto hide after duration
-    if (toastTimeout) clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => {
-        hideToast();
-    }, duration);
-}
-function hideToast() {
-    const toast = document.getElementById("toastMessage");
-    toast.classList.add("hidden");
-
-    // Optional: reset icon and text
-    document.getElementById("toastText").innerText = "";
-    document.getElementById("toastIcon").innerText = "✔️";
-}
-async function confirmDeleteCustomer() {
+// DELETE CUSTOMER 2
+function openDeleteCustModal() {
     const customerId = getSelectedCustomerId();
-    if (!customerId) return;
 
-    // close modal
-    closeDeleteCustModal();
-
-    try {
-        const res = await fetch(`/customers/${customerId}`, {
-            method: "DELETE",
-            headers: {
-                "X-CSRF-TOKEN": document.querySelector('input[name="_token"]')
-                    .value,
-                Accept: "application/json",
-            },
-        });
-
-        if (!res.ok) throw new Error();
-
-        // ✅ remove row safely using data-id
-        const row = document.querySelector(`tr[data-id="${customerId}"]`);
-        if (row) row.remove();
-
-        // show success toast
+    if (!customerId) {
         showToast({
-            message: "Customer deleted successfully",
-            type: "success",
+            message: "Please select a customer first",
+            type: "warning",
         });
-    } catch (err) {
-        showToast({ message: "Delete failed", type: "error" });
-        console.error(err);
+        return;
     }
+    document.getElementById("confirm-delete-cust").classList.remove("hidden");
 }
 
+// GLOBAL VARIABLE ID CUSTOMER SELETED  FOR UPDATE DELETE
+let selectedCustomerId = null;
+// UPDATE CUSTOMER
+function getSelectedCustomerId() {
+    const selected = document.querySelector(
+        'input[name="customer_id"]:checked',
+    );
+    selectedCustomerId = selected ? selected.value : null; // store it
+    return selectedCustomerId;
+}
+
+// UPDATE CUSTOMER
+
+document.getElementById("btnEditCustomer").addEventListener("click", () => {
+    openUpdateCustModal();
+});
+
+function closeDeleteCustModal() {
+    document.getElementById("confirm-delete-cust").classList.add("hidden");
+}
+
+// UPDATE CUSTOMER
+// Hook CLOSE button
+document.getElementById("btnEditCustomer").addEventListener("click", () => {
+    openUpdateCustModal();
+});
+
+// UPDATE CUSTOMER
+function openUpdateCustModal() {
+    const customerId = getSelectedCustomerId();
+    if (!customerId) {
+        showToast({
+            message: "Please select a customer first",
+            type: "warning",
+        });
+        return;
+    }
+
+    // Get the selected row
+    const row = document.querySelector(`tr[data-id="${customerId}"]`);
+    console.log(row.dataset);
+    // Read data directly from data attributes
+    document.getElementById("cust-customer_code").value =
+        row.dataset.customer_code ?? "";
+    document.getElementById("cust-name").value = row.dataset.name ?? "";
+    document.getElementById("cust-phone").value = row.dataset.phone ?? "";
+
+    document.getElementById("cust-email").value = row.dataset.email ?? "";
+    document.getElementById("cust-address1").value = row.dataset.address1 ?? "";
+    document.getElementById("cust-address2").value = row.dataset.address2 ?? "";
+    document.getElementById("cust-contact").value =
+        row.dataset.contact_name ?? "";
+
+    document.getElementById("cust-contact_phone").value =
+        row.dataset.contact_phone ?? "";
+    document.getElementById("cust-city").value = row.dataset.city ?? "";
+    document.getElementById("cust-country").value = row.dataset.country ?? "";
+    document.getElementById("cust-type").value = row.dataset.type ?? "";
+    document.getElementById("cust-credit").value = parseFloat(
+        row.dataset.credit ?? 0,
+    ).toFixed(2);
+    document.getElementById("cust-balance").value = parseFloat(
+        row.dataset.balance ?? 0,
+    ).toFixed(2);
+    document.getElementById("cust-point").value = row.dataset.point ?? 0;
+    document.getElementById("cust-status").value = row.dataset.status ?? "1";
+
+    // Show modal
+    document.getElementById("confirm-update-cust").classList.remove("hidden");
+}
+// UPDATE CUSTOMER
 async function confirmUpdateCustomer() {
     if (!selectedCustomerId) {
         showToast({ message: "No customer selected!", type: "warning" });
@@ -237,14 +243,169 @@ async function confirmUpdateCustomer() {
             message: "Customer updated successfully",
             type: "success",
         });
+
         closeUpdateCustModal();
     } catch (err) {
         console.error(err);
         showToast({ message: "Failed to update customer", type: "error" });
     }
 }
+function closeUpdateCustModal() {
+    document.getElementById("confirm-update-cust").classList.add("hidden");
+}
 
-// Data Customer Search & Pagination
+// ADD CURRENCY
+function saveCurrencies() {
+    const form = document.getElementById("currencyForm");
+    const formData = new FormData(form);
+
+    fetch("/currency/update-all", {
+        method: "POST",
+        headers: {
+            "X-CSRF-TOKEN": document.querySelector('input[name="_token"]')
+                .value,
+            Accept: "application/json",
+        },
+        body: formData,
+    })
+        .then((res) => res.json())
+        .then((data) => {
+            if (data.success) {
+                // Alert user to reload page
+                alert(
+                    data.message +
+                        "\nPlease reload the page to see the new currency.",
+                );
+
+                // Reset new currency inputs
+                form.querySelector('input[name="new_currency[factor]"]').value =
+                    "";
+                form.querySelector('input[name="new_currency[name]"]').value =
+                    "";
+                form.querySelector('input[name="new_currency[code]"]').value =
+                    "";
+            } else {
+                console.error(data.message);
+                alert("Error: " + data.message);
+            }
+        })
+        .catch((err) => {
+            console.error(err);
+            alert("Server error. Check console for details.");
+        });
+}
+
+// Refresh Button
+const refreshBtn = document.getElementById("refreshBtn");
+const unsaveModal = document.getElementById("unsaveModal");
+const cancelBtn = unsaveModal.querySelector("[data-modal-close]");
+const continueBtn = unsaveModal.querySelector("[data-modal-action]");
+
+// Flag to simulate unsaved work (you can replace this with your real check)
+let hasUnsavedWork = true;
+refreshBtn.addEventListener("click", () => {
+    if (hasUnsavedWork) {
+        // Show modal
+        unsaveModal.classList.remove("hidden");
+    } else {
+        // No unsaved work, refresh directly
+        location.reload();
+    }
+});
+
+// Close modal SAVE AND UNSAVE
+cancelBtn.addEventListener("click", () => {
+    unsaveModal.classList.add("hidden");
+});
+
+// Confirm refresh
+continueBtn.addEventListener("click", () => {
+    unsaveModal.classList.add("hidden");
+    location.reload(); // actually refresh the page
+});
+
+// GLOBAL TOAST
+let toastTimeout;
+function showToast({ message, type = "success", duration = 3000 }) {
+    const toast = document.getElementById("toastMessage");
+    const text = document.getElementById("toastText");
+    const icon = document.getElementById("toastIcon");
+
+    // Set message
+    text.innerText = message;
+
+    // Set icon and color
+    switch (type) {
+        case "success":
+            toast.classList.remove("bg-red-500", "bg-yellow-500");
+            icon.innerText = "✔️";
+            icon.classList.add("text-green-500");
+            break;
+        case "error":
+            toast.classList.remove("bg-green-500", "bg-yellow-500");
+            icon.innerText = "❌";
+            icon.classList.add("text-red-500");
+            break;
+        case "warning":
+            toast.classList.remove("bg-green-500", "bg-red-500");
+            icon.innerText = "⚠️";
+            icon.classList.add("text-yellow-500");
+            break;
+    }
+
+    toast.classList.remove("hidden");
+
+    // Auto hide after duration
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        hideToast();
+    }, duration);
+}
+// GLOBAL HIDE TOAST
+function hideToast() {
+    const toast = document.getElementById("toastMessage");
+    toast.classList.add("hidden");
+
+    // Optional: reset icon and text
+    document.getElementById("toastText").innerText = "";
+    document.getElementById("toastIcon").innerText = "✔️";
+}
+// DELETE CUSTOMER
+async function confirmDeleteCustomer() {
+    const customerId = getSelectedCustomerId();
+    if (!customerId) return;
+
+    // close modal
+    closeDeleteCustModal();
+
+    try {
+        const res = await fetch(`/customers/${customerId}`, {
+            method: "DELETE",
+            headers: {
+                "X-CSRF-TOKEN": document.querySelector('input[name="_token"]')
+                    .value,
+                Accept: "application/json",
+            },
+        });
+
+        if (!res.ok) throw new Error();
+
+        // ✅ remove row safely using data-id
+        const row = document.querySelector(`tr[data-id="${customerId}"]`);
+        if (row) row.remove();
+
+        // show success toast
+        showToast({
+            message: "Customer deleted successfully",
+            type: "success",
+        });
+    } catch (err) {
+        showToast({ message: "Delete failed", type: "error" });
+        console.error(err);
+    }
+}
+
+// LIST CUSTOMER
 const searchInput = document.getElementById("customerSearchInput");
 const typeSelect = document.getElementById("customerTypeSelect");
 const activeCheckbox = document.getElementById("customerSearchCheckbox");
@@ -351,17 +512,25 @@ function renderCustomerTable(data) {
         <tr class="border-t hover:bg-neutral-tertiary cursor-pointer"
             data-id="${c.id}"
             data-customer_code="${c.customer_code ?? ""}"
-            data-address="${c.address ?? ""}"
+             data-name ="${c.name ?? ""}"
+            data-address1="${c.address1 ?? ""}"
             data-city="${c.city ?? ""}"
             data-country="${c.country ?? ""}"
             data-credit="${c.credit_limit}"
             data-balance="${c.balance}"
             data-point="${c.point}"
+            data-type="${c.type}"
+            data-address2="${c.address2}"
+            data-contact_name="${c.contact_name ?? ""}"
+            data-phone="${c.phone}"
+            data-email="${c.email}"
+            data-contact_phone="${c.contact_phone}"
             data-status="${c.status}">
             <td><input type="radio" name="customer_id" value="${c.id}"></td>
             <td>${c.id}</td>
             <td>${c.customer_code ?? "-"}</td>
             <td>${c.name}</td>
+            <td>${c.address1}</td>
             <td>${c.phone ?? "-"}</td>
             <td>${c.email ?? "-"}</td>
             <td>${c.type}</td>
@@ -569,7 +738,7 @@ function renderProductTable(data) {
                 <div class="img">
                           <img src="/assets/startic_img/${encodeURIComponent(p.image)}" alt="" />
                 </div>
-            
+
             </td>
             <td>${p.bar_code ?? "-"}</td>
             <td>${p.code ?? "-"}</td>
@@ -623,7 +792,7 @@ document.addEventListener("click", function (e) {
     }
 
     // Call your edit logic
-    editProductFromRow(row);
+    // editProductFromRow(row);
 });
 
 // Load categories on first click
@@ -1061,7 +1230,7 @@ function print(document_type) {
         });
         return;
     }
-
+    updatePayment();
     // Handle documents that need modals first
     if (document_type === "Receipt") {
         openDatePromt_Modal(() => print_document("Receipt"));
@@ -1079,38 +1248,37 @@ function print(document_type) {
     print_document(document_type);
 }
 
+const input_due_date = document.getElementById("due_date");
+const input_document_date_value = document.getElementById("document_dateInput");
 function print_document(document_type) {
-    if (document_type === "Delivery Note") {
-        let deliveryRemark =
-            prompt("Enter remark for Delivery Note (optional):") || "";
-    }
+    const due_date_input_value = input_due_date.value;
+    const due_date = new Date(due_date_input_value);
+    const document_date_value = input_document_date_value.value;
+    const document_date = new Date(document_date_value);
+    const options = { day: "2-digit", month: "short", year: "numeric" };
+    const formattedDueDate = due_date.toLocaleDateString("en-GB", options);
+    const formattedDocumentDate = document_date.toLocaleDateString(
+        "en-GB",
+        options,
+    );
     // docutment Header
     const document_header = document.getElementById("document-header");
-
     // Title
     let document_title = document.getElementById("document_title");
     document_title.querySelector("h1").textContent = document_type;
-
     let logo = document.getElementById("logo");
-
     const invoiceContent = document.getElementById("invoice").innerHTML;
-
     // Table
     const table_data = document.getElementById("invoice-table");
-
     // Shop Info
     const shop_info = document.getElementById("shop_info");
-
     // customer_info
-
     const customer_info = document.getElementById("customer_info");
-
     // table Footer
     const table_footer = document.getElementById("table_footer");
     let table_footer_description = document.getElementById(
         "table_footer_description",
     );
-
     // Open new window
     const printWindow = window.open("", "_blank", "width=800,height=600");
 
@@ -1118,26 +1286,28 @@ function print_document(document_type) {
 
     // Promt User Input
 
-    if (document_type === "Invoice") {
-        table_footer_description.innerHTML = `
+    // Personal Data
 
+    let footer_panha_invoice = `
+                    <div style="line-height:1.5; margin-top:5px;">
 
+                            <span>PLEASE MAKE PAYABLE CHEQUE TO MR. RITH SOPHANHA </span> <br>
+                            <span>THANK YOU FOR YOUR BUSINESS! </span> <br>
+                            <span><b>Mr. Rith SOPHANHA </b></span>
+                    </div>
                 `;
-        table_footer_description.innerHTML = `
-                    <div style="line-height:1.5;">
 
-                            PLEASE MAKE PAYABLE CHEQUE TO MR. RITH SOPHANHA
-
+    let footer_CFR_invoice = `
+                    <div style="width:100%; display:flex; justify-content:center ; margin-top:30px; line-height:1.5;">
+                            <span>THANK YOU FOR YOUR BUSINESS! </span> <br>
 
                     </div>
                 `;
-        // Format using toLocaleDateString
-        const options = { day: "2-digit", month: "short", year: "numeric" };
-        const formattedDueDate = due_date.toLocaleDateString("en-GB", options);
-        const formattedDocumentDate = document_date.toLocaleDateString(
-            "en-GB",
-            options,
-        );
+
+    if (document_type === "Invoice") {
+        table_footer_description.innerHTML = ``;
+        table_footer_description.innerHTML = footer_CFR_invoice;
+
         printWindow.document.write(`
                 <html>
                 <head>
@@ -1175,9 +1345,11 @@ function print_document(document_type) {
                  <!-- Seller + Date in 2-column grid -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; ">
 
-                            <!-- Left column: Shop info -->
-                            <div  class="font-mid" style="display: grid; gap:3px; text-align: left;">
+                               <!-- Left column: Shop info -->
+                            <div  class="font-mid"  style="display: grid; gap:3px; text-align: left;">
                                 ${shop_info.innerHTML}
+                                <strong>BILL TO:</strong>
+                                 ${customer_info.innerHTML}
                             </div>
 
                           <!-- Right column: Dates / Invoice (2-grid, all right aligned) -->
@@ -1193,7 +1365,7 @@ function print_document(document_type) {
 
                                 <div><b>Invoice #</b></div>
                                 <div>
-
+                                  ${document_no}
 
                                 </div>
 
@@ -1215,12 +1387,6 @@ function print_document(document_type) {
                 </html>
                 `);
     } else if (document_type === "Receipt") {
-        const options = { day: "2-digit", month: "short", year: "numeric" };
-        const formattedDueDate = due_date.toLocaleDateString("en-GB", options);
-        const formattedDocumentDate = document_date.toLocaleDateString(
-            "en-GB",
-            options,
-        );
         table_footer_description.innerHTML = `
                     <div class="font-mid" style="line-height:1.5;">
                         <div style="font-weight:bold; text-decoration:underline; margin-bottom:6px;">
@@ -1283,9 +1449,171 @@ function print_document(document_type) {
                                 <div><b>Date:</b></div>
                                 <div>${formattedDocumentDate}</div>
 
-                                <div><b>Invoice:</b></div>
+                                <div><b>Reciept No:</b></div>
+                                <div>
+                                    REC- ${document_no}
+
+                                </div>
+
+                                <div><b>Due Date:</b></div>
+                                <div>${formattedDueDate}</div>
+                            </div>
+                        </div>
+                    <!-- Table -->
+                    ${table_data.innerHTML}
+                    <div class="font-mid">${table_footer.innerHTML} </div>
+
+
+                </body>
+                </html>
+                `);
+    } else if (document_type === "Order") {
+        table_footer_description.innerHTML = `
+                    <div class="font-mid" style="line-height:1.5;">
+                        <div style="font-weight:bold; text-decoration:underline; margin-bottom:6px;">
+                            <center>Thanks for your Please come again.</center>
+                        </div>
+
+
+                    </div>
+                `;
+
+        printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Order</title>
+                    <style>
+                        body {  font-family: 'Noto Serif Khmer', serif; margin: 20px; color: black; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+                        th { background-color: #f0f0f0; }
+                        .invoice-header h2 { margin: 0; }
+                        .font-mid{
+                            font-size:12px;
+                        }
+                        #seller_name{
+                        display:none;
+                        }
+                        @media print {
+                            button { display: none; }
+                        }
+                    </style>
+                </head>
+                <body onload="window.print(); window.close();">
+
+                    <!-- Header -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        ${logo.innerHTML}
+                        <div style="font-size:25px; font-weight:bold;">
+                            ${document_title.innerHTML}
+                        </div>
+                    </div>
+
+                 <!-- Seller + Date in 2-column grid -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+
+                            <!-- Left column: Shop info -->
+                            <div  class="font-mid"  style="display: grid; gap:3px; text-align: left;">
+                                ${shop_info.innerHTML}
+                                <strong>Reciept for:</strong>
+                                 ${customer_info.innerHTML}
+                            </div>
+
+                          <!-- Right column: Dates / Invoice (2-grid, all right aligned) -->
+                            <div class="font-mid" style="
+                                display: grid;
+                                grid-template-columns: max-content max-content;
+
+                                justify-content: end;
+                                text-align: right;
+                            ">
+                                <div><b>Date:</b></div>
+                                <div>${formattedDocumentDate}</div>
+
+                                <div><b>QUEUE No:</b></div>
                                 <div>
 
+                                   ORDER-  ${document_no}
+                                </div>
+
+                                <div><b>Due Date:</b></div>
+                                <div>${formattedDueDate}</div>
+                            </div>
+                        </div>
+                    <!-- Table -->
+                    ${table_data.innerHTML}
+                    <div class="font-mid">${table_footer.innerHTML} </div>
+
+
+                </body>
+                </html>
+                `);
+    } else if (document_type === "Quotation") {
+        table_footer_description.innerHTML = `
+                    <div class="font-mid" style="line-height:1.5;">
+                        <div style="font-weight:bold; text-decoration:underline; margin-bottom:6px;">
+                            <center>Thanks for your Please come again.</center>
+                        </div>
+
+
+                    </div>
+                `;
+
+        printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Invoice</title>
+                    <style>
+                        body {  font-family: 'Noto Serif Khmer', serif; margin: 20px; color: black; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+                        th { background-color: #f0f0f0; }
+                        .invoice-header h2 { margin: 0; }
+                        .font-mid{
+                            font-size:12px;
+                        }
+                        #seller_name{
+                        display:none;
+                        }
+                        @media print {
+                            button { display: none; }
+                        }
+                    </style>
+                </head>
+                <body onload="window.print(); window.close();">
+
+                    <!-- Header -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        ${logo.innerHTML}
+                        <div style="font-size:25px; font-weight:bold;">
+                            ${document_title.innerHTML}
+                        </div>
+                    </div>
+
+                 <!-- Seller + Date in 2-column grid -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+
+                            <!-- Left column: Shop info -->
+                            <div  class="font-mid"  style="display: grid; gap:3px; text-align: left;">
+                                ${shop_info.innerHTML}
+                                <strong>Reciept for:</strong>
+                                 ${customer_info.innerHTML}
+                            </div>
+
+                          <!-- Right column: Dates / Invoice (2-grid, all right aligned) -->
+                            <div class="font-mid" style="
+                                display: grid;
+                                grid-template-columns: max-content max-content;
+
+                                justify-content: end;
+                                text-align: right;
+                            ">
+                                <div><b>Date:</b></div>
+                                <div>${formattedDocumentDate}</div>
+
+                                <div><b>Quotation:</b></div>
+                                <div>
+                                      Q${document_no}
 
                                 </div>
 
@@ -1302,12 +1630,6 @@ function print_document(document_type) {
                 </html>
                 `);
     } else if (document_type === "Delivery Note") {
-        const options = { day: "2-digit", month: "short", year: "numeric" };
-        const formattedDueDate = due_date.toLocaleDateString("en-GB", options);
-        const formattedDocumentDate = document_date.toLocaleDateString(
-            "en-GB",
-            options,
-        );
         table_footer_description.innerHTML = `
                     <div style=" line-height:1.5;">
 
@@ -1360,12 +1682,12 @@ function print_document(document_type) {
                     </div>
 
                  <!-- Seller + Date in 2-column grid -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 5px;">
 
                             <!-- Left column: Shop info -->
                             <div class="font-mid" style="display: grid; gap:3px; text-align: left;">
                                 ${shop_info.innerHTML}
-                                <div style="font-size:25px; margin: 5px 5px;  font-weight:bold;">
+                                <div style="font-size:15px; margin: 0px 5px;  font-weight:bold;">
                                     ${document_title.innerHTML}
                                 </div>
                             <br>
@@ -1385,9 +1707,9 @@ function print_document(document_type) {
                                 <div><b>Date:</b></div>
                                 <div>${formattedDocumentDate}</div>
 
-                                <div><b>Invoice:</b></div>
+                                <div><b>Delivery No:</b></div>
                                 <div>
-
+                                  DN-   ${document_no}
                                 </div>
 
                                 <div><b>Due Date:</b></div>
@@ -1408,16 +1730,21 @@ function print_document(document_type) {
     printWindow.document.close();
 }
 
-let document_date = null;
-let due_date = null;
+const dateInput = document.getElementById("document_dateInput");
+const validInput = document.getElementById("due_date");
 let quotationNextAction = null;
 let formattedDocDate = null;
 let formattedDueDate = null;
 
 function openDatePromt_Modal(onConfirm) {
+    const payUSDInput = document.getElementById("pay_usd");
+    const payOtherInput = document.getElementById("pay_other");
+
+    // Reset input
+    payUSDInput.value = 0;
+    payOtherInput.value = 0;
+
     const modal = document.getElementById("DatePromptModal");
-    const dateInput = document.getElementById("document_dateInput");
-    const validInput = document.getElementById("due_date");
 
     const total_amount = document.querySelector("#total_amount").value;
     const converted_total_amount = document.querySelector(
@@ -1469,19 +1796,6 @@ function openDatePromt_Modal(onConfirm) {
         // Parse input values
         document_date = new Date(dateInput.value);
         due_date = new Date(validInput.value);
-
-        // Function to format date as "12 Jan 2026"
-        const formatDate = (d) => {
-            const options = { day: "2-digit", month: "short", year: "numeric" };
-            return d.toLocaleDateString("en-GB", options);
-        };
-
-        // Call the callback safely
-        if (quotationNextAction && typeof quotationNextAction === "function") {
-            quotationNextAction(formattedDocDate, formattedDueDate);
-        }
-
-        quotationNextAction = null; // clear after use
     };
 }
 
@@ -1550,7 +1864,7 @@ document
         reader.readAsDataURL(file);
     });
 
-// Submit New Product
+// ADD Product
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("AddProductForm");
     if (!form) return;
@@ -1614,7 +1928,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 message: data.message || "Product added successfully",
                 type: "success",
             });
-
+            loadProducts(1);
             form.reset();
             imagePreviewContainer.innerHTML = "";
 
@@ -1641,7 +1955,7 @@ document.getElementById("btnEditProduct").addEventListener("click", () => {
 
 let selectedProductId = null;
 
-// Get ID
+// Get ID Product
 function getSelectedProductId() {
     const selected = document.querySelector('input[name="product_id"]:checked');
     selectedProductId = selected ? selected.value : null; // store it
@@ -1658,14 +1972,10 @@ async function openUpdateProductModal() {
         return;
     }
 
-
-
     const productId = selected.value;
     const row = document.querySelector(`tr[data-id="${productId}"]`);
     if (!row) return;
 
-
-    console.log(row);
     // Load categories
     let categories = [];
     try {
@@ -1676,7 +1986,7 @@ async function openUpdateProductModal() {
     }
 
     // Take ID from Modal
-    const categorySelect = document.getElementById("prod-category");
+    const categorySelect = document.getElementById("prod-category-id");
 
     categorySelect.innerHTML = ""; // clear previous options
 
@@ -1733,7 +2043,7 @@ async function openUpdateProductModal() {
     document.getElementById("prod-description").value =
         row.dataset.description ?? "";
 
-    document.getElementById("prod-price-final").value = finalPrice.toFixed(3);
+    document.getElementById("sell_price-final").value = finalPrice.toFixed(3);
 
     // console.log(row.dataset.category_id);
     // CATEGORY / UNIT
@@ -1750,7 +2060,9 @@ async function openUpdateProductModal() {
 
     // PRICE
     document.getElementById("prod-cost").value = row.dataset.cost ?? 0;
-    document.getElementById("prod-price").value = row.dataset.sell_price ?? 0;
+
+    document.getElementById("prod-sell-price").value =
+        row.dataset.sell_price ?? 0;
     document.getElementById("prod-vat").value = row.dataset.vat ?? 0;
     document.getElementById("prod-discount").value =
         row.dataset.discount_percent ?? 0;
@@ -1758,7 +2070,7 @@ async function openUpdateProductModal() {
     // CHECKBOXES / STATUS
     document.getElementById("prod-status").checked =
         row.dataset.status == "true";
-    document.getElementById("prod-category_name").value =
+    document.getElementById("prod-category-name").value =
         row.dataset.category_name ?? "";
 
     document.getElementById("prod-track-stock").checked =
@@ -1790,136 +2102,107 @@ function closeUpdateProductModal() {
     }
 }
 
-    async function confirmUpdateProduct() {
-        const id = document.getElementById("prod-id").value;
-
-        const data = {
-            bar_code: document.getElementById("prod-barcode").value,
-            code: document.getElementById("prod-code").value,
-            name: document.getElementById("prod-name").value,
-            variant: document.getElementById("prod-variant").value,
-            description: document.getElementById("prod-description").value,
-
-            min_stock: document.getElementById("prod-min-stock").value,
-            max_stock: document.getElementById("prod-max-stock").value,
-            cost: document.getElementById("prod-cost").value,
-            sell_price: document.getElementById("prod-price").value,
-            vat: document.getElementById("prod-vat").value,
-            discount: document.getElementById("prod-discount").value,
-
-            category_id: document.getElementById("prod-category").value,
-            category_name: document.getElementById("prod-category_name").value,
-            unit: document.getElementById("prod-unit").value,
-
-            track_stock: document.getElementById("prod-track-stock").checked,
-            allow_discount: document.getElementById("prod-allow-discount").checked,
-            allow_return: document.getElementById("prod-allow-return").checked,
-            status: document.getElementById("prod-status").checked,
-        };
-
-        try {
-            let new_img = document.getElementById("update_image");
-
-            const res = await fetch(`/product/${id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN":
-                        document.querySelector("input[name=_token]").value,
-                },
-                body: JSON.stringify(data),
-            });
-
-            const result = await res.json();
-
-            if (result.success) {
-                loadProducts(1);
-                closeUpdateProductModal();
-
-                showToast({
-                    message: "Product updated successfully",
-                    type: "success",
-                });
-            } else {
-                alert("❌ Update failed");
-            }
-        } catch (err) {
-            console.error(err);
-            alert("❌ Server error");
-        }
-    }
 async function confirmUpdateProduct() {
     const id = document.getElementById("prod-id").value;
 
     try {
-        // Create FormData
+        // 1️⃣ Create FormData
         const formData = new FormData();
+        formData.append("_method", "PUT"); // Laravel fake PUT
 
-        // Append text fields
-        formData.append("bar_code", document.getElementById("prod-barcode").value);
-        formData.append("code", document.getElementById("prod-code").value);
+        // 2️⃣ Define field mappings
+        const fields = [
+            "barcode",
+            "code",
+            "name",
+            "variant",
+            "description",
+            "min_stock",
+            "max_stock",
+            "cost",
+            "sell_price",
+            "vat",
+            "discount",
+            "category_id",
+            "category_name",
+            "unit",
+        ];
 
-        formData.append("name", document.getElementById("prod-name").value);
-        formData.append("variant", document.getElementById("prod-variant").value);
-        formData.append("description", document.getElementById("prod-description").value);
+        // 3️⃣ Append text/number fields
+        fields.forEach((field) => {
+            const el = document.getElementById(
+                `prod-${field.replace("_", "-")}`,
+            );
+            if (el) formData.append(field, el.value ?? "");
+            console.log(field);
+            console.log(el);
+        });
 
-        formData.append("min_stock", document.getElementById("prod-min-stock").value);
-        formData.append("max_stock", document.getElementById("prod-max-stock").value);
-        formData.append("cost", document.getElementById("prod-cost").value);
-        formData.append("sell_price", document.getElementById("prod-price").value);
-        formData.append("vat", document.getElementById("prod-vat").value);
-        formData.append("discount", document.getElementById("prod-discount").value);
+        // 4️⃣ Append switch/checkbox fields
+        const switches = [
+            "track_stock",
+            "allow_discount",
+            "allow_return",
+            "status",
+        ];
 
-        formData.append("category_id", document.getElementById("prod-category").value);
-        formData.append("category_name", document.getElementById("prod-category_name").value);
-        formData.append("unit", document.getElementById("prod-unit").value);
+        switches.forEach((field) => {
+            const el = document.getElementById(
+                `prod-${field.replace("_", "-")}`,
+            );
+            if (el) formData.append(field, el.checked ? 1 : 0);
+        });
 
-        formData.append("track_stock", document.getElementById("prod-track-stock").checked ? 1 : 0);
-        formData.append("allow_discount", document.getElementById("prod-allow-discount").checked ? 1 : 0);
-        formData.append("allow_return", document.getElementById("prod-allow-return").checked ? 1 : 0);
-        formData.append("status", document.getElementById("prod-status").checked ? 1 : 0);
+        // 5️⃣ Append image if selected
+        const imageFile = document.getElementById("update_image")?.files[0];
+        if (imageFile) formData.append("image", imageFile);
 
-        // Append image if user selected one
-        const imageFile = document.getElementById("update_image").files[0];
-        if (imageFile) {
-            formData.append("image", imageFile);
+        // 6️⃣ Debug: log FormData
+        console.log("FormData entries:");
+        for (const pair of formData.entries()) {
+            console.log(pair[0], pair[1]);
         }
 
-        // Send request
+        // 7️⃣ Send request
         const res = await fetch(`/product/${id}`, {
-            method: "PUT", // use POST with _method=PUT for Laravel
-           headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN":
-                            document.querySelector("input[name=_token]").value,
-                },
-
+            method: "POST", // Must be POST for Laravel FormData + _method=PUT
+            headers: {
+                "X-CSRF-TOKEN":
+                    document.querySelector("input[name=_token]").value,
+            },
             body: formData,
         });
-        console.log(formData);
+
         const result = await res.json();
 
+        // 8️⃣ Debug: log server response
+        console.log("Server response:", result);
+
+        // 9️⃣ Success handling
         if (result.success) {
             loadProducts(1);
             closeUpdateProductModal();
-
             showToast({
                 message: "Product updated successfully",
                 type: "success",
             });
         } else {
-            alert("❌ Update failed");
+            showToast({
+                message: result.message || "Update failed",
+                type: "error",
+            });
         }
-
     } catch (err) {
-        console.error(err);
-        alert("❌ Server error");
+        console.error("Server error:", err);
+        showToast({
+            message: "Server error while updating product",
+            type: "error",
+        });
     }
 }
 
-
 function calculateFinalPrice() {
-    const priceInput = document.getElementById("prod-price");
+    const priceInput = document.getElementById("prod-sell-price");
     const vatInput = document.getElementById("prod-vat");
     const discountInput = document.getElementById("prod-discount");
 
@@ -1955,52 +2238,53 @@ function calculateFinalPrice() {
     // prevent negative sell price
     finalPrice = Math.max(finalPrice, 0);
 
-    document.getElementById("prod-price-final").value = finalPrice.toFixed(2);
+    document.getElementById("sell_price-final").value = finalPrice.toFixed(2);
 }
 
 // auto recalc on typing
-["prod-price", "prod-vat", "prod-discount"].forEach((id) => {
+["prod-sell-price", "prod-vat", "prod-discount"].forEach((id) => {
     document.getElementById(id).addEventListener("input", calculateFinalPrice);
 });
 
-document
-    .getElementById("openTableModal")
-    .addEventListener("click", openTableModal);
+// document
+//     .getElementById("sale_data")
+//     .addEventListener("click", Sale_data());
 
-async function openTableModal() {
-    const tbody = document.getElementById("Table-table-body");
-    tbody.innerHTML =
-        '<tr><td colspan="5" class="text-center py-2">Loading...</td></tr>';
+// async function Sale_data() {
+//     const tbody = document.getElementById("Table-table-body");
+//     tbody.innerHTML =
+//         '<tr><td colspan="5" class="text-center py-2">Loading...</td></tr>';
 
-    try {
-        const res = await fetch("/tables"); // Your API route
-        if (!res.ok) throw new Error("Failed to fetch tables");
+//     try {
+//         const res = await fetch("/tables"); // Your API route
+//         if (!res.ok) throw new Error("Failed to fetch tables");
 
-        const tables = await res.json();
+//         const tables = await res.json();
 
-        tbody.innerHTML = ""; // Clear loading
+//         tbody.innerHTML = ""; // Clear loading
 
-        tables.forEach((table) => {
-            const tr = document.createElement("tr");
+//         tables.forEach((table) => {
+//             const tr = document.createElement("tr");
 
-            tr.innerHTML = `
-                <td class="px-4 py-2 text-center">
-                    <input type="radio" name="table_id" value="${table.id}">
-                </td>
-                <td class="px-4 py-2">${table.id}</td>
-                <td class="px-4 py-2">${table.name}</td>
-              <td class="px-4 py-2">${table.status ? "Occupied" : "Available"}</td>
+//             tr.innerHTML = `
+//                 <td class="px-4 py-2 text-center">
+//                     <input type="radio" name="table_id" value="${table.id}">
+//                 </td>
+//                 <td class="px-4 py-2">${table.id}</td>
+//                 <td class="px-4 py-2">${table.name}</td>
 
-            `;
+//               <td class="px-4 py-2">${table.status ? "Occupied" : "Available"}</td>
 
-            tbody.appendChild(tr);
-        });
-    } catch (err) {
-        console.error(err);
-        tbody.innerHTML =
-            '<tr><td colspan="5" class="text-center py-2 text-red-500">Failed to load tables</td></tr>';
-    }
-}
+//             `;
+
+//             tbody.appendChild(tr);
+//         });
+//     } catch (err) {
+//         console.error(err);
+//         tbody.innerHTML =
+//             '<tr><td colspan="5" class="text-center py-2 text-red-500">Failed to load tables</td></tr>';
+//     }
+// }
 
 let cart_qty = 0;
 let current_id = null;
@@ -2016,13 +2300,15 @@ async function showTableModal(qty_cart, id) {
 
     try {
         const response = await fetch("/tables");
+
         if (!response.ok) throw new Error("Network error fetching tables");
+
 
         const tables = await response.json();
 
+        console.log("Fetched tables:", tables);
         // Filter rows
-        const tablesToShow =
-            id === "ALL" ? tables : tables.filter((table) => table.id == id);
+        const tablesToShow = tables;
 
         tbody.innerHTML = "";
 
@@ -2031,7 +2317,7 @@ async function showTableModal(qty_cart, id) {
 
             const isOccupied = table.products && table.products.length > 0;
 
-            const statusText = isOccupied ? "Occupied" : "Available";
+            const statusText = isOccupied ? "UNAVAILABLE" : "Available";
             const statusClass = isOccupied
                 ? "text-red-600 font-semibold"
                 : "text-green-600 font-semibold";
@@ -2039,6 +2325,7 @@ async function showTableModal(qty_cart, id) {
             tr.innerHTML = `
                 <td>${table.id}</td>
                 <td>${table.name}</td>
+                <td>${table.queue_no}</td>
                 <td class="${statusClass}">${statusText}</td>
                 <td></td>
             `;
@@ -2079,7 +2366,6 @@ async function showTableModal(qty_cart, id) {
                     selectTable(table.id);
                 });
             }
-
             /* =====================
                LOAD BUTTON
             ===================== */
@@ -2088,8 +2374,42 @@ async function showTableModal(qty_cart, id) {
             loadButton.className =
                 "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded";
 
+            if (blockAdd) {
+                loadButton.addEventListener("click", () => {
+                    // 🔥 SET CURRENT TABLE HERE
+                    current_id = table.id;
+
+                    if (id === "ALL" && cart_qty > 0) {
+                        showToast({
+                            message:
+                                "Current cart has items. Cannot load all tables.",
+                            type: "error",
+                        });
+                        return;
+                    }
+
+                    LoadTable_product(table.id);
+
+                    // Disable all Load buttons
+                    modal.querySelectorAll("button").forEach((btn) => {
+                        if (btn.textContent === "Check Out") {
+                            btn.disabled = true;
+                            btn.classList.add(
+                                "bg-gray-400",
+                                "cursor-not-allowed",
+                            );
+                        }
+                    });
+                });
+            } else {
+                loadButton.disabled = true;
+                loadButton.className =
+                    "bg-gray-400 text-white px-3 py-1 rounded cursor-not-allowed";
+                loadButton.title = "This table is occupied";
+            }
+
             const PayButton = document.createElement("button");
-            PayButton.textContent = "Payment";
+            PayButton.textContent = "Payment & Print";
             PayButton.className =
                 "bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded";
             if (bockAdd_occupied) {
@@ -2116,30 +2436,6 @@ async function showTableModal(qty_cart, id) {
                 PayButton.title = "This table is occupied";
             }
 
-            loadButton.addEventListener("click", () => {
-                // 🔥 SET CURRENT TABLE HERE
-                current_id = table.id;
-
-                if (id === "ALL" && cart_qty > 0) {
-                    showToast({
-                        message:
-                            "Current cart has items. Cannot load all tables.",
-                        type: "error",
-                    });
-                    return;
-                }
-
-                LoadTable_product(table.id);
-
-                // Disable all Load buttons
-                modal.querySelectorAll("button").forEach((btn) => {
-                    if (btn.textContent === "Check Out") {
-                        btn.disabled = true;
-                        btn.classList.add("bg-gray-400", "cursor-not-allowed");
-                    }
-                });
-            });
-
             td.appendChild(addButton);
             td.appendChild(loadButton);
             td.appendChild(PayButton);
@@ -2161,45 +2457,43 @@ async function showTableModal(qty_cart, id) {
     }
 }
 
+let old_table = 0;
 function selectTable(tableId) {
     Livewire.dispatch("transferCartToTable", {
-        payload: { table_id: tableId },
+        payload: { table_id: tableId, old_table_id: old_table },
     });
+    // cleared table ;
+    old_table = 0;
 
-    // Hide modal after adding
-    const modal = document.getElementById("default-modal-table-select-list");
-    if (modal) modal.classList.add("hidden");
+    showTableModal(0, "ALL");
 }
 
 function LoadTable_product(tableId) {
+    // keep old id for clear
+    old_table = tableId;
     Livewire.dispatch("loadTableToCart", { table_id: tableId });
-
-    // Hide modal after loading
-    // const modal = document.getElementById("default-modal-table-select-list");
-    // if (modal) modal.classList.add("hidden");
 }
 function exit_table() {
     Livewire.dispatch("exit_table");
 
-
+    document.querySelector("#customerValue").value = "";
+    document.querySelector("#customerSearch").value = "";
     // Hide modal after loading
     showToast({
         message: `Exit Table Editing Mode.`,
         type: "success",
     });
-    // openTableModal();
-    showTableModal(0,"ALL");
-
+    showTableModal(0, "ALL");
 }
 function table_pay(id) {
     // close modal
     const modal = document.getElementById("default-modal-table-select-list");
     if (modal) modal.classList.add("hidden");
     // load to cart
-    payOtherInput.value = '';
-    payUSDInput.value = '';
-    returnedInput.value = '';
-    returnedInputOther.value = '';
+    payOtherInput.value = "";
+    payUSDInput.value = "";
+    returnedInput.value = "";
+    returnedInputOther.value = "";
     Livewire.dispatch("loadTableToCartPayment", { table_id: id });
 }
 
@@ -2214,19 +2508,29 @@ const confirmPayBtn = document.getElementById("confirmPayBtn");
 function formatCurrency(value, symbol) {
     return `${value} ${symbol}`;
 }
+function cleanNumberInput(input) {
+    let value = input.value;
 
+    // Allow empty
+    if (value === "") return;
+
+    // If contains decimal → DO NOT TOUCH
+
+    // Remove leading zeros ONLY if no decimal
+    input.value = value.replace(/^0+(?=\d)/, "");
+}
+let paymentData = {};
 function updatePayment() {
-
-
-
-
     const totalAmountUSD = parseFloat(displayUSD.value) || 0;
 
-    // Get numeric values from inputs
+    cleanNumberInput(payUSDInput);
+    cleanNumberInput(payOtherInput);
+
     const payUSD = payUSDInput.value || 0;
     const payOther = payOtherInput.value || 0;
+
     const factor = parseFloat(currencyFactorInput.value) || 1;
-    const corrency_other_symbol = document.querySelector(
+    const currency_other_symbol = document.querySelector(
         "#currency_display_symbol",
     ).value;
     // Convert other currency to USD
@@ -2250,24 +2554,41 @@ function updatePayment() {
     returnedInput.value = formatCurrency(returnedUSD.toFixed(2), "$");
     returnedInputOther.value = formatCurrency(
         returnedOther.toFixed(0),
-        corrency_other_symbol,
+        currency_other_symbol,
     );
-
-
-
 
     // Update input formatting while typing
     payUSDInput.value = payUSD;
-
     payOtherInput.value = payOther;
 
     // Highlight
     const isEnough = totalPaidUSD >= totalAmountUSD;
 
     if (isEnough) {
+        // Dates from inputs
+        const input_due_date_local = document.getElementById("due_date");
+        const input_document_date_value_local =
+            document.getElementById("document_dateInput");
+        const Payment_Method = document.getElementById("payment_method").value;
+        const due_date = new Date(input_due_date_local.value);
+        const document_date = new Date(input_document_date_value_local.value);
+        // Store everything in global object
+        paymentData = {
+            paymentMethod: Payment_Method,
+            totalAmountUSD: Number(totalAmountUSD) || 0,
+            payUSD: Number(payUSD) || 0,
+            payOther: Number(payOther) || 0,
+            payOtherInUSD: Number(payOtherInUSD) || 0,
+            returnedUSD: Number(returnedUSD) || 0,
+
+            factor: Number(factor) || 1,
+            currency_other_symbol: currency_other_symbol ?? null,
+            due_date: due_date ?? null,
+            document_date: document_date ?? null,
+        };
         // enable button
         confirmPayBtn.disabled = false;
-        confirmPayBtn.textContent = "Confirm Payment";
+        confirmPayBtn.textContent = "Payment";
 
         confirmPayBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
         confirmPayBtn.classList.add(
@@ -2288,6 +2609,12 @@ function updatePayment() {
         confirmPayBtn.classList.add("bg-gray-400", "cursor-not-allowed");
     }
 }
+confirmPayBtn.addEventListener("click", Final_Payment);
+function Final_Payment() {
+    Livewire.dispatch("paymentConfirmed", {
+        payload: paymentData,
+    });
+}
 
 // Attach events
 payUSDInput.addEventListener("input", updatePayment);
@@ -2297,19 +2624,33 @@ payOtherInput.addEventListener("input", updatePayment);
 updatePayment();
 
 window.addEventListener("cart-loaded", (e) => {
-    console.log("Table cart loaded!", e.detail);
     document.querySelector("#count_cart_input").value = 1;
+    updatePayment();
     print("Receipt");
 });
 
 window.addEventListener("serve-table", (e) => {
     showToast({
-        message: `Served ${e.detail[0].name} table success.`,
+        message: e.detail[0].message,
         type: "success",
     });
+    showTableModal(0, "ALL");
 });
 
+window.addEventListener("clear-customer", (e) => {
+    document.querySelector("#customerValue").value = "";
+    document.querySelector("#customerSearch").value = "";
+});
 
+window.addEventListener("update-customer-input", (e) => {
+    document.querySelector("#customerValue").value = e.detail[0].code;
+    document.querySelector("#customerSearch").value = e.detail[0].display;
+});
+let document_no = "NA";
+window.addEventListener("get-document", (e) => {
+    console.log("Received document number:", document_no);
+    document_no = e.detail[0].document_no;
+});
 
 const fileInput = document.getElementById("update_image");
 const previewImg = document.getElementById("preview_img");
@@ -2325,4 +2666,519 @@ fileInput.addEventListener("change", function () {
     } else {
         previewImg.src = ""; // Reset if no file selected
     }
+});
+
+function openModal() {
+    document.getElementById("tableModal").classList.remove("hidden");
+    document.getElementById("tableModal").classList.add("flex");
+}
+
+function closeModal() {
+    document.getElementById("tableModal").classList.add("hidden");
+    document.getElementById("tableModal").classList.remove("flex");
+}
+
+async function saveTable() {
+    const name = document.getElementById("table_name").value.trim();
+
+    if (!name) {
+        alert("Table name is required");
+        return;
+    }
+
+    try {
+        const response = await fetch("/restaurant-tables/store", {
+            method: "POST",
+            headers: {
+                "X-CSRF-TOKEN": document.querySelector('input[name="_token"]')
+                    .value,
+                Accept: "application/json",
+                "Content-Type": "application/json", // 🔥 must have
+            },
+            body: JSON.stringify({
+                name: name,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast({
+                message: "Table Created Successfully!",
+                type: "success",
+            });
+            closeModal();
+            showTableModal(0, "ALL");
+        } else {
+            showToast({
+                message: "Table Fail!",
+                type: "error",
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Something went wrong.");
+    }
+}
+
+window.addEventListener("payment-success", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "success",
+    });
+
+    // Ask before printing
+    const shouldPrint = confirm("Do you want to print the receipt?");
+
+    if (shouldPrint) {
+        print_document("Receipt");
+    }
+
+    // Clear after confirmation (whether printed or not)
+    Livewire.dispatch("clearAll_after_payment");
+});
+
+/*
+|--------------------------------------------------------------------------
+| Date Filter Handler
+|--------------------------------------------------------------------------
+*/
+function handleDateFilter() {
+    const fromDate = document.getElementById("from_date").value;
+    const toDate = document.getElementById("to_date").value;
+
+    if (fromDate && toDate) {
+        loadSales();
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Fetch Data
+|--------------------------------------------------------------------------
+*/
+document.getElementById("sale_data").addEventListener("click", () => {
+    fetchSalesData(1); // start from page 1
+    loadCategories();
+    loadPaymentMethods();
+});
+// Example: filter inputs
+const filters = [
+    "from_date",
+    "to_date",
+    "invoice_paymentMethod",
+    "customer_filter",
+    "ProductSearchInput_sale_invoice",
+    "category_filter",
+    "sale_view_limit",
+];
+
+filters.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener("change", () => {
+        // Only fetch if both dates are filled (if date filters)
+        if (id === "from_date" || id === "to_date") {
+            const from = document.getElementById("from_date").value;
+            const to = document.getElementById("to_date").value;
+            if (!from || !to) return;
+        }
+        fetchSalesData(1);
+    });
+});
+
+function fetchSalesData(page = 1) {
+    const params = new URLSearchParams();
+
+    const from_date = document.getElementById("from_date").value;
+    const to_date = document.getElementById("to_date").value;
+    const invoice_paymentMethod = document.getElementById(
+        "invoice_paymentMethod",
+    ).value;
+    const customer_filter = document.getElementById("customer_filter").value;
+    const ProductSearchInput = document.getElementById(
+        "ProductSearchInput_sale_invoice",
+    ).value;
+    const category_filter = document.getElementById("category_filter").value;
+    const sale_view_limit = document.getElementById("sale_view_limit").value;
+
+    if (from_date) params.append("from_date", from_date);
+    if (to_date) params.append("to_date", to_date);
+    if (invoice_paymentMethod)
+        params.append("invoice_paymentMethod", invoice_paymentMethod);
+    if (customer_filter) params.append("customer_filter", customer_filter);
+    if (ProductSearchInput)
+        params.append("ProductSearchInput", ProductSearchInput);
+    if (category_filter) params.append("category_filter", category_filter);
+    if (sale_view_limit) params.append("sale_view_limit", sale_view_limit);
+
+    params.append("page", page);
+
+    fetch(`/sales-report?${params.toString()}`)
+        .then((res) => res.json())
+        .then((data) => renderTable(data))
+        .catch((err) => console.error(err));
+}
+
+/*
+|--------------------------------------------------------------------------
+| Debounce
+|--------------------------------------------------------------------------
+*/
+function debounce(func, delay) {
+    let timeout;
+    return function () {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(), delay);
+    };
+}
+
+let currentSortColumn = "h.invoice_date";
+let currentSortDirection = "asc";
+document.querySelectorAll("th[data-column]").forEach((th) => {
+    th.addEventListener("click", function () {
+        const column = this.getAttribute("data-column");
+
+        // Toggle direction
+        if (currentSortColumn === column) {
+            currentSortDirection =
+                currentSortDirection === "asc" ? "desc" : "asc";
+        } else {
+            currentSortColumn = column;
+            currentSortDirection = "asc";
+        }
+
+        updateSortIcons();
+        loadSales();
+    });
+});
+function updateSortIcons() {
+    document.querySelectorAll(".sort-icon").forEach((icon) => {
+        icon.innerText = "↕";
+    });
+
+    const activeTh = document.querySelector(
+        `th[data-column="${currentSortColumn}"] .sort-icon`,
+    );
+
+    if (activeTh) {
+        activeTh.innerText = currentSortDirection === "asc" ? "↑" : "↓";
+    }
+}
+// Helper functions
+function formatMoney(value) {
+    return (Number(value) || 0).toFixed(2); // always 2 decimals for money
+}
+function formatPercent(value) {
+    return Math.round(Number(value) || 0); // round to integer for percent
+}
+function renderTable(response) {
+    const tbody = document.getElementById("salesTableBody");
+    const paginationContainer = document.getElementById(
+        "paginationContainer_sale_invoice",
+    );
+    const pageInfo = document.getElementById("pageInfo_sale_invoice");
+
+    tbody.innerHTML = "";
+    paginationContainer.innerHTML = "";
+    pageInfo.innerHTML = "";
+
+    if (!response.data || response.data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="22" class="text-center py-4 text-gray-500">No data found</td></tr>`;
+        return;
+    }
+
+    // Totals
+    let subtotal = {
+        quantity: 0,
+        unit_price: 0,
+        cost: 0,
+        sell_price: 0,
+        line_amount: 0,
+        discount_percent: 0,
+        discount_amount: 0,
+        vat: 0,
+        vat_amount: 0,
+        cost_amount: 0,
+        total_amount: 0,
+    };
+    let rowCount = 0; // for average
+    console.log(response.data.length); // Debug log
+    response.data.forEach((header) => {
+        const lines = header.lines;
+        if (!lines.length) return;
+
+        const lineCount = lines.length;
+        console.log(lines.length); // Debug log
+        lines.forEach((line, index) => {
+            rowCount++; // increment row count for each line
+            // Calculate cost_amount safely
+            const cost_amount =
+                Math.round(
+                    (Number(line.cost) || 0) *
+                        (Number(line.quantity) || 0) *
+                        100,
+                ) / 100;
+
+            tbody.innerHTML += `
+                 <tr class="text-nowrap ">
+                    <td data-value="${line.id}">${line.id}</td>
+                    <td data-value="${header.invoice_number}">${header.invoice_number ?? ""}</td>
+                    <td data-value="${header.created_at ? new Date(header.created_at).toISOString() : ""}">
+                        ${header.created_at ? new Date(header.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }) : ""}
+                    </td>
+                    <td data-value="${header.customer?.name ?? ""}">${header.customer?.name ?? ""}</td>
+                    <td data-value="${header.invoice_date ?? ""}">${header.invoice_date ? new Date(header.invoice_date).toLocaleDateString("en-GB") : ""}</td>
+                    <td data-value="${header.due_date ?? ""}">${header.due_date ? new Date(header.due_date).toLocaleDateString("en-GB") : ""}</td>
+                    <td data-value="${header.payment_method ?? ""}">${header.payment_method ?? ""}</td>
+                    <td data-value="${line.item_code ?? ""}">${line.item_code ?? ""}</td>
+                    <td data-value="${line.name ?? ""}">${line.name ?? ""}</td>
+                    <td data-value="${line.variant ?? ""}">${line.variant ?? ""}</td>
+                    <td data-value="${line.description ?? ""}">${line.description ?? ""}</td>
+                    <td data-value="${line.quantity ?? 0}" class="text-right">${line.quantity ?? 0}</td>
+                    <td data-value="${line.unit ?? ""}">${line.unit ?? ""}</td>
+                    <td data-value="${line.unit_price ?? 0}" class="text-right">${formatMoney(line.unit_price)} $</td>
+
+                    <td data-value="${line.sell_price ?? 0}" class="text-right">${formatMoney(line.sell_price)} $</td>
+                    <td data-value="${line.line_amount ?? 0}" class="text-right">${formatMoney(line.line_amount)} $</td>
+                    <td data-value="${line.discount_percent ?? 0}" class="text-right">${formatPercent(line.discount_percent)} %</td>
+                    <td data-value="${line.discount_amount ?? 0}" class="text-right">${formatMoney(line.discount_amount)} $</td>
+                    <td data-value="${line.vat ?? 0}" class="text-right">${formatPercent(line.vat)} %</td>
+                    <td data-value="${line.vat_amount ?? 0}" class="text-right">${formatMoney(line.vat_amount)} $</td>
+
+                    <td data-value="${line.total_amount ?? 0}" class="text-right">${formatMoney(line.total_amount)} $</td>
+                </tr>
+            `;
+
+            //  <td data-value="${line.cost ?? 0}" class="text-right">${formatMoney(line.cost)} $</td>
+            //         <td data-value="${cost_amount}" class="text-right">${formatMoney(cost_amount)} $</td>
+            // Add to subtotal
+            subtotal.quantity += Number(line.quantity) || 0;
+            // subtotal.cost += Number(line.cost) || 0;
+            subtotal.unit_price += Number(line.unit_price) || 0;
+            subtotal.sell_price += Number(line.sell_price) || 0;
+            subtotal.line_amount += Number(line.line_amount) || 0;
+            subtotal.discount_percent += Number(line.discount_percent) || 0;
+            subtotal.discount_amount += Number(line.discount_amount) || 0;
+            subtotal.vat += Number(line.vat) || 0;
+            subtotal.vat_amount += Number(line.vat_amount) || 0;
+            // subtotal.cost_amount += cost_amount;
+            subtotal.total_amount += Number(line.total_amount) || 0;
+        });
+    });
+
+    subtotal.discount_percent = subtotal.discount_percent / rowCount; // average discount percent
+    subtotal.sell_price = subtotal.sell_price / rowCount; // average sell price
+    subtotal.cost = subtotal.cost / rowCount; // average cost
+    subtotal.unit_price = subtotal.unit_price / rowCount; // average unit price
+    subtotal.vat = subtotal.vat / rowCount; // average vat percent
+    // Subtotal row
+
+    tbody.innerHTML += `
+    <tr class="bg-blue-200 font-semibold text-nowrap">
+    <td colspan="11" class="text-left">Subtotal</td>
+
+    <td class="text-right">${subtotal.quantity.toFixed(0)}</td>
+        <td> </td>
+
+    <td class="text-right">AVG ${subtotal.unit_price.toFixed(2)} $</td>
+    <td class="text-right">AVG ${subtotal.sell_price.toFixed(2)} $</td>
+    <td class="text-right">${subtotal.line_amount.toFixed(2)} $</td>
+    <td class="text-right">AVG ${Math.round(subtotal.discount_percent)} %</td>
+    <td class="text-right">${subtotal.discount_amount.toFixed(2)} $</td>
+    <td class="text-right">AVG ${Math.round(subtotal.vat)} %</td>
+    <td class="text-right">${subtotal.vat_amount.toFixed(2)} $</td>
+
+    <td class="text-right">${subtotal.total_amount.toFixed(2)} $</td>
+</tr>
+    `;
+    // <td class="text-right">AVG ${subtotal.cost.toFixed(2)} $</td>
+    //  <td class="text-right">${subtotal.cost_amount.toFixed(2)} $</td>
+
+    // Pagination
+    const totalPages = response.last_page;
+    const currentPage = response.current_page;
+
+    if (totalPages > 1) {
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = i;
+            btn.className =
+                "px-3 py-1 rounded border border-gray-300 text-sm " +
+                (i === currentPage
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-100");
+            btn.addEventListener("click", () => fetchSalesData(i));
+            paginationContainer.appendChild(btn);
+        }
+    }
+
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+}
+
+async function loadCategories() {
+    try {
+        const res = await fetch("/sales/categories");
+        const categories = await res.json();
+
+        const select = document.getElementById("category_filter");
+        select.innerHTML = '<option value="">All Categories</option>'; // Clear existing options
+        categories.forEach((category) => {
+            const option = document.createElement("option");
+            option.value = category;
+            option.textContent = category;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error loading categories:", error);
+    }
+}
+
+async function loadPaymentMethods() {
+    try {
+        const res = await fetch("/sales/payment-methods");
+        const methods = await res.json();
+
+        const select = document.getElementById("invoice_paymentMethod");
+        select.innerHTML = '<option value="">All Payment</option>'; // Clear existing options
+        methods.forEach((method) => {
+            const option = document.createElement("option");
+            option.value = method; // value for filtering
+            option.textContent = method; // text shown to user
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error loading payment methods:", error);
+    }
+}
+const customerInput = document.getElementById("customer_search");
+const customerList = document.getElementById("customer_list");
+const customerHidden = document.getElementById("customer_filter");
+
+let debounceTimer;
+
+customerInput.addEventListener("input", function () {
+    clearTimeout(debounceTimer);
+
+    debounceTimer = setTimeout(() => {
+        fetchCustomers(this.value);
+    }, 300); // debounce 300ms
+});
+
+async function fetchCustomers(search = "") {
+    try {
+        const res = await fetch(`/sales/customer-search?search=${search}`);
+        const customers = await res.json();
+
+        customerList.innerHTML = "";
+
+        if (customers.length === 0) {
+            customerList.classList.add("hidden");
+            return;
+        }
+
+        customers.forEach((customer) => {
+            const li = document.createElement("li");
+            li.textContent = customer.name;
+            li.className = "px-3 py-2 hover:bg-gray-100 cursor-pointer";
+
+            li.addEventListener("click", () => {
+                customerInput.value = customer.name;
+                customerHidden.value = customer.id;
+                customerList.classList.add("hidden");
+
+                fetchSalesData(1); // auto filter
+            });
+
+            customerList.appendChild(li);
+        });
+
+        customerList.classList.remove("hidden");
+    } catch (error) {
+        console.error("Customer search error:", error);
+    }
+}
+
+// Hide dropdown when clicking outside
+document.addEventListener("click", function (e) {
+    if (!customerInput.contains(e.target) && !customerList.contains(e.target)) {
+        customerList.classList.add("hidden");
+    }
+});
+
+const productInput = document.getElementById("product_search");
+const productDatalist = document.getElementById("product_datalist");
+const productHidden = document.getElementById(
+    "ProductSearchInput_sale_invoice",
+);
+
+let productDebounce;
+
+productInput.addEventListener("input", function () {
+    clearTimeout(productDebounce);
+
+    productDebounce = setTimeout(() => {
+        fetchProducts(this.value);
+    }, 300);
+});
+
+async function fetchProducts(search = "") {
+    try {
+        const res = await fetch(`/sales/product-search?search=${search}`);
+        const products = await res.json();
+
+        productDatalist.innerHTML = "";
+        console.log(products);
+        products.forEach((product) => {
+            const option = document.createElement("option");
+            option.value = product; // what user sees
+            option.dataset.code = product;
+            productDatalist.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Product search error:", error);
+    }
+}
+
+function exportTableToExcelXLSX(tableId, filename = "sales.xlsx") {
+    const table = document.getElementById(tableId);
+    const rows = Array.from(table.querySelectorAll("tr"));
+
+    const data = rows
+        .filter((row) => !row.classList.contains("bg-blue-200")) // skip subtotal row
+        .map((row) => {
+            return Array.from(row.querySelectorAll("td, th")).map((cell) => {
+                // Remove sort-icon and trim whitespace from header
+                let text = cell.textContent.replace(/↕/g, "").trim();
+                // Use dataset.value if exists (numeric) otherwise text
+                return cell.dataset.value ?? text;
+            });
+        });
+
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // Align all cells left
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cell_address = { c: C, r: R };
+            const cell_ref = XLSX.utils.encode_cell(cell_address);
+            if (!ws[cell_ref]) continue;
+            ws[cell_ref].s = { alignment: { horizontal: "left" } };
+        }
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, "Sales Report");
+    XLSX.writeFile(wb, filename);
+}
+
+// Hook download button
+document.getElementById("downloadSales").addEventListener("click", () => {
+    exportTableToExcelXLSX("Table-sale-list");
 });

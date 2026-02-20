@@ -2,14 +2,15 @@
     <div class="screen-only">
         <div id="header_invoice"
             class="border-b bg-white border-default pb-2  p-2 flex items-center justify-between sticky top-0">
-            <h1 style="font-size: 30px;" class="mb-2 font-bold">
+            <h1 id="chasier" class="mb-2 font-bold">
                 @if (!empty($this->Current_table_id))
                     <span class="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
                         Editing Data :
                     </span>
                     {{ $this->Current_table_name }}
                 @else
-                    <span id="tittle_span" class="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
+                    <span id="tittle_span"
+                        class="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
                         {{ $prefix }}
                     </span>
                     {{ $title }}
@@ -17,7 +18,7 @@
 
             </h1>
             <div class="px-4" id="refreshBtn" data-popover-target="popover-user-profile">
-                <i style="font-size: 30px;" class="fa-solid fa-arrows-rotate"></i>
+                <i id="refresh-icon" class="fa-solid fa-arrows-rotate"></i>
             </div>
 
             <div data-popover id="popover-user-profile" role="tooltip"
@@ -68,9 +69,10 @@
                                 <p class="text-sm text-gray-400">
                                     តម្លៃ:
                                     @if ($item['discount_percent'] != 0)
-                                        <del>{{ $item['price'] }}</del>$ - {{ $item['discount_price'] }}$
+                                        <del>{{ number_format($item['price'], 2) }}</del>$
+                                        -{{ number_format((float) $item['discount_price'], 2) }}$
                                     @else
-                                        {{ (float) $item['price'] }} $
+                                        {{ number_format((float) $item['price'], 2) }} $
                                     @endif
                                 </p>
                             </div>
@@ -78,10 +80,13 @@
                         <div class="text-right">
                             <p class="font-semibold">
                                 @if ($item['discount_percent'] != 0)
-                                    <del>{{ $item['amount_line'] }}$</del> - {{ $item['net_amount_line'] }}$
+                                    <del>{{ number_format($item['amount_line'], 2) }}$</del> -
+                                    {{ number_format($item['net_amount_line'], 2) }}$
                                 @else
-                                    {{ $item['amount_line'] }}$
+                                    {{ number_format($item['amount_line'], 2) }}$
                                 @endif
+
+
                             </p>
                         </div>
                     </div>
@@ -115,10 +120,21 @@
 
         <div id="total" class="grid grid-cols-1 gap-1 p-2">
             <div class="flex items-end flex-col justify-between">
-                <p class="text-sm">សរុបរង: {{ $this->totals['total_original'] }}$</p>
-                <p class="text-sm">បញ្ចុះតម្លៃ : {{ $this->totals['total_discount'] }}$</p>
-                <p class="font-semibold">តម្លៃសរុប : {{ $this->totals['total_net'], 0 }} $</p>
-                <input type="hidden" id="total_amount" value="{{ $this->totals['total_net'], 0 }}">
+                <p class="text-sm">
+                    សរុបរង: {{ number_format($this->totals['total_original'], 2) }}$
+
+                </p>
+
+                <p class="text-sm">
+                    បញ្ចុះតម្លៃ : {{ number_format($this->totals['total_discount'], 2) }}$
+                </p>
+                <p class="font-semibold">
+                    តម្លៃសរុប : {{ number_format($this->totals['total_net'], 2) }}$
+                </p>
+
+
+
+                <input type="hidden" id="total_amount" value="{{ floor($this->totals['total_net'] * 100) / 100 }}">
                 <input type="hidden" id="currency_name" value="{{ $currency_name }}">
                 <input type="hidden" id="currency_display_symbol" value="{{ $currency }}">
                 <input type="hidden" id="currency_display_factor" value="{{ $factor }}">
@@ -137,13 +153,14 @@
                         </div>
                         <p class="font-semibold">
                             តម្លៃសរុបគិតជា {{ $currency_name }}:
-                            {{ floor($this->totals['total_net'] * $factor) == $this->totals['total_net'] * $factor
-                                ? number_format($this->totals['total_net'] * $factor, 0)
-                                : number_format($this->totals['total_net'] * $factor, 2) }}
+                            @php
+                                $converted = $this->totals['total_net'] * $factor;
+                                $truncated = floor($converted * 100) / 100;
+                            @endphp
+                            {{ $truncated == floor($truncated) ? number_format($truncated, 0) : number_format($truncated, 2) }}
                             {{ $currency }}
-
-
                         </p>
+
 
                     </div>
                     <input type="hidden" id="converted_total_amount"
@@ -205,18 +222,6 @@
                     class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
                     Payment
                 </button>
-                {{-- <button onclick="print('Invoice')" style="font-size: 10px;"
-                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                    Invoice
-                </button> --}}
-
-                {{-- <button onclick="print('Delivery Note')" style="font-size: 10px;"
-                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                    Delivery Note
-                </button> --}}
-
-
-
             </div>
         </div>
     </div>
@@ -227,61 +232,95 @@
     <div id="invoice">
         <div class="print-only">
             <input type="text" id="count_cart_input" value="{{ $count_cart }}" hidden>
+            @php
+                // CFR
+                $logo = 'logo_cfr.png';
+                // Panha
+                //    $logo = 'logo.jpg';
+            @endphp
 
             <div id="logo" style="flex: 0 0 auto; margin-right:15px;">
-                <img id="logo" class="logo" style="width: 100px;" src="{{ asset('assets/logo/logo.png') }}">
+
+                {{-- CFR  --}}
+                <img class="logo" style="width: 80px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo">
+                {{-- Panha --}}
+                {{-- <img class="logo" style="width: 250px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo"> --}}
             </div>
-            <div id="document-header">
-                <!-- LOGO -->
 
-                <!-- INVOICE HEADER -->
-                <div class="invoice-header" style="display:flex; align-items:flex-start;">
-
-                    <!-- BUYER & SELLER -->
-                    <div style="flex:1; display:flex; justify-content:space-between;">
-
-                        <!-- BUYER (LEFT) -->
-                        <div style="width:48%; text-align:left;">
-
-                            <strong>Bill To:</strong><br>
-                            Name: {{ $customer_name }}<br>
-                            Mobile: {{ $customer_phone }}<br>
-                            Address: {{ $customer_address }}<br>
-                            City: {{ $customer_city }}
-                        </div>
-
-                        <!-- SELLER (RIGHT) -->
-
-
-                    </div>
-                </div>
-
-
-
-            </div>
             <div id="document_title">
                 <h1> </h1>
             </div>
+            @php
+                $shopInfo_CFR = [
+                    'company' => 'Confirel',
+                    'address1' => '#57, Street 178, Songkat Chey Chomneas',
+                    'address2' => 'Khan Doun Penh, Phnom Penh, Cambodia.',
+                    'phone' => '+855 93 981 724',
+                    'email' => 'info@confirel.com',
+                    'seller' => 'Cashier',
+                    'name' => 'Confirel Co., Ltd.',
+                ];
+                $sellerInfo_panha = [
+                    'address1' => 'PHUM SAMRORNG, SANGKAT KRANG THNUNG,',
+                    'address2' => 'KHAN SEN SOK, PHNOM PENH, CAMBODIA',
+                    'phone' => '010 712 324 / 070 426 322',
+                    'email' => 'spsparep@gmail.com',
+                    'name' => 'Mr. Troek Panha',
+                ];
+
+                $sellerInfo = $shopInfo_CFR;
+            @endphp
+
 
             <div id="shop_info">
                 <div class="text-left">
-                    <div id="seller_company">Confirel</div>
-                    <div id="seller_address">#57 , Street 178, Songkat Chey Chomneas</div>
-                    <div id="seller_address2">Khan Doun Penh , Phnom Penh , Cambodia.</div>
-                    <div id="seller_phone">Mobile: +855 93 981 724</div>
-                    <div id="seller_email">Email: info@confirel.com</div>
-                    <div id="seller_name">Seller: Cashier</div>
+                    <div id="seller_address">{{ $sellerInfo['address1'] }}</div>
+                    <div id="seller_address2">{{ $sellerInfo['address2'] }}</div>
+                    <div id="seller_phone">Mobile: {{ $sellerInfo['phone'] }}</div>
+                    <div id="seller_email">Email: {{ $sellerInfo['email'] }}</div>
+                    <div id="seller_name">Seller: {{ $sellerInfo['name'] }}</div>
                 </div>
             </div>
             <div id="customer_info">
                 <div class="text-left">
                     @if ($customer_name != 'Walk-in Customer')
-                        <div id="sell_to_name" class="bold">{{ $customer_name }}</div>
-                        <div id="sell_to_company">{{ $customer_name }}</div>
-                        <div id="sell_to_address1">{{ $customer_address }}</div>
-                        <div id="sell_to_address2">{{ $customer_address }}</div>
-                        <div id="sell_to_contact_name">{{ $customer_name }}</div>
-                        <div id="sell_to_phone">Mobile: {{ $customer_phone }}</div>
+                        @if (filled($this->customer_name) ||
+                                filled($this->customer_address1) ||
+                                filled($this->customer_address2) ||
+                                filled($this->customer_contact_name) ||
+                                filled($this->customer_contact_phone))
+
+                            @if (filled($this->customer_name))
+                                <div id="sell_to_name" class="bold">
+                                    {{ $this->customer_name }}
+                                </div>
+                            @endif
+
+                            @if (filled($this->customer_address1))
+                                <div id="sell_to_address1">
+                                    {{ $this->customer_address1 }}
+                                </div>
+                            @endif
+
+                            @if (filled($this->customer_address2))
+                                <div id="sell_to_address2">
+                                    {{ $this->customer_address2 }}
+                                </div>
+                            @endif
+
+                            @if (filled($this->customer_contact_name))
+                                <div id="sell_to_contact_name">
+                                    ATT To: {{ $this->customer_contact_name }}
+                                </div>
+                            @endif
+
+                            @if (filled($this->customer_contact_phone))
+                                <div id="sell_to_phone">
+                                    Mobile: {{ $this->customer_contact_phone }}
+                                </div>
+                            @endif
+
+                        @endif
                     @else
                         <div id="sell_to_name" class="bold">Walk-in Customer</div>
                     @endif
@@ -289,7 +328,7 @@
                 </div>
             </div>
             <div id="table_footer">
-                <div style="width:100%; display:flex; justify-content:center ; margin-top:30px;">
+                <div>
                     <div id="table_footer_description"></div>
                     <!-- CURRENCY RATE -->
 
@@ -333,28 +372,32 @@
                                     {{ number_format($item['net_amount_line'], 2) }}$</td>
                             </tr>
                         @endforeach
-
                         <!-- TOTALS -->
                         <tr class="total_print">
-                            <td colspan="7" style="text-align:end;">Subtotal:
-                                {{ number_format($this->totals['total_original'], 2) }}$</td>
+                            <td colspan="7" style="text-align:end;">
+                                Subtotal: {{ floor($this->totals['total_original'] * 100) / 100 }}$
+                            </td>
                         </tr>
                         <tr class="total_print">
-                            <td colspan="7" style="text-align:end;">Discount:
-                                {{ number_format($this->totals['total_discount'], 2) }}$</td>
+                            <td colspan="7" style="text-align:end;">
+                                Discount: {{ floor($this->totals['total_discount'] * 100) / 100 }}$
+                            </td>
                         </tr>
                         <tr class="total_print">
-                            <td colspan="7" style="text-align:end;">Total Amount:
-                                {{ number_format($this->totals['total_net'], 2) }}$</td>
+                            <td colspan="7" style="text-align:end;">
+                                Total Amount: {{ floor($this->totals['total_net'] * 100) / 100 }}$
+                            </td>
                         </tr>
 
                         @if ($currency != 'USD')
                             <tr class="total_print">
-                                <td colspan="7" style="text-align:end;">Total Amount in {{ $currency }}:
-                                    {{ number_format($this->totals['total_net'] * $factor, 2) }}{{ $currency }}
+                                <td colspan="7" style="text-align:end;">
+                                    Total Amount in {{ $currency }}:
+                                    {{ floor($this->totals['total_net'] * $factor * 100) / 100 }}{{ $currency }}
                                 </td>
                             </tr>
                         @endif
+
                     </tbody>
                 </table>
 

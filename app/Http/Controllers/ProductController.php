@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class ProductController extends Controller
@@ -123,7 +125,7 @@ class ProductController extends Controller
                 'vat' => $product->vat,
                 'discount_percent' => $product->discount_percent,
                 'last_purchase_price' => $product->last_purchase_price,
-                                'category_id' => $product->category_id,
+                'category_id' => $product->category_id,
                 'min_stock' => $product->min_stock,
                 'max_stock' => $product->max_stock,
                 'track_stock' => $product->track_stock,
@@ -188,47 +190,74 @@ class ProductController extends Controller
 
 
    public function update(Request $request, $id)
-{
-    $product = Product::findOrFail($id);
+    {
+        // 1️⃣ Find the product
+        $product = Product::findOrFail($id);
 
-    // Handle image upload if present
-    if ($request->hasFile('image')) {
-        $file = $request->file('image');
-        $filename = time() . '.' . $file->getClientOriginalExtension();
-        // Store in storage/app/public/products
-        $file->storeAs('public/products', $filename);
-        $product->image = $filename;
+        // 2️⃣ Validate required fields
+        $request->validate([
+            'code' => 'required|string',
+            'name' => 'required|string',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            /* ==========================
+            HANDLE IMAGE UPLOAD
+            ========================== */
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $folder = 'assets/startic_img';
+                $filename = time() . '-' . ($request->code ?? 'product') . '.' . $file->getClientOriginalExtension();
+
+                $file->move(public_path($folder), $filename);
+
+                $product->image = $filename;
+            }
+
+            /* ==========================
+            UPDATE PRODUCT
+            ========================== */
+            $product->update([
+                'bar_code'         => $request->bar_code ?? '',
+                'code'             => $request->code,
+                'name'             => $request->name,
+                'variant'          => $request->variant ?? '',
+                'description'      => $request->description ?? '',
+                'min_stock'        => $request->min_stock ?? 0,
+                'max_stock'        => $request->max_stock ?? 0,
+                'cost'             => $request->cost ?? 0,
+                'sell_price'       => $request->sell_price ?? 0,
+                'vat'              => $request->vat ?? 0,
+                'discount_percent' => $request->discount ?? 0,
+                'category_id'      => $request->category_id ?? null,
+                'category_name'    => $request->category_name ?? '',
+                'unit'             => $request->unit ?? '',
+                // switches
+                'track_stock'      => $request->track_stock ? 1 : 0,
+                'allow_discount'   => $request->allow_discount ? 1 : 0,
+                'allow_return'     => $request->allow_return ? 1 : 0,
+                'status'           => $request->status ? 1 : 0,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product updated successfully',
+                'product' => $product
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger()->error($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Update failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-
-    // Update other fields
-    $product->update([
-        'bar_code'         => $request->bar_code,
-        'code'             => $request->code,
-        'name'             => $request->name,
-        'variant'          => $request->variant,
-        'description'      => $request->description,
-        'min_stock'        => $request->min_stock ?? 0,
-        'max_stock'        => $request->max_stock ?? 0,
-        'cost'             => $request->cost ?? 0,
-        'sell_price'       => $request->sell_price ?? 0,
-        'vat'              => $request->vat ?? 0,
-        'discount_percent' => $request->discount ?? 0,
-        'category_id'      => $request->category_id,
-        'category_name'    => $request->category_name,
-        'unit'             => $request->unit,
-
-        // switches
-        'track_stock'      => $request->track_stock ? 1 : 0,
-        'allow_discount'   => $request->allow_discount ? 1 : 0,
-        'allow_return'     => $request->allow_return ? 1 : 0,
-        'status'           => $request->status ? 1 : 0,
-    ]);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Product updated successfully',
-        'product' => $product
-    ]);
-}
 
 }

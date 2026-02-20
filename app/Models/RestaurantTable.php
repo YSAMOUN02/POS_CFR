@@ -12,9 +12,13 @@ class RestaurantTable extends Model
     protected $table = 'restaurant_tables';
 
     protected $fillable = [
+        'document',
         'name',
-        'status', // e.g., available, occupied
-        'location',
+        'customer_id',
+        'queue_no',
+         'status',
+        'customer_qty',
+       
     ];
 
     // RELATIONSHIPS

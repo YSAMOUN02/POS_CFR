@@ -300,16 +300,71 @@ table td ,table th{
     background-color: #f3f3f3;
     z-index: 5;
 }
-#customer-list table thead th {
-     position: sticky !important;
-    top: 0;
-    background-color: #f3f3f3; /* table header bg */
-    z-index: 5;
+/* ===== Shared Table Styles ===== */
+.table-container {
+    overflow-x: auto; /* horizontal scroll if needed */
 }
-#customer-list td, #customer-list th{
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* Sticky header */
+table thead th {
+    position: sticky !important;
+    top: 0;
+    background-color: #f3f3f3; /* unified header color */
+    z-index: 5;
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 12px;
+}
+
+/* Body cells */
+table td {
     padding: 8px 12px;
     border-bottom: 1px solid #ddd;
+    vertical-align: middle;
 }
+
+/* Row hover effect */
+table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* Sort icon */
+.sort-icon {
+    font-size: 12px;
+    margin-left: 4px;
+    color: #9ca3af; /* gray-400 */
+}
+
+/* Right-align numeric columns */
+table td.text-right,
+table th.text-right {
+    text-align: right;
+}
+
+/* Optional: Rounded corners for first and last header cells */
+table thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+table thead th:last-child {
+    border-top-right-radius: 8px;
+}
+
+
+
+
+
 .hight_index{
     z-index: 10000;
 }
@@ -326,13 +381,47 @@ table td ,table th{
 .img{
     width:  100px;
     height: 100px;
-    object-fit: cover;
 
+     overflow: hidden;
 }
 .img img{
     width: 100%;
     height: 100%;
+        object-fit: cover;
 }
+.img_400 {
+ width: 200px;
+    height: 200px;
+
+    overflow: hidden;
+}
+.img_400 img{
+    width: 100%;
+    height: 100%;
+        object-fit: cover;
+}
+#DatePromptModal button{
+    padding: 3px;
+    border-radius: 5px;
+    font-size: 12px;
+}
+#chasier{
+    font-size: 26px;
+}
+#refresh-icon{
+    font-size: 25px;
+}
+
+/* #Table-sale-list{
+
+} */
+
+#Table-sale-list thead th {
+    position: sticky !important;
+    top: 0;
+    z-index: 2;
+}
+
     @keyframes scaleUp {
         0% { transform: scale(0.8); opacity: 0; }
         100% { transform: scale(1); opacity: 1; }
@@ -403,7 +492,7 @@ table td ,table th{
     font-size: 10px;
   }
 #tittle_span{
-     font-size: 26px; 
+     font-size: 20px;
 }
   input,
   select,
@@ -412,7 +501,9 @@ table td ,table th{
     font-size: 10px;
     padding: 5px 10px;
   }
-
+#refresh-icon{
+    font-size: 15px;
+}
 .card_style {
 
     min-height: 100px !important;
@@ -459,5 +550,8 @@ table td ,table th{
 .scroll_content_70{
     max-height: 50vh;
     min-height: 50vh;
+}
+#chasier{
+    font-size: 20px;
 }
 }

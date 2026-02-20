@@ -204,6 +204,9 @@
         // Load first tab (Top Product)
         if (tabs.length) tabs[0].click();
 
+        function round2(value) {
+            return Number(Math.round((value + Number.EPSILON) * 100) / 100);
+        }
         // Render Category Products
         async function renderCategoryProducts(category) {
             tabContent.innerHTML = '<p class="p-4">Loading...</p>';
@@ -225,11 +228,14 @@
                         `assets/startic_img/${product.image}` :
                         'assets/defult/placeholder.jpg';
 
-                    const price = Number(product.sell_price);
-                    const finalPrice = Number(price + (price * Number(product.vat || 0) / 100));
-                    const discountedPrice = finalPrice - (finalPrice * Number(product.discount_percent || 0) /
-                        100);
 
+                    const price = Number(product.sell_price || 0);
+                    const vatRate = Number(product.vat || 0);
+                    const finalPrice = round2(price + (price * vatRate / 100));
+
+                    // Discounted price
+                    const discountPercent = Number(product.discount_percent || 0);
+                    const discountedPrice = round2(finalPrice - (finalPrice * discountPercent / 100));
                     // Stock color logic using percentage
                     let stockColor = 'text-gray-400'; // default out of stock
 
@@ -265,9 +271,9 @@
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
 
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                                <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                    <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                                </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -284,11 +290,11 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                             ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                            <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                            <span class="${stockColor}">
-                                                                                                                                                                                                                                                                                                                                ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
-                                                                                                                                                                                                                                                                                                                            </span>
-                                                                                                                                                                                                                                                                                                                            &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="${stockColor}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        </span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        &ensp;` : ''}
 
                                             ${product.discount_percent != 0
                                                 ? `<del class="text-gray-400 text-[10px]">${finalPrice.toFixed(2)} $</del> → <span class="${stockColor} font-semibold text-sm">${discountedPrice.toFixed(2)} $</span>`
@@ -388,9 +394,13 @@
                 `assets/startic_img/${product.image}` :
                 'assets/defult/placeholder.jpg';
 
-            const price = Number(product.sell_price);
-            const finalPrice = Number(price + (price * Number(product.vat || 0) / 100));
-            const discountedPrice = finalPrice - (finalPrice * Number(product.discount_percent || 0) / 100);
+            const price = Number(product.sell_price || 0);
+            const vatRate = Number(product.vat || 0);
+            const finalPrice = round2(price + (price * vatRate / 100));
+
+            // Discounted price
+            const discountPercent = Number(product.discount_percent || 0);
+            const discountedPrice = round2(finalPrice - (finalPrice * discountPercent / 100));
 
             // Stock color logic
             let stockColor = 'text-gray-400'; // default out of stock
@@ -412,9 +422,9 @@
                                             src="${imageSrc}" onerror="this.src='assets/defult/placeholder.jpg'" alt="${product.name}" />
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                            <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                            </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -427,13 +437,14 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                                 ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                    <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                    <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
-                                                                                                                                                                                                                                                                                                                                    &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                &ensp;` : ''}
 
-                                                ${product.discount_percent != 0
-                                                    ? `<del class="text-gray-400 text-[10px]">${finalPrice.toFixed(2)} $</del> → <span class="${stockColor} font-semibold text-sm">${discountedPrice.toFixed(2)} $</span>`
-                                                    : `<span class="font-semibold text-sm">${finalPrice.toFixed(2)} $</span>`}
+                                              ${product.discount_percent != 0
+    ? `<del class="text-gray-400 text-[10px]">${finalPrice.toFixed(2)} $</del> → <span class="${stockColor} font-semibold text-sm">${discountedPrice.toFixed(2)} $</span>`
+    : `<span class="font-semibold text-sm">${finalPrice.toFixed(2)} $</span>`}
+
                                             </p>
                                         </div>
                                     </div>
@@ -573,7 +584,8 @@
 
 
 @push('modals')
-    <!--Currency Main modal -->
+
+    {{-- <ADD CURRENCY> --}}
     <div id="static-modal-currency-exchange" data-modal-backdrop="static" tabindex="-1" aria-hidden="true"
         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
         <div class="relative p-4 w-full max-w-2xl max-h-full">
@@ -727,7 +739,8 @@
             </div>
         </div>
     </div>
-    <!-- Reusable Confirmation Modal -->
+
+    {{-- <DELETE CUSTOMER> --}}
     <div id="confirm-delete-cust"
         class=" hight_index fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
         <div class="bg-white rounded-2xl shadow-2xl w-96 max-w-sm p-6 text-center">
@@ -749,6 +762,8 @@
             </div>
         </div>
     </div>
+
+    {{-- <UPDATE CUSTOMER> --}}
     <div id="confirm-update-cust"
         class="hight_index fixed inset-0 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
         <div class="bg-white rounded-2xl shadow-2xl w-96 max-w-sm p-6 text-center">
@@ -780,10 +795,13 @@
                 </div>
 
                 <div>
-                    <label>Address</label>
-                    <input id="cust-address" type="text" class="w-full border rounded px-3 py-2" />
+                    <label>Address 1</label>
+                    <input id="cust-address1" type="text" class="w-full border rounded px-3 py-2" />
                 </div>
-
+                <div>
+                    <label>Address 2</label>
+                    <input id="cust-address2" type="text" class="w-full border rounded px-3 py-2" />
+                </div>
                 <div>
                     <label>City</label>
                     <input id="cust-city" type="text" class="w-full border rounded px-3 py-2" />
@@ -804,7 +822,7 @@
                 </div>
 
                 <div>
-                    <label>Credit Limit</label>
+                    <label>Discount (%)</label>
                     <input id="cust-credit" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
                 </div>
 
@@ -817,7 +835,14 @@
                     <label>Points</label>
                     <input id="cust-point" type="number" class="w-full border rounded px-3 py-2" />
                 </div>
-
+                <div>
+                    <label>Contact</label>
+                    <input id="cust-contact" type="text" class="w-full border rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label>Contact Phone</label>
+                    <input id="cust-contact_phone" type="text" class="w-full border rounded px-3 py-2" />
+                </div>
                 <div>
                     <label>Status</label>
                     <select id="cust-status" class="w-full border rounded px-3 py-2">
@@ -840,7 +865,8 @@
         </div>
     </div>
 
-    <!-- Reusable Confirmation Modal -->
+
+    {{-- <CONFIRM > --}}
     <div id="confirmModal"
         class="fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
         <div class="bg-white rounded-2xl shadow-2xl w-96 max-w-sm p-6 text-center animate-scaleUp">
@@ -855,7 +881,8 @@
         </div>
     </div>
 
-    <!-- Unsaved Work Modal (Top Right) -->
+
+    {{-- <REFRESH> --}}
 
     <div id="unsaveModal" class="fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
         <div class="bg-white rounded-2xl shadow-2xl w-96 max-w-sm p-6 text-center animate-scaleUp">
@@ -871,14 +898,16 @@
         </div>
     </div>
 
-    <!-- List Customer Main modal -->
+
+    {{-- <LIST CUSTOMER> --}}
     <div id="default-modal-customer-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
         class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
 
         {{-- width Custom  --}}
         <div class="  relative p-4 w-full max-w-10xl max-h-full ">
             <!-- Modal content -->
-            <div class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
+            <div
+                class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
                 <form id="customerFormList">
                     @csrf
                     <!-- Modal header -->
@@ -927,51 +956,34 @@
                     <!-- Modal body -->
                     <div id="customer-list" class="max-h-[70vh] overflow-y-auto">
                         <div class=" scroll_content_70  overflow-x-auto">
-                            
-                            <table class=" w-full text-sm text-left border border-default rounded-base">
-                                <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
+
+                            <table id="customer-list" class="w-full text-sm text-left">
+                                <thead>
                                     <tr>
                                         <th class="px-4 py-3">Select</th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="id">ID <span
+                                                class="sort-icon">↕</span></th>
 
-                                        <th class="px-4 py-3 cursor-pointer" data-column="id">
-                                            ID <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="customer_code">
-                                            Code <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="name">
-                                            Name <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="phone">
-                                            Phone <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="email">
-                                            Email <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="type">
-                                            Type <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="credit_limit">
-                                            Credit Limit <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="balance">
-                                            Balance <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="point">
-                                            Point <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="status">
-                                            Status <span class="sort-icon">↕</span>
-                                        </th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="customer_code">Code <span
+                                                class="sort-icon">↕</span></th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="name">Name <span
+                                                class="sort-icon">↕</span></th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="address1">Address 1 <span
+                                                class="sort-icon">↕</span></th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="phone">Phone <span
+                                                class="sort-icon">↕</span></th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="email">Email <span
+                                                class="sort-icon">↕</span></th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="type">Type <span
+                                                class="sort-icon">↕</span></th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="credit_limit">Credit Limit <span
+                                                class="sort-icon">↕</span></th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="balance">Balance <span
+                                                class="sort-icon">↕</span></th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="point">Point <span
+                                                class="sort-icon">↕</span></th>
+                                        <th class="px-4 py-3 cursor-pointer" data-column="status">Status <span
+                                                class="sort-icon">↕</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="customer-table-body">
@@ -1016,7 +1028,8 @@
         </div>
     </div>
 
-    <!-- Add  Customer Main modal -->
+
+    {{-- <ADD CUSTOMER> --}}
     <div id="default-modal-customer" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
         <div class="relative p-4 w-full max-w-2xl max-h-full">
@@ -1099,7 +1112,7 @@
                             <!-- Credit Limit -->
                             <div>
                                 <label class="block mb-2.5 text-sm font-medium text-heading">
-                                    Credit Limit
+                                    Discount (%)
                                 </label>
                                 <input type="number" name="credit_limit" step="0.01" value="0"
                                     class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
@@ -1112,7 +1125,25 @@
                             <label class="block mb-6 text-sm font-medium text-heading">
                                 Address <span class="text-rose-600">*</span>
                             </label>
-                            <input type="text" name="address" placeholder="Street / Village"
+                            <input type="text" name="address1" placeholder="Street / Village"
+                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                        </div>
+
+                        <br>
+                        <div class="mb-6">
+                            <label class="block mb-6 text-sm font-medium text-heading">
+                                Address 2
+                            </label>
+                            <input type="text" name="address2" placeholder="Street / Village"
+                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                        </div>
+                        <br>
+                        <!-- City & Country -->
+                        <div class="grid gap-6 mb-6 md:grid-cols-2">
+                            <input type="text" name="contact_name" placeholder="Contact Name"
+                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+
+                            <input type="text" name="contact_phone" placeholder="Contact Phone"
                                 class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
                         </div>
                         <br>
@@ -1153,6 +1184,8 @@
             </div>
         </div>
     </div>
+
+    {{-- <LIST Warehouse > --}}
     <div id="default-modal-warehouse" data-modal-backdrop="static" tabindex="-1" aria-hidden="true"
         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
         <div class="relative p-4 w-full max-w-2xl max-h-[90vh]">
@@ -1224,7 +1257,8 @@
             </div>
         </div>
     </div>
-    <!-- Warehouse Confirmation + Edit Modal -->
+
+    {{-- <Update Warehouse > --}}
     <div id="warehouseConfirmModal"
         class=" fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
         <div class="bg-white rounded-2xl shadow-2xl w-96 max-w-sm p-6 text-center animate-scaleUp">
@@ -1261,7 +1295,8 @@
     </div>
 
 
-    <!-- Modal Overlay -->
+
+    {{-- <LIST STOCK > --}}
     <div id="warehouse-stock-modal"
         class="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 hidden transition-opacity duration-300">
 
@@ -1336,7 +1371,7 @@
                             <th data-sort="unit" class="sortable px-3 py-2">Unit</th>
                             <th data-sort="cost" class="sortable px-3 py-2">Cost</th>
                             <th data-sort="vat" class="sortable px-3 py-2">VAT</th>
-                            <th data-sort="sell" class="sortable px-3 py-2">Sell Price</th>
+                            <th data-sort="sell" class="sortable px-3 py-2">Unit Price</th>
                             <th data-sort="sellvat" class="sortable px-3 py-2">Sell Price (VAT)</th>
                             <th data-sort="category" class="sortable px-3 py-2">Category</th>
                             <th data-sort="status" class="sortable px-3 py-2">Status</th>
@@ -1354,11 +1389,12 @@
             </div>
         </div>
     </div>
-    <!-- Quotation Date Modal -->
+
+    {{-- <MODAL PRINT > --}}
     <div id="DatePromptModal"
         class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm">
 
-        <div class="bg-white rounded-3xl shadow-2xl w-96 max-w-sm p-6 space-y-5 animate-scaleUp">
+        <div class="bg-white rounded-5xl shadow-2xl  w-1/2 max-w-sm p-6 space-y-5 animate-scaleUp">
 
             <!-- Header -->
             <div class="flex flex-col items-center text-center">
@@ -1390,10 +1426,12 @@
                     <select id="payment_method"
                         class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
                         <option value="ABA">ABA</option>
-                        <option value="cash">Cash</option>
-                        <option value="credit_card">Credit Card</option>
-                        <option value="bank_transfer">Bank Transfer</option>
-                        <option value="paypal">PayPal</option>
+                        <option value="CASH">Cash</option>
+                        <option value="CREDIT CARD">Credit Card</option>
+                        <option value="BANK TRANSFER">Bank Transfer</option>
+                        <option value="PAYPAL">PayPal</option>
+                        <option value="WISE BANK">WISE BANK</option>
+                        <option value="CHEQ">CHEQ</option>
                     </select>
                 </div>
 
@@ -1461,16 +1499,37 @@
             <br>
             <!-- Buttons -->
             <div class="flex justify-end space-x-3">
-                <button data-quotation-cancel
-                    class="px-5 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition">
+                <button data-quotation-cancel class=" bg-rose-200 text-gray-700 rounded-xl hover:bg-rose-300 transition">
                     Cancel
                 </button>
                 &ensp;
-                <button id="confirmPayBtn"
-                    class="px-5 py-2 bg-gray-400 text-black rounded-xl hover:bg-gray-400 transition shadow-md">
+                <button onclick="print_document('Quotation')"
+                    class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
+                    Quote
+                </button>
+                &ensp;
+                <button onclick="print_document('Order')"
+                    class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
+                    Order
+                </button>
+
+                &ensp;
+                <button onclick="print_document('Delivery Note')"
+                    class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
+                    Delivery
+                </button>
+                &ensp;
+                <button onclick="print_document('Invoice')"
+                    class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
+                    Invoice
+                </button>
+                &ensp;
+                <button id="confirmPayBtn" onclick="Final_Payment()"
+                    class=" bg-gray-400 text-black rounded-xl hover:bg-gray-400 transition shadow-md">
                     Enter Amount
 
                 </button>
+
             </div>
         </div>
     </div>
@@ -1483,14 +1542,16 @@
 
 
 
-    <!-- List product Main modal -->
+
+    {{-- <LIST PRODUCT > --}}
     <div id="default-modal-product-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
         class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
 
         {{-- width Custom  --}}
         <div class="  relative p-4 w-full max-w-10xl max-h-full ">
             <!-- Modal content -->
-            <div class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
+            <div
+                class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
                 <form id="customerFormList">
                     @csrf
                     <!-- Modal header -->
@@ -1647,20 +1708,21 @@
 
                     <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5">
                         <div>
-                            <button type="button" data-modal-target="default-modal-customer"
+                            {{-- <button type="button" data-modal-target="default-modal-customer"
                                 data-modal-toggle="default-modal-customer"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Product Category
-                            </button>
+                            </button> --}}
                             <button type="button" {{-- id="btnEditCustomer" --}} id="btnEditProduct"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Edit
                             </button>
                             &ensp;
-                            <button type="button" {{-- id="btnDeleteCustomer" --}}
+                            {{-- <button type="button"
+                             id="btnDeleteCustomer"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Delete
-                            </button>
+                            </button> --}}
 
 
                             <button type="button" id="btnAddProduct" data-modal-target="default-modal-add-product"
@@ -1691,7 +1753,8 @@
 
 
 
-    <!-- Add  Product Main modal -->
+
+    {{-- <ADD PRODUCT > --}}
     <div id="default-modal-add-product" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
         <div class="  relative p-4 w-full max-w-5xl max-h-full ">
@@ -1792,7 +1855,7 @@
                         <!-- Pricing -->
                         <div class="grid gap-6 md:grid-cols-3">
                             <div>
-                                <label class="block mb-2.5 text-sm font-medium text-heading">Sell Price</label>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">Unit Price</label>
                                 <input type="number" step="0.01" name="sell_price" value="0"
                                     class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
                             </div>
@@ -1893,6 +1956,8 @@
             </div>
         </div>
     </div>
+
+    {{-- <UPDATE PRODUCT> --}}
     <div id="confirm-update-product"
         class="hight_index fixed inset-0 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 text-center">
@@ -1909,7 +1974,10 @@
                 <input type="hidden" id="prod-id" />
 
                 <div class="col-span-2">
-                <img width="300px" style="border-radius: 10px" id="preview_img" src="" alt="">
+                    <div class="img_400">
+                        <img style="border-radius: 10px" id="preview_img" src="" alt="">
+                    </div>
+
 
 
                     <input type="file" id="update_image" accept="image/*">
@@ -1954,7 +2022,7 @@
                 </div>
                 <div>
                     <label>Unit Price</label>
-                    <input id="prod-price" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
+                    <input id="prod-sell-price" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
                 </div>
                 <div>
                     <label>Vat</label>
@@ -1962,11 +2030,12 @@
                 </div>
                 <div>
                     <label>Discount (%)</label>
-                    <input id="prod-discount" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
+                    <input id="prod-discount" type="number" step="0.01"
+                        class="w-full border rounded px-3 py-2" />
                 </div>
                 <div>
                     <label>Sell Price</label>
-                    <input id="prod-price-final" disabled type="number" step="0.01"
+                    <input id="sell_price-final" disabled type="number" step="0.01"
                         class="w-full border rounded px-3 py-2" />
                 </div>
                 <div></div>
@@ -1974,7 +2043,7 @@
                     <label>Category</label>
 
                     </input>
-                    <select id="prod-category" class="w-full border rounded px-3 py-2">
+                    <select id="prod-category-id" class="w-full border rounded px-3 py-2">
                         <!-- fill dynamically -->
                     </select>
                 </div>
@@ -1985,7 +2054,7 @@
                 </div>
                 <div>
                     <label>Display On</label>
-                    <input id="prod-category_name" type="text" class="w-full border rounded px-3 py-2" />
+                    <input id="prod-category-name" type="text" class="w-full border rounded px-3 py-2" />
                 </div>
 
 
@@ -2062,110 +2131,219 @@
 
 
 
-    <!-- List Table Main modal -->
-    <div id="default-modal-Table-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
+
+    {{-- <LIST TABLE> --}}
+    <div id="default-modal-sale-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
         class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
 
         {{-- width Custom  --}}
         <div class="  relative p-4 w-full max-w-10xl max-h-full ">
+
             <!-- Modal content -->
-            <div class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
-                <form id="TableFormList">
-                    @csrf
-                    <!-- Modal header -->
-                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
-                        <div class="w-full flex items-center justify-between mb-4">
-                            <div>
-                                <h3 class="text-lg font-medium text-heading">
-                                    Table
-                                </h3>
+            <div
+                class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                    <div class="w-full mb-6">
+                        <!-- Title -->
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-medium text-heading">
+                                បាយការណ៍ ការលក់
+                            </h3>
+                        </div>
+
+                        <!-- Filters Row 1: Date, Status, Customer -->
+                        <!-- Filters -->
+                        <div class="flex flex-wrap items-center gap-3 mb-4">
+                            <input type="date" id="from_date" class="px-3 py-2 border rounded-md text-sm">
+                            <input type="date" id="to_date" class="px-3 py-2 border rounded-md text-sm">
+                            <select id="invoice_paymentMethod" class="px-6 py-2 border rounded-md text-sm">
+                                <option value="">All Payment</option>
+                            </select>
+                            <div class="relative w-52">
+                                <input type="text" id="customer_search" placeholder="Customer Name"
+                                    autocomplete="off" class="px-3 py-2 border rounded-md text-sm w-full">
+
+                                <input type="hidden" id="customer_filter">
+
+                                <ul id="customer_list"
+                                    class="absolute z-50 bg-white border rounded-md w-full mt-1 max-h-60 overflow-y-auto hidden">
+                                </ul>
                             </div>
-                            <button type="button"
-                                class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
-                                data-modal-hide="default-modal-Table-list">
-                                <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                    width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                        stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
-                                </svg>
-                                <span class="sr-only">Close modal</span>
-                            </button>
-                        </div>
 
-                    </div>
-                    <!-- Modal body -->
-                    <div id="Table-list" class="max-h-[70vh] overflow-y-auto">
-                        <div class=" scroll_content_70  overflow-x-auto">
-                            <table class=" w-full text-sm text-left border border-default rounded-base">
-                                <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
-                                    <tr>
-                                        <th class="px-4 py-3">Select</th>
+                            <input type="text" id="product_search" list="product_datalist"
+                                placeholder="Search product" autocomplete="off"
+                                class="px-3 py-2 border rounded-md text-sm w-64">
 
-                                        <th class="px-4 py-3 cursor-pointer" data-column="id">
-                                            ID
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="name">
-                                            Name
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="name">
-                                            Occupied
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody id="Table-table-body">
-                                    <!-- async rows -->
-                                </tbody>
-                            </table>
-                        </div>
+                            <input type="hidden" id="ProductSearchInput_sale_invoice">
 
-                    </div>
-                    <!-- Modal footer -->
-
-                    <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5">
-                        <div>
-                            <button type="button" id="btnEditCustomer"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                Edit
-                            </button>
-                            &ensp;
-                            <button type="button" id="btnDeleteCustomer"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                Delete
-                            </button>
-
-
-                            <button type="button" data-modal-target="default-modal-customer"
-                                data-modal-toggle="default-modal-customer"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                New
-                            </button>
-                        </div>
-
-                        <div class="flex items-center justify-between mt-4">
-                            <div class="flex items-center justify-center gap-1 mt-4 mx-2" id="paginationContainer">
-                                <!-- JS will render buttons here -->
-                            </div>
-                            &ensp;
-                            <span id="pageInfo" class="text-sm text-gray-600"></span>
+                            <datalist id="product_datalist"></datalist>
+                            <select id="category_filter" class="px-3 py-2 border rounded-md text-sm w-44">
+                                <option value="">All Categories</option>
+                            </select>
+                            <select id="sale_view_limit" class="px-5 py-2 border rounded-md text-sm w-36">
+                                <option value="10">10 Invoice</option>
+                                <option value="20">20 Invoice</option>
+                                <option value="30">30 Invoice</option>
+                                <option value="50">50 Invoice</option>
+                                <option selected value="75">75 Invoice</option>
+                                <option value="100">100 Invoice</option>
+                                <option value="200">200 Invoice</option>
+                            </select>
                         </div>
                     </div>
-                </form>
+                    <button type="button"
+                        class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                        data-modal-hide="default-modal-sale-list">
+                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                        </svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+
+
+
+                <!-- Modal body -->
+
+                <div class="scroll_content_70 overflow-x-auto">
+                    <table id="Table-sale-list" class=" text-sm text-left border border-default rounded-base">
+                        <thead class="text-xs uppercase bg-neutral-secondary">
+                            <tr class="text-nowrap">
+                                <!-- ===== Invoice Header ===== -->
+                                <th class="px-4 py-3 cursor-pointer" data-column="id">
+                                    ID<span class="sort-icon">↕</span>
+                                </th>
+                                <th class="px-4 py-3 cursor-pointer" data-column="invoice_number">
+                                    Invoice # <span class="sort-icon">↕</span>
+                                </th>
+                                <th class="px-4 py-3 cursor-pointer" data-column="created_at">Transaction
+                                    Date<span class="sort-icon">↕</span></th>
+                                <th class="px-4 py-3 cursor-pointer" data-column="customer_name">
+                                    Customer <span class="sort-icon">↕</span>
+                                </th>
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="invoice_date">
+                                    Invoice Date <span class="sort-icon">↕</span>
+                                </th>
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="due_date">
+                                    Due Date <span class="sort-icon">↕</span>
+                                </th>
+                                <th class="px-4 py-3 cursor-pointer" data-column="payment_method">
+                                    Payment Method <span class="sort-icon">↕</span>
+                                </th>
+
+
+
+                                <!-- ===== Line Item Fields ===== -->
+                                <th class="px-4 py-3 cursor-pointer" data-column="item_code">
+                                    Item Code <span class="sort-icon">↕</span>
+                                </th>
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="product_name">
+                                    Name <span class="sort-icon">↕</span>
+                                </th>
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="variant">
+                                    Variant <span class="sort-icon">↕</span>
+                                </th>
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="description">
+                                    Description <span class="sort-icon">↕</span>
+                                </th>
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="quantity">
+                                    Qty <span class="sort-icon">↕</span>
+                                </th>
+                                <th class="px-4 py-3 cursor-pointer" data-column="unit">
+                                    UOM <span class="sort-icon">↕</span>
+                                </th>
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="unit_price">
+                                    Unit Price <span class="sort-icon">↕</span>
+                                </th>
+                                {{-- <th class="px-4 py-3 cursor-pointer" data-column="cost">
+                                    Cost <span class="sort-icon">↕</span>
+                                </th> --}}
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="sell_price">
+                                    Sell Price <span class="sort-icon">↕</span>
+                                </th>
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="line_amount">
+                                    Line Amount <span class="sort-icon">↕</span>
+                                </th>
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="discount_percent">
+                                    Discount % <span class="sort-icon">↕</span>
+                                </th>
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="discount_percent">
+                                    Discount Amount <span class="sort-icon">↕</span>
+                                </th>
+
+                                <th class="px-4 py-3 cursor-pointer" data-column="vat_percent">
+                                    VAT <span class="sort-icon">↕</span>
+                                </th>
+                                <th class="px-4 py-3 cursor-pointer" data-column="total_vat_amount">
+                                    Total Vat Amount<span class="sort-icon">↕</span>
+                                </th>
+                                {{-- <th class="px-4 py-3 cursor-pointer" data-column="total_cost_amount">
+                                    Total Cost Amount<span class="sort-icon">↕</span>
+                                </th> --}}
+                                <th class="px-4 py-3 cursor-pointer" data-column="total_line_amount">
+                                    Total Line <span class="sort-icon">↕</span>
+                                </th>
+
+                            </tr>
+
+                        </thead>
+                        <tbody id="salesTableBody">
+                            <!-- async rows -->
+                        </tbody>
+                    </table>
+                </div>
+
+
+                <!-- Modal footer -->
+
+                <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5">
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="flex items-center justify-center gap-1 mt-4 mx-2"
+                            id="paginationContainer_sale_invoice">
+                            <!-- JS will render buttons here -->
+                        </div>
+                        &ensp;
+                        <span id="pageInfo_sale_invoice" class="text-sm text-gray-600"></span>
+                    </div>
+                    <button type="button" id="downloadSales" class="px-4 py-2 bg-green-600 text-white rounded">
+                        Export
+                    </button>
+                </div>
+
             </div>
         </div>
     </div>
 
 
 
-    <!-- List Table Main modal -->
+
+    {{-- <LIST TABLE > --}}
     <div id="default-modal-table-select-list" tabindex="-1" aria-hidden="true"
         class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center p-4">
         <div class="relative p-4 w-full max-w-4xl max-h-full">
             <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
                 <div class="flex justify-between w-full p-2">
-                    <h3 class="text-lg font-medium text-heading mb-4">Select Table</h3>
+                    <h3 class="text-lg font-medium text-heading mb-4">Table\Quote</h3>
                     <div>
+                        <button onclick="openModal()"
+                            class="mt-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">New Doc</button>
                         <button onclick="exit_table()"
-                            class="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Exit Table</button>
+                            class="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Exit
+                            Table\Quote</button>
                         <button type="button"
                             onclick="document.getElementById('default-modal-table-select-list').classList.add('hidden')"
                             class="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
@@ -2173,13 +2351,14 @@
                         </button>
                     </div>
                 </div>
-                <div class="scroll_content_70 max-h-[70vh] overflow-y-auto">
-                    <div class="overflow-x-auto">
+                <div class=" max-h-[70vh] overflow-y-auto">
+                    <div class="scroll_content_70 overflow-x-auto">
                         <table class="w-full text-sm text-left border rounded-base">
                             <thead class="bg-neutral-secondary text-xs uppercase">
                                 <tr>
                                     <th>ID</th>
                                     <th>Name</th>
+                                    <th>Queue No</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -2196,4 +2375,29 @@
 
 
 
+    <!-- Modal -->
+    <div id="tableModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+
+        <div class="bg-white w-96 p-6 rounded-lg shadow-lg">
+            <h2 class="text-lg font-semibold mb-4">Create Table\QUOTE</h2>
+
+            <form id="tableForm" class="grid grid-cols-2 gap-2">
+
+                <!-- Table Name -->
+                <input type="text" name="name" id="table_name" value="N\A"
+                    class="col-span-2 w-full border p-2 rounded" required>
+                <!--Buttons -->
+                <div class="col-span-2 flex justify-end gap-2 mt-3">
+                    <button type="button" onclick="closeModal()" class="bg-gray-400 text-white px-3 py-1 rounded">
+                        Cancel
+                    </button>
+
+                    <button type="button" onclick="saveTable()" class="bg-green-500 text-white px-3 py-1 rounded">
+                        Save
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
 @endpush

@@ -8,18 +8,22 @@ class Customer extends Model
 {
     protected $table = 'customers';
 
-    protected $fillable = [
-        'customer_code',
-        'name',
-        'phone',
-        'email',
-        'address',
-        'city',
-        'country',
-        'type',
-        'credit_limit',
-        'balance',
-        'point',
-        'status',
-    ];
+protected $fillable = [
+    'customer_code',
+    'name',
+    'phone',
+    'email',
+    'address1',
+    'address2',
+    'contact_name',
+    'contact_phone',
+    'city',
+    'country',
+    'type',
+    'credit_limit',
+    'balance',
+    'point',
+    'status',
+];
+
 }

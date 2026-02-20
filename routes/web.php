@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Request;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SaleInvoiceController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\WarehouseController;
 
@@ -47,7 +48,7 @@ Route::get('/currency/{code}', [AdminController::class, 'getByCode']);
 Route::post('/currency/update-all', [AdminController::class, 'updateAll'])
     ->name('currency.updateAll');
 
-Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
+Route::post('/customers/store', [CustomerController::class, 'store'])->name('customers.store');
 
 
 Route::get('/customers/search', [CustomerController::class, 'search'])->name('customers.search');
@@ -74,4 +75,20 @@ Route::get('/products/list_search', [ProductController::class, 'list_search']);
 Route::put('/product/{id}', [ProductController::class, 'update'])->name('product.update');
 
 
+
 Route::get('/tables', [TableController::class, 'GetTables']);
+Route::post('/restaurant-tables/store', [TableController::class, 'store'])
+    ->name('restaurant-tables.store');
+
+    // Report
+
+
+
+
+Route::get('/sales-report', [SaleInvoiceController::class, 'salesReport'])->name('sales.report');
+Route::get('/sales/categories', [SaleInvoiceController::class, 'getCategories']);
+
+Route::get('/sales/customer-search', [SaleInvoiceController::class, 'searchCustomers']);
+Route::get('/sales/product-search', [SaleInvoiceController::class, 'searchProducts']);
+Route::get('/sales/payment-methods', [SaleInvoiceController::class, 'getPaymentMethods']);
+

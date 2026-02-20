@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-      Schema::create('customers', function (Blueprint $table) {
+        Schema::create('customers', function (Blueprint $table) {
             $table->id();
 
             // Basic info
@@ -21,11 +21,12 @@ return new class extends Migration
             $table->string('email')->nullable();
 
             // Address
-            $table->string('address')->nullable();
+            $table->string('address1')->nullable();
             $table->string('address2')->nullable();
             $table->string('city')->nullable();
             $table->string('country')->nullable();
-
+            $table->string('contact_name')->nullable();
+            $table->string('contact_phone')->nullable();
             // POS related
             $table->enum('type', ['walk_in', 'member', 'vip'])->default('walk_in');
             $table->decimal('credit_limit', 12, 2)->default(0);  //Allow pay later

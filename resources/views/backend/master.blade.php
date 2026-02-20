@@ -58,21 +58,27 @@
                 &ensp; មីនុយ
             </h5>
         </div>
+
         <div id="drawer" class="grid grid-cols-3 gap-4 p-4 lg:grid-cols-8">
-            <div
-                class="hidden p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+
+            <button id="sale_data" data-modal-target="default-modal-sale-list"
+                data-modal-toggle="default-modal-sale-list">
                 <div
-                    class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
-                    <svg class="w-7 h-7 inline text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                        width="24" height="24" fill="none" viewBox="0 0 24 24">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 6.025A7.5 7.5 0 1 0 17.975 14H10V6.025Z" />
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13.5 3c-.169 0-.334.014-.5.025V11h7.975c.011-.166.025-.331.025-.5A7.5 7.5 0 0 0 13.5 3Z" />
-                    </svg>
+                    class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+                    <div
+                        class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
+                        <svg class="w-7 h-7 inline text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                            width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6.025A7.5 7.5 0 1 0 17.975 14H10V6.025Z" />
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13.5 3c-.169 0-.334.014-.5.025V11h7.975c.011-.166.025-.331.025-.5A7.5 7.5 0 0 0 13.5 3Z" />
+                        </svg>
+                    </div>
+                    <div class="font-medium text-center text-body">របាយការណ៍ការលក់
+                    </div>
                 </div>
-                <div class="font-medium text-center text-body">របាយការណ៍ ការលក់ប្រចាំថ្ងៃ</div>
-            </div>
+            </button>
             <button id="openWarehouseModel" data-modal-target="default-modal-warehouse" class="hidden"
                 data-modal-toggle="default-modal-warehouse">
                 <div
@@ -89,7 +95,7 @@
                 class="hidden p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
                 <div
                     class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
-                    <i  class="fa-solid fa-boxes-stacked"></i>
+                    <i class="fa-solid fa-boxes-stacked"></i>
                 </div>
                 <div class="font-medium text-center text-body">គ្រប់គ្រងស្តុក</div>
             </div>
@@ -100,7 +106,7 @@
                 class=" p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium lg:block">
                 <div
                     class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
-                    <i  class="fa-solid fa-box-open"></i>
+                    <i class="fa-solid fa-box-open"></i>
                 </div>
                 <div class=" font-medium text-center text-body">គ្រប់គ្រង ផលិតផល</div>
             </div>
@@ -153,18 +159,7 @@
                     </div>
                 </div>
             </button>
-            <button id="openTableModal" data-modal-target="default-modal-Table-list"
-                data-modal-toggle="default-modal-Table-list">
-                <div
-                    class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
-                    <div
-                        class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
-                        <i class="fa-solid fa-users-between-lines"></i>
-                    </div>
-                    <div class="font-medium text-center text-body">គ្រប់គ្រង តុ
-                    </div>
-                </div>
-            </button>
+
             <div data-modal-target="static-modal-currency-exchange" data-modal-toggle="static-modal-currency-exchange"
                 class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
                 <button>
@@ -198,144 +193,9 @@
 
     <livewire:scripts />
     <script src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="{{ asset('assets/js/script.js') }}"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const form = document.getElementById("AddcustomerForm");
-            const submitBtn = form.querySelector('button[type="submit"]');
 
-            form.addEventListener("submit", async function(e) {
-                e.preventDefault();
-
-                submitBtn.disabled = true;
-                submitBtn.innerText = "Saving...";
-
-                try {
-                    const response = await fetch("{{ route('customers.store') }}", {
-                        method: "POST",
-                        headers: {
-                            "Accept": "application/json"
-                        },
-                        body: new FormData(form),
-                    });
-
-                    const data = await response.json();
-
-                    if (!response.ok) {
-                        throw data;
-                    }
-
-                    // ✅ SUCCESS
-                    showToast({
-                        message: data.message || "Customer created successfully",
-                        type: "success"
-                    });
-
-                    form.reset();
-
-                    document
-                        .querySelector('[data-modal-hide="default-modal-customer"]')
-                        ?.click();
-
-                } catch (err) {
-
-                    // ❌ VALIDATION ERRORS
-                    if (err.errors) {
-                        Object.values(err.errors).forEach((msgs) => {
-                            showToast({
-                                message: msgs[0],
-                                type: "error"
-                            });
-                        });
-                    } else {
-                        showToast({
-                            message: "Server error. Please try again.",
-                            type: "error"
-                        });
-                    }
-
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "Save Customer";
-                }
-            });
-        });
-        // Hook Edit button
-        document.getElementById('btnEditCustomer').addEventListener('click', () => {
-            openUpdateCustModal();
-        });
-
-        // Hook Delete button
-        document.getElementById('btnDeleteCustomer').addEventListener('click', () => {
-            openDeleteCustModal();
-        });
-
-
-        let selectedCustomerId = null;
-
-        // Get ID
-        function getSelectedCustomerId() {
-            const selected = document.querySelector('input[name="customer_id"]:checked');
-            selectedCustomerId = selected ? selected.value : null; // store it
-            return selectedCustomerId;
-        }
-
-        function openDeleteCustModal() {
-            const customerId = getSelectedCustomerId();
-
-            if (!customerId) {
-                showToast({
-                    message: "Please select a customer first",
-                    type: "warning",
-                });
-                return;
-            }
-            document.getElementById("confirm-delete-cust").classList.remove("hidden");
-        }
-
-        function closeDeleteCustModal() {
-            document.getElementById("confirm-delete-cust").classList.add("hidden");
-        }
-
-
-
-        function openUpdateCustModal() {
-            const customerId = getSelectedCustomerId();
-            if (!customerId) {
-                showToast({
-                    message: "Please select a customer first",
-                    type: "warning"
-                });
-                return;
-            }
-
-            // Get the selected row
-            const row = document.querySelector(
-                `tr[data-id="${customerId}"]`
-            );
-
-            // Read data directly from data attributes
-            document.getElementById("cust-customer_code").value = row.querySelector('td:nth-child(3)').textContent;
-            document.getElementById("cust-name").value = row.querySelector('td:nth-child(4)').textContent;
-            document.getElementById("cust-phone").value = row.querySelector('td:nth-child(5)').textContent;
-            document.getElementById("cust-email").value = row.querySelector('td:nth-child(6)').textContent;
-            document.getElementById("cust-address").value = row.dataset.address ?? "";
-            document.getElementById("cust-city").value = row.dataset.city ?? "";
-            document.getElementById("cust-country").value = row.dataset.country ?? "";
-            document.getElementById("cust-type").value = row.querySelector('td:nth-child(7)').textContent;
-            document.getElementById("cust-credit").value = parseFloat(row.dataset.credit ?? 0).toFixed(2);
-            document.getElementById("cust-balance").value = parseFloat(row.dataset.balance ?? 0).toFixed(2);
-            document.getElementById("cust-point").value = row.dataset.point ?? 0;
-            document.getElementById("cust-status").value = row.dataset.status ?? "1";
-
-            // Show modal
-            document.getElementById("confirm-update-cust").classList.remove("hidden");
-        }
-
-        function closeUpdateCustModal() {
-            document.getElementById("confirm-update-cust").classList.add("hidden");
-        }
-    </script>
 </body>
 
 </html>

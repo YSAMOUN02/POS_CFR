@@ -11,17 +11,22 @@ class TableProduct extends Model
 
     protected $table = 'table_products_tables';
 
-    protected $fillable = [
-        'table_id',
-        'product_id',
-        'qty',
-        'price',
-        'discount_percent',
-        'vat',
-        'gross_amount',
-        'discount_amount',
-        'net_amount',
-    ];
+  protected $fillable = [
+    'table_id',
+    'product_id',
+    'customer_id',      // add this
+    'queue_no',         // add this
+    'qty',
+    'order_qty',        // add this
+    'printed_qty',      // add this
+    'price',
+    'discount_percent',
+    'vat',
+    'gross_amount',
+    'discount_amount',
+    'net_amount',
+];
+
 
     // RELATIONSHIPS
     public function table()
