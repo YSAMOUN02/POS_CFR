@@ -232,19 +232,26 @@
             <input type="text" id="count_cart_input" value="{{ $count_cart }}" hidden>
             @php
                 // CFR
-                $logo = 'logo_cfr.png';
+                // $logo = 'logo_cfr.png';
                 // Panha
-                //    $logo = 'logo.jpg';
+                   $logo = 'logo.jpg';
             @endphp
 
             <div id="logo" style="flex: 0 0 auto; margin-right:15px;">
 
                 {{-- CFR  --}}
-                <img class="logo" style="width: 80px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo">
+                {{-- <img class="logo" style="width: 80px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo"> --}}
                 {{-- Panha --}}
-                {{-- <img class="logo" style="width: 250px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo"> --}}
+                <img class="logo" style="width: 250px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo">
             </div>
 
+              <div id="logo_80mm" style="flex: 0 0 auto; margin-right:15px;">
+
+                {{-- CFR  --}}
+                {{-- <img class="logo" style="width: 80px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo"> --}}
+                {{-- Panha --}}
+                <img class="logo" style="width: 120px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo">
+            </div>
             <div id="document_title">
                 <h1> </h1>
             </div>
@@ -266,7 +273,7 @@
                     'name' => 'Mr. Troek Panha',
                 ];
 
-                $sellerInfo = $shopInfo_CFR;
+                $sellerInfo = $sellerInfo_panha;
             @endphp
 
 

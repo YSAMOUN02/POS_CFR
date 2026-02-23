@@ -1224,11 +1224,9 @@ let delivery_note_no = "NA";
 let invoice_no = "NA";
 let quotation_no = "NA";
 window.addEventListener("get-delivery-note", (e) => {
-
     delivery_note_no = e.detail[0].document_no;
 });
 window.addEventListener("get-invoice-no", (e) => {
-
     invoice_no = e.detail[0].document_no;
 });
 window.addEventListener("get-quotation-no", (e) => {
@@ -1251,8 +1249,6 @@ function print(document_type) {
     } else {
         document.querySelector("#btn-print-invoice").style.display = "block";
     }
-
-
 
     // check cart Logic
     let input_count_cart = document.getElementById("count_cart_input");
@@ -1301,6 +1297,7 @@ function print_document(document_type) {
     let document_title = document.getElementById("document_title");
     document_title.querySelector("h1").textContent = document_type;
     let logo = document.getElementById("logo");
+    const logo_80mm = document.getElementById("logo_80mm").innerHTML;
     const invoiceContent = document.getElementById("invoice").innerHTML;
     // Table
     const table_data = document.getElementById("invoice-table");
@@ -1313,6 +1310,8 @@ function print_document(document_type) {
     let table_footer_description = document.getElementById(
         "table_footer_description",
     );
+
+
     // Open new window
     const printWindow = window.open("", "_blank", "width=800,height=600");
 
@@ -1322,7 +1321,8 @@ function print_document(document_type) {
 
     // Personal Data
 
-    let footer_panha_invoice = `
+    if (document_type === "Invoice") {
+        let footer_panha_invoice = `
                     <div style="line-height:1.5; margin-top:5px;">
 
                             <span>PLEASE MAKE PAYABLE CHEQUE TO MR. RITH SOPHANHA </span> <br>
@@ -1331,16 +1331,15 @@ function print_document(document_type) {
                     </div>
                 `;
 
-    let footer_CFR_invoice = `
+        let footer_CFR_invoice = `
                     <div style="width:100%; display:flex; justify-content:center ; margin-top:30px; line-height:1.5;">
                             <span>THANK YOU FOR YOUR BUSINESS! </span> <br>
 
                     </div>
                 `;
 
-    if (document_type === "Invoice") {
         table_footer_description.innerHTML = ``;
-        table_footer_description.innerHTML = footer_CFR_invoice;
+        table_footer_description.innerHTML = footer_panha_invoice;
 
         printWindow.document.write(`
                 <html>
@@ -1517,7 +1516,7 @@ function print_document(document_type) {
 
                     <!-- Header -->
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        ${logo.innerHTML}
+                        ${logo_80mm}
                         <div style="font-size:12px; font-weight:bold;">
 
                         </div>
@@ -1563,6 +1562,7 @@ function print_document(document_type) {
                 </html>
                 `);
     } else if (document_type === "Order") {
+
         let formattedOrderNo = String(document_no).padStart(3, "0");
         table_footer_description.innerHTML = `
                     <div class="font-mid" style="line-height:1.5;">
@@ -1654,13 +1654,14 @@ function print_document(document_type) {
                         .font-mid{
                             font-size: 8px;
                         }
+
                         </style>
                 </head>
                 <body onload="window.print(); window.close();">
 
                     <!-- Header -->
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        ${logo.innerHTML}
+                        ${logo_80mm}
                         <div style="font-size:12px; font-weight:bold;">
                             ${document_title.innerHTML}
                         </div>

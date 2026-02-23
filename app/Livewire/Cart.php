@@ -447,6 +447,9 @@ class Cart extends Component
         $this->count_cart = 0;
         $this->Current_table_id = null;
         $this->Current_table_name  = "";
+        $this->clearCart();
+        $this->clearCustomer();
+
     }
     #[\Livewire\Attributes\On('loadTableToCart')]
     public function loadTableToCart($table_id)
@@ -807,6 +810,10 @@ class Cart extends Component
         $this->cart = [];
         $this->qty = 0;
         $this->count_cart = 0;
+        $this->invoiceNo = 'NA';
+        $this->DNNo = 'NA';
+         $this->GetInvoiceNo($this->invoiceNo);
+         $this->GetDeliveryNote($this->DNNo);
     }
     // Cart.php (Livewire component)
     public function getTotalsProperty()
