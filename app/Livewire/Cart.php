@@ -8,8 +8,10 @@ use App\Models\InvoiceHeader;
 use App\Models\InvoiceLine;
 use App\Models\Product;
 use App\Models\RestaurantTable;
+use App\Models\Serial_No;
 use App\Models\TableProduct;
 use App\Models\TableQueue;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 use Livewire\Component;
@@ -32,6 +34,9 @@ class Cart extends Component
     public $currency_name = 'US Dollar';
     public $factor = 1; // Conversion factor
     public $all_currency = [];
+
+    public $invoiceNo = null;
+    public $DNNo = null;
 
     public $customer_name = 'Walk-in Customer';
     public $customer_id = null;
@@ -75,7 +80,7 @@ class Cart extends Component
                 'invoice_date'    => $payload['document_date'] ?? now(),
                 'due_date'        => $payload['due_date'] ?? null,
                 'customer_id'     => $customer_id_no,
-                'currency_id'     => 1,
+
                 'total_amount'    => 0, // will update after lines
                 'discount_amount' => 0,
                 'vat_amount'      => 0,
@@ -83,6 +88,7 @@ class Cart extends Component
                 'return_amount'   => $payload['returnedUSD'] ?? 0,
                 'remarks'         => null,
             ]);
+            $this->dispatch('get-reciept-no', ['invoice_number' => $invoice->invoice_number]);
 
             // 2️⃣ Create Invoice Lines
             foreach ($this->cart as $cartItem) {
@@ -147,11 +153,13 @@ class Cart extends Component
                 'discount_amount' => $totalDiscount,
                 'vat_amount'      => $totalVAT,
             ]);
+            $this->cart_queue_no = 0;
+            $this->getDocument($this->cart_queue_no); // send queue to front
         });
 
 
 
-
+        $this->new_cart = true;
         $this->dispatch('payment-success', ['message' => 'Payment is successfully']);
     }
 
@@ -247,6 +255,15 @@ class Cart extends Component
                 }
             }
 
+            if ($this->invoiceNo == null || $this->DNNo == null) {
+
+                $this->invoiceNo = $this->generateSerial('invoice');
+                $this->DNNo = $this->generateSerial('delivery_note');
+                $this->GetInvoiceNo($this->invoiceNo);
+                $this->GetDeliveryNote($this->DNNo);
+            }
+
+
 
             // 3️⃣ Process cart items
             foreach ($this->cart as $item) {
@@ -255,13 +272,21 @@ class Cart extends Component
                     ->first();
 
                 if ($existing) {
-                    // Update existing item
-                    $existing->qty = $item['qty']; // replace, not add
+
+                    $existing->qty = $item['qty'];
                     $existing->order_qty += 1;
-                    $existing->customer_id =  $customerId;
+                    $existing->customer_id = $customerId;
+
+                    // ✅ IMPORTANT: update discount from cart
+                    $existing->price = $item['price'];
+                    $existing->discount_percent = $item['discount_percent'];
+                    $existing->vat = $item['vat'] ?? 0;
+
+                    // Recalculate amounts
                     $existing->gross_amount = $existing->qty * $existing->price;
                     $existing->discount_amount = ($existing->gross_amount * $existing->discount_percent) / 100;
                     $existing->net_amount = $existing->gross_amount - $existing->discount_amount;
+
                     $existing->save();
                 } else {
 
@@ -270,10 +295,12 @@ class Cart extends Component
                         'table_id' => $newTableId,
                         'product_id' => $item['id'],
                         'customer_id' => $customerId,
+                        'invoice_no' => $this->invoiceNo,         // ✅ add
+                        'delivery_note' => $this->DNNo, // ✅ add
                         'queue_no' => $queueNo, // ✅ same queue for this table/order
                         'qty' => $item['qty'],
                         'order_qty' => 1,
-                        'printed_qty' => 0,
+                        'printed_qty' => 100,
                         'price' => $item['price'],
                         'discount_percent' => $item['discount_percent'],
                         'vat' => $item['vat'] ?? 0,
@@ -326,6 +353,75 @@ class Cart extends Component
 
         // 3️⃣ Otherwise → keep old queue
     }
+    public function GetInvoiceNo($invoice)
+    {
+
+        $this->dispatch('get-invoice-no', [
+            'document_no' => $invoice
+        ]);
+    }
+    public function GetDeliveryNote($deliveryNote)
+    {
+        $this->dispatch('get-delivery-note', [
+            'document_no' => $deliveryNote,
+        ]);
+    }
+    public function GetQuotationNo($quotationNo)
+    {
+        $this->dispatch('get-quotation-no', [
+            'document_no' => $quotationNo,
+        ]);
+    }
+    public function generateSerial($type)
+    {
+        return DB::transaction(function () use ($type) {
+
+            $yearShort = Carbon::now()->format('y');  // 26
+
+            // Find existing serial config
+            $serial = Serial_No::where('type', $type)->lockForUpdate()->first();
+
+            if (!$serial) {
+                // Create new if not exists
+                $serial = Serial_No::create([
+                    'prefix' => $type === 'invoice' ? 'INV' : 'DN',
+                    'type' => $type,
+                    'current_no' => 0,
+                    'last_reset_date' => now()
+                ]);
+            }
+
+            // 🔁 Reset yearly for delivery note
+            if ($type === 'delivery_note') {
+                if (
+                    $serial->last_reset_date &&
+                    Carbon::parse($serial->last_reset_date)->format('y') != $yearShort
+                ) {
+                    $serial->current_no = 0;
+                }
+            }
+
+            // Increment number
+            $serial->current_no += 1;
+            $serial->last_reset_date = now();
+            $serial->save();
+
+            // Format number 0001
+            $number = str_pad($serial->current_no, 4, '0', STR_PAD_LEFT);
+
+            // Return formatted result
+            if ($type === 'invoice') {
+                return "INV{$yearShort}-{$number}";
+            }
+
+            if ($type === 'delivery_note') {
+                return "DN{$yearShort}-{$number}";
+            }
+
+            return null;
+        });
+    }
+
     protected function incrementQueueTable()
     {
         $today = now()->toDateString();
@@ -369,6 +465,7 @@ class Cart extends Component
         $tableItems_assign = RestaurantTable::where('id', $table_id)
             ->first();
 
+        $this->GetQuotationNo($tableItems_assign->name);
 
         $order = 1;
         $queue_no = 0;
@@ -394,6 +491,10 @@ class Cart extends Component
                 'track_stock' => $row->product->track_stock ?? false,
             ];
         }
+
+        $this->GetInvoiceNo($row->invoice_no);
+        $this->GetDeliveryNote($row->delivery_note);
+
 
         $this->Current_table_id = $table_id;
         $this->Current_table_name = $tableItems_assign->name . '  ' . 'Queue No :' . $this->cart_queue_no;
@@ -468,21 +569,32 @@ class Cart extends Component
             ->where('table_id', $table_id)
             ->get();
 
+        $getDocument = TableProduct::with('product')
+            ->where('table_id', $table_id)
+            ->first();
+
+        $this->invoiceNo = $getDocument->invoice_no ?? 'NA';
+        $this->DNNo = $getDocument->delivery_note ?? 'NA';
+        $this->GetInvoiceNo($this->invoiceNo);
+        $this->GetDeliveryNote($this->DNNo);
+
+
         $tableItems_assign = RestaurantTable::where('id', $table_id)
             ->first();
+
+
+        $this->GetQuotationNo($tableItems_assign->name);
         $this->Current_table_id = $table_id;
         $this->Current_table_name = $tableItems_assign->name;
 
         $order = 1;
         $customer_id = 0;
         $queue_no = 0;
-        foreach ($tableItems as $row) {
-            if (!$row->product) continue;
-            $queue_no = $tableItems_assign->queue_no;
+        $lastRow = $tableItems->last();
 
-            $this->cart_queue_no = $queue_no;
-            $this->getDocument($this->cart_queue_no); // send queue to front
-            $customer_id = $row->customer_id;
+        foreach ($tableItems as $index => $row) {
+            if (!$row->product) continue;
+
             $this->cart[] = [
                 'id' => $row->product->id,
                 'name' => $row->product->name,
@@ -490,7 +602,7 @@ class Cart extends Component
                 'qty' => $row->qty,
                 'discount_percent' => $row->discount_percent,
                 'discount_price' => $row->net_amount / max($row->qty, 1),
-                'order_no' => $order++,
+                'order_no' => $index + 1,
                 'amount_line' => $row->gross_amount,
                 'discount_amount_line' => $row->discount_amount,
                 'net_amount_line' => $row->net_amount,
@@ -499,6 +611,9 @@ class Cart extends Component
                 'track_stock' => $row->product->track_stock ?? false,
             ];
         }
+
+
+
         $this->getDocument($queue_no);
         $this->count_cart = count($this->cart);
         // ✅ Notify frontend
@@ -525,6 +640,7 @@ class Cart extends Component
             $this->clearCustomer();
             $this->getDocument($queue_no);
         }
+
 
 
         $this->dispatch('cart-loaded', [
@@ -687,7 +803,7 @@ class Cart extends Component
     {
         $this->Current_table_id = null;
         $this->Current_table_name = "";
-
+        $this->new_cart = true;
         $this->cart = [];
         $this->qty = 0;
         $this->count_cart = 0;

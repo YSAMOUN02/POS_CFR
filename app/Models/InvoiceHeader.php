@@ -16,7 +16,7 @@ class InvoiceHeader extends Model
         'invoice_date',
         'due_date',
         'customer_id',
-        'currency_id',
+
         'total_amount',
         'discount_amount',
         'payment_method',

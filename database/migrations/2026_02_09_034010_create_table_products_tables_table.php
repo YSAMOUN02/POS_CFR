@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('table_id')->constrained('restaurant_tables')->onDelete('cascade');
             $table->foreignId('product_id')->constrained('product')->onDelete('cascade');
             $table->foreignId('customer_id')->nullable();
+            $table->string('invoice_no')->nullable();
+            $table->string('delivery_note')->nullable();
 
             // start from 1 every day
             $table->string('queue_no') ->default(1);

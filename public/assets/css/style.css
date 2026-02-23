@@ -422,6 +422,7 @@ table thead th:last-child {
     z-index: 2;
 }
 
+
     @keyframes scaleUp {
         0% { transform: scale(0.8); opacity: 0; }
         100% { transform: scale(1); opacity: 1; }
@@ -459,6 +460,8 @@ table thead th:last-child {
     .space{
         margin-bottom: 15px;
     }
+
+
 }
 @media screen {
     .print-only { display: none; }

@@ -14,11 +14,13 @@ class TableProduct extends Model
   protected $fillable = [
     'table_id',
     'product_id',
-    'customer_id',      // add this
-    'queue_no',         // add this
+    'customer_id',
+    'queue_no',
+        'invoice_no',
+    'delivery_note',
     'qty',
-    'order_qty',        // add this
-    'printed_qty',      // add this
+    'order_qty',
+    'printed_qty',   
     'price',
     'discount_percent',
     'vat',

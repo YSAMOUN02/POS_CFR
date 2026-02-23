@@ -20,10 +20,7 @@ return new class extends Migration
                 ->constrained('customers')
                 ->nullOnDelete(); // if customer deleted → set null
 
-            $table->foreignId('currency_id')
-                ->nullable()
-                ->constrained('currencies')
-                ->nullOnDelete();
+          
 
 
             $table->date('invoice_date'); // Date of invoice

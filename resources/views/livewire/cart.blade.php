@@ -131,10 +131,8 @@
                 <p class="font-semibold">
                     តម្លៃសរុប : {{ number_format($this->totals['total_net'], 2) }}$
                 </p>
-
-
-
-                <input type="hidden" id="total_amount" value="{{ floor($this->totals['total_net'] * 100) / 100 }}">
+                <input type="hidden" id="total_amount"
+                    value="{{ number_format($this->totals['total_net'], 2, '.', '') }}">
                 <input type="hidden" id="currency_name" value="{{ $currency_name }}">
                 <input type="hidden" id="currency_display_symbol" value="{{ $currency }}">
                 <input type="hidden" id="currency_display_factor" value="{{ $factor }}">
@@ -337,17 +335,17 @@
 
             <div id="invoice-table">
                 <!-- INVOICE TABLE -->
-                <table style="width:100%; border-collapse:collapse; margin-top:15px;">
+                <table style="width:100%;">
                     <thead>
-                        <tr style="background-color:#f2f2f2;">
-                            <th style="border:1px solid #000; padding:8px;">#</th>
-                            <th style="border:1px solid #000; padding:8px;">Item</th>
-                            <th style="border:1px solid #000; padding:8px;">Qty</th>
-                            <th style="border:1px solid #000; padding:8px;">Unit</th>
-                            <th style="border:1px solid #000; padding:8px;">Unit Price</th>
-                            <th style="border:1px solid #000; padding:8px;">Discount</th>
-                            <th style="border:1px solid #000; padding:8px;">Total</th>
-                        </tr>
+                        <tr">
+                            <th>No.</th>
+                            <th class="text-left">Item</th>
+                            <th>Qty</th>
+                            <th>Unit</th>
+                            <th>Price</th>
+                            <th>Discount</th>
+                            <th>Total</th>
+                            </tr>
                     </thead>
 
 
@@ -358,17 +356,17 @@
                     <tbody>
                         @foreach ($cart as $item)
                             <tr style="background-color: {{ $loop->even ? '#ffffff' : '#f9f9f9' }};">
-                                <td style="border:1px solid #000; padding:6px;">{{ $item['order_no'] }}</td>
-                                <td style="border:1px solid #000; padding:6px;">{{ $item['name'] }}</td>
-                                <td style="border:1px solid #000; padding:6px; text-align:center;">{{ $item['qty'] }}
+                                <td>{{ $item['order_no'] }}</td>
+                                <td>{{ $item['name'] }}</td>
+                                <td>{{ $item['qty'] }}
                                 </td>
-                                <td style="border:1px solid #000; padding:6px; text-align:center;">{{ $item['unit'] }}
+                                <td>{{ $item['unit'] }}
                                 </td>
-                                <td style="border:1px solid #000; padding:6px; text-align:right;">
+                                <td>
                                     {{ number_format($item['price'], 2) }}$</td>
-                                <td style="border:1px solid #000; padding:6px; text-align:center;">
+                                <td>
                                     {{ $item['discount_percent'] }}%</td>
-                                <td style="border:1px solid #000; padding:6px; text-align:right;">
+                                <td>
                                     {{ number_format($item['net_amount_line'], 2) }}$</td>
                             </tr>
                         @endforeach
@@ -388,12 +386,12 @@
                                 Total Amount: {{ floor($this->totals['total_net'] * 100) / 100 }}$
                             </td>
                         </tr>
-
                         @if ($currency != 'USD')
                             <tr class="total_print">
                                 <td colspan="7" style="text-align:end;">
                                     Total Amount in {{ $currency }}:
-                                    {{ floor($this->totals['total_net'] * $factor * 100) / 100 }}{{ $currency }}
+                                    {{ number_format(floor($this->totals['total_net'] * $factor * 100) / 100, 0, '.', ' ') }}
+                                    {{ $currency }}
                                 </td>
                             </tr>
                         @endif

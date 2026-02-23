@@ -752,10 +752,11 @@ function renderProductTable(data) {
             <td>${parseFloat(p.vat).toFixed(2)}</td>
             <td>${parseFloat(p.discount_percent).toFixed(2)}</td>
             <td>${p.last_purchase_price ? parseFloat(p.last_purchase_price).toFixed(2) : "-"}</td>
+            <td>${p.category_id ?? "-"}</td>
             <td>${p.category?.name ?? "-"}</td>
             <td>${p.unit ?? "-"}</td>
             <td>${p.category_name ?? "-"}</td>
-                            <td>${p.category_id ?? "-"}</td>
+
             <td>${p.track_stock ? "Yes" : "No"}</td>
             <td>${p.allow_discount ? "Yes" : "No"}</td>
             <td>${p.allow_return ? "Yes" : "No"}</td>
@@ -1219,7 +1220,40 @@ warehouseModal.addEventListener("click", (e) => {
     if (e.target === warehouseModal) closeWarehouseModal();
 });
 
+let delivery_note_no = "NA";
+let invoice_no = "NA";
+let quotation_no = "NA";
+window.addEventListener("get-delivery-note", (e) => {
+
+    delivery_note_no = e.detail[0].document_no;
+});
+window.addEventListener("get-invoice-no", (e) => {
+
+    invoice_no = e.detail[0].document_no;
+});
+window.addEventListener("get-quotation-no", (e) => {
+    quotation_no = e.detail[0].document_no;
+});
+
 function print(document_type) {
+    if (quotation_no == "NA") {
+        document.querySelector("#btn-print-quote").style.display = "none";
+    } else {
+        document.querySelector("#btn-print-quote").style.display = "block";
+    }
+    if (delivery_note_no == "NA") {
+        document.querySelector("#btn-print-delivery").style.display = "none";
+    } else {
+        document.querySelector("#btn-print-delivery").style.display = "block";
+    }
+    if (invoice_no == "NA") {
+        document.querySelector("#btn-print-invoice").style.display = "none";
+    } else {
+        document.querySelector("#btn-print-invoice").style.display = "block";
+    }
+
+
+
     // check cart Logic
     let input_count_cart = document.getElementById("count_cart_input");
     let count_cart = input_count_cart.value;
@@ -1365,7 +1399,7 @@ function print_document(document_type) {
 
                                 <div><b>Invoice #</b></div>
                                 <div>
-                                  ${document_no}
+                                  ${invoice_no}
 
                                 </div>
 
@@ -1390,7 +1424,7 @@ function print_document(document_type) {
         table_footer_description.innerHTML = `
                     <div class="font-mid" style="line-height:1.5;">
                         <div style="font-weight:bold; text-decoration:underline; margin-bottom:6px;">
-                            <center>Thanks for your Please come again.</center>
+                            <center>Thanks for you! Please come again.</center>
                         </div>
 
 
@@ -1400,42 +1434,102 @@ function print_document(document_type) {
         printWindow.document.write(`
                 <html>
                 <head>
-                    <title>Invoice</title>
+                    <title>Receipt</title>
                     <style>
-                        body {  font-family: 'Noto Serif Khmer', serif; margin: 20px; color: black; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
-                        th { background-color: #f0f0f0; }
-                        .invoice-header h2 { margin: 0; }
+
+                        @page {
+                            size: 80mm auto;
+                            margin: 0 !important;
+                        }
+
+                        * {
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            box-sizing: border-box;
+                            font-family: 'Noto Serif Khmer', serif;
+                        }
+                        /* Khmer */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/khmer.woff2') format('woff2');
+                            unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
+                        }
+
+                        /* Latin Extended */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/latinex.woff2') format('woff2');
+                            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+                        }
+
+                        /* Latin */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/latin.woff2') format('woff2');
+                            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+                        }
+
+                        html, body {
+                            width: 80mm !important;
+                            max-width: 80mm !important;
+                            font-family: 'Noto Serif Khmer', serif;
+                            font-size:8px;
+                            color: black;
+                        }
+
+                        body {
+                            padding: 3mm !important; /* tiny inner safe padding */
+                        }
+
+                        table {
+                            width: 100% !important;
+                            border-collapse: collapse;
+                            margin: 8px 0 !important;
+                            border: 1px solid #000;
+                        }
+                        table th:nth-child(6), table td:nth-child(6) {
+                         display: none;
+                         }
+
+                        th, td {
+                         border: 1px solid #00000050;
+                            padding: 1px 2px !important;
+                            font-size: 7px;
+                        }
                         .font-mid{
-                            font-size:12px;
+                            font-size: 8px;
                         }
-                        #seller_name{
-                        display:none;
-                        }
-                        @media print {
-                            button { display: none; }
-                        }
-                    </style>
+                        </style>
                 </head>
                 <body onload="window.print(); window.close();">
 
                     <!-- Header -->
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                         ${logo.innerHTML}
-                        <div style="font-size:25px; font-weight:bold;">
-                            ${document_title.innerHTML}
+                        <div style="font-size:12px; font-weight:bold;">
+
                         </div>
                     </div>
 
                  <!-- Seller + Date in 2-column grid -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0 ;">
 
                             <!-- Left column: Shop info -->
                             <div  class="font-mid"  style="display: grid; gap:3px; text-align: left;">
                                 ${shop_info.innerHTML}
-                                <strong>Reciept for:</strong>
-                                 ${customer_info.innerHTML}
+
                             </div>
 
                           <!-- Right column: Dates / Invoice (2-grid, all right aligned) -->
@@ -1447,31 +1541,33 @@ function print_document(document_type) {
                                 text-align: right;
                             ">
                                 <div><b>Date:</b></div>
-                                <div>${formattedDocumentDate}</div>
+                                <div>&ensp; ${formattedDocumentDate}</div>
 
                                 <div><b>Reciept No:</b></div>
                                 <div>
-                                    REC- ${document_no}
+                                 &ensp; ${reciept_no}
 
                                 </div>
 
                                 <div><b>Due Date:</b></div>
-                                <div>${formattedDueDate}</div>
+                                <div>&ensp; ${formattedDueDate}</div>
                             </div>
                         </div>
+                       <div style="font-size:10px; font-weight:bold; margin-bottom:10px;"> <center>${document_title.innerHTML}</center></div>
                     <!-- Table -->
                     ${table_data.innerHTML}
-                    <div class="font-mid">${table_footer.innerHTML} </div>
+                    <div class="font-mid mt-2">${table_footer.innerHTML} </div>
 
 
                 </body>
                 </html>
                 `);
     } else if (document_type === "Order") {
+        let formattedOrderNo = String(document_no).padStart(3, "0");
         table_footer_description.innerHTML = `
                     <div class="font-mid" style="line-height:1.5;">
                         <div style="font-weight:bold; text-decoration:underline; margin-bottom:6px;">
-                            <center>Thanks for your Please come again.</center>
+                            <center>Thanks for your Order.</center>
                         </div>
 
 
@@ -1482,29 +1578,90 @@ function print_document(document_type) {
                 <html>
                 <head>
                     <title>Order</title>
-                    <style>
-                        body {  font-family: 'Noto Serif Khmer', serif; margin: 20px; color: black; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
-                        th { background-color: #f0f0f0; }
-                        .invoice-header h2 { margin: 0; }
+                  <style>
+
+                        @page {
+                            size: 80mm auto;
+                            margin: 0 !important;
+                        }
+
+                        * {
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            box-sizing: border-box;
+                            font-family: 'Noto Serif Khmer', serif;
+                        }
+                        /* Khmer */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/khmer.woff2') format('woff2');
+                            unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
+                        }
+
+                        /* Latin Extended */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/latinex.woff2') format('woff2');
+                            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+                        }
+
+                        /* Latin */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/latin.woff2') format('woff2');
+                            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+                        }
+
+                        html, body {
+                            width: 80mm !important;
+                            max-width: 80mm !important;
+                            font-family: 'Noto Serif Khmer', serif;
+                            font-size:8px;
+                            color: black;
+                        }
+
+                        body {
+                            padding: 3mm !important; /* tiny inner safe padding */
+                        }
+
+                        table {
+                            width: 100% !important;
+                            border-collapse: collapse;
+                            margin: 8px 0 !important;
+                            border: 1px solid #000;
+                        }
+                        table th:nth-child(6), table td:nth-child(6) {
+                         display: none;
+                         }
+
+                        th, td {
+                         border: 1px solid #00000050;
+                            padding: 1px 2px !important;
+                            font-size: 7px;
+                        }
                         .font-mid{
-                            font-size:12px;
+                            font-size: 8px;
                         }
-                        #seller_name{
-                        display:none;
-                        }
-                        @media print {
-                            button { display: none; }
-                        }
-                    </style>
+                        </style>
                 </head>
                 <body onload="window.print(); window.close();">
 
                     <!-- Header -->
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                         ${logo.innerHTML}
-                        <div style="font-size:25px; font-weight:bold;">
+                        <div style="font-size:12px; font-weight:bold;">
                             ${document_title.innerHTML}
                         </div>
                     </div>
@@ -1515,8 +1672,7 @@ function print_document(document_type) {
                             <!-- Left column: Shop info -->
                             <div  class="font-mid"  style="display: grid; gap:3px; text-align: left;">
                                 ${shop_info.innerHTML}
-                                <strong>Reciept for:</strong>
-                                 ${customer_info.innerHTML}
+
                             </div>
 
                           <!-- Right column: Dates / Invoice (2-grid, all right aligned) -->
@@ -1533,7 +1689,7 @@ function print_document(document_type) {
                                 <div><b>QUEUE No:</b></div>
                                 <div>
 
-                                   ORDER-  ${document_no}
+                                    ORDER-${formattedOrderNo}
                                 </div>
 
                                 <div><b>Due Date:</b></div>
@@ -1564,10 +1720,59 @@ function print_document(document_type) {
                 <head>
                     <title>Invoice</title>
                     <style>
-                        body {  font-family: 'Noto Serif Khmer', serif; margin: 20px; color: black; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
-                        th { background-color: #f0f0f0; }
+                                /* Khmer */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/khmer.woff2') format('woff2');
+                            unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
+                        }
+
+                        /* Latin Extended */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/latinex.woff2') format('woff2');
+                            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+                        }
+
+                        /* Latin */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/latin.woff2') format('woff2');
+                            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+                        }
+
+                        html, body {
+
+                            font-family: 'Noto Serif Khmer', serif;
+
+                            color: black;
+                        }
+                        table {
+                        width: 100%;
+                         border-collapse: collapse;
+                          margin: 10px 0;
+                           }
+                        th, td {
+                        border: 1px solid #000;
+                        padding: 6px;
+                         text-align: left;
+                         font-size:12px;
+                          }
+                        th {
+                        background-color: #f0f0f0;
+                         }
                         .invoice-header h2 { margin: 0; }
                         .font-mid{
                             font-size:12px;
@@ -1596,7 +1801,7 @@ function print_document(document_type) {
                             <!-- Left column: Shop info -->
                             <div  class="font-mid"  style="display: grid; gap:3px; text-align: left;">
                                 ${shop_info.innerHTML}
-                                <strong>Reciept for:</strong>
+                                <strong>Quotation for:</strong>
                                  ${customer_info.innerHTML}
                             </div>
 
@@ -1613,8 +1818,7 @@ function print_document(document_type) {
 
                                 <div><b>Quotation:</b></div>
                                 <div>
-                                      Q${document_no}
-
+                                    &ensp;${quotation_no}
                                 </div>
 
                                 <div><b>Due Date:</b></div>
@@ -1630,26 +1834,53 @@ function print_document(document_type) {
                 </html>
                 `);
     } else if (document_type === "Delivery Note") {
-        table_footer_description.innerHTML = `
-                    <div style=" line-height:1.5;">
+        let today = new Date().toLocaleDateString(); // e.g., "23/02/2026"
+
+        let footer_panha_delivery_note = `
 
 
-
+                <!-- Seller -->
+                <div style="width:50%; display:flex; flex-direction:column;">
+                    <div style="font-weight:bold;">Seller</div>
+                    <div style="margin-top:10px;">
+                        Name: <span style="display:inline-block; width:150px; border-bottom:1px solid #000;"></span>
                     </div>
-                `;
+                    <div style="margin-top:5px;">
+                        Date: <span style="display:inline-block; width:150px; border-bottom:1px solid #000;">${today}</span>
+                    </div>
+                </div>
 
-        printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Invoice</title>
-                    <style>
-                        body {   font-family: 'Noto Serif Khmer', serif; margin: 20px; color: black; }
+                <!-- Receiver -->
+                <div style="width:50%; display:flex; justify-content:flex-end; flex-direction:column;">
+                    <div style="font-weight:bold;">Receiver</div>
+                    <div style="margin-top:10px;">
+                        Name: <span style="display:inline-block; width:150px; border-bottom:1px solid #000;"></span>
+                    </div>
+                    <div style="margin-top:5px;">
+                        Date: <span style="display:inline-block; width:150px; border-bottom:1px solid #000;">${today}</span>
+                    </div>
+                </div>
 
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+
+            `;
+        let page_A4_style = `
+        <style>
+                        body {
+                            font-family: 'Noto Serif Khmer', serif;
+                            position: relative;
+
+                            background-color: white;
+                          }
+
+                        table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 10px;
+                        }
+
                         th, td { border: 1px solid #000; padding: 6px; text-align: left; }
                         th { background-color: #f0f0f0; }
                         .invoice-header h2 { margin: 0; }
-
                         #seller_name{
                         display:none;
                         }
@@ -1663,15 +1894,32 @@ function print_document(document_type) {
                        .font-mid{
                             font-size:12px;
                         }
-                        .total_print{
-                        display:none;
+                        .footer {
+
+                            position: absolute;
+                            bottom:0;
+                            width: 100%;
+                            display: flex;
+                            justify-content: space-between;
+
+
                         }
+                        .total_print{
+                        display:none;}
                           #currency_exchange{
                             display:none;}
                         @media print {
                             button { display: none; }
                         }
                     </style>
+        `;
+        let footer_delivery_note = footer_panha_delivery_note;
+        let page_style = page_A4_style;
+        printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Invoice</title>
+                    ${page_style}
                 </head>
                 <body onload="window.print(); window.close();">
 
@@ -1709,7 +1957,7 @@ function print_document(document_type) {
 
                                 <div><b>Delivery No:</b></div>
                                 <div>
-                                  DN-   ${document_no}
+                                  ${delivery_note_no}
                                 </div>
 
                                 <div><b>Due Date:</b></div>
@@ -1721,7 +1969,10 @@ function print_document(document_type) {
 
                     <!-- Table -->
                     ${table_data.innerHTML}
-                    <div class="font-mid">${table_footer.innerHTML} </div>
+                  <div class="footer">
+                    ${footer_delivery_note}
+                    </div>
+
                 </body>
                 </html>
                 `);
@@ -2246,46 +2497,6 @@ function calculateFinalPrice() {
     document.getElementById(id).addEventListener("input", calculateFinalPrice);
 });
 
-// document
-//     .getElementById("sale_data")
-//     .addEventListener("click", Sale_data());
-
-// async function Sale_data() {
-//     const tbody = document.getElementById("Table-table-body");
-//     tbody.innerHTML =
-//         '<tr><td colspan="5" class="text-center py-2">Loading...</td></tr>';
-
-//     try {
-//         const res = await fetch("/tables"); // Your API route
-//         if (!res.ok) throw new Error("Failed to fetch tables");
-
-//         const tables = await res.json();
-
-//         tbody.innerHTML = ""; // Clear loading
-
-//         tables.forEach((table) => {
-//             const tr = document.createElement("tr");
-
-//             tr.innerHTML = `
-//                 <td class="px-4 py-2 text-center">
-//                     <input type="radio" name="table_id" value="${table.id}">
-//                 </td>
-//                 <td class="px-4 py-2">${table.id}</td>
-//                 <td class="px-4 py-2">${table.name}</td>
-
-//               <td class="px-4 py-2">${table.status ? "Occupied" : "Available"}</td>
-
-//             `;
-
-//             tbody.appendChild(tr);
-//         });
-//     } catch (err) {
-//         console.error(err);
-//         tbody.innerHTML =
-//             '<tr><td colspan="5" class="text-center py-2 text-red-500">Failed to load tables</td></tr>';
-//     }
-// }
-
 let cart_qty = 0;
 let current_id = null;
 
@@ -2302,7 +2513,6 @@ async function showTableModal(qty_cart, id) {
         const response = await fetch("/tables");
 
         if (!response.ok) throw new Error("Network error fetching tables");
-
 
         const tables = await response.json();
 
@@ -2521,8 +2731,9 @@ function cleanNumberInput(input) {
 }
 let paymentData = {};
 function updatePayment() {
-    const totalAmountUSD = parseFloat(displayUSD.value) || 0;
-
+    const totalAmountUSD = Number(
+        (parseFloat(displayUSD.value) || 0).toFixed(3),
+    );
     cleanNumberInput(payUSDInput);
     cleanNumberInput(payOtherInput);
 
@@ -2637,6 +2848,11 @@ window.addEventListener("serve-table", (e) => {
     showTableModal(0, "ALL");
 });
 
+let reciept_no = "NA";
+window.addEventListener("get-reciept-no", (e) => {
+    reciept_no = e.detail[0].invoice_number;
+});
+
 window.addEventListener("clear-customer", (e) => {
     document.querySelector("#customerValue").value = "";
     document.querySelector("#customerSearch").value = "";
@@ -2648,7 +2864,6 @@ window.addEventListener("update-customer-input", (e) => {
 });
 let document_no = "NA";
 window.addEventListener("get-document", (e) => {
-    console.log("Received document number:", document_no);
     document_no = e.detail[0].document_no;
 });
 
@@ -3149,13 +3364,26 @@ function exportTableToExcelXLSX(tableId, filename = "sales.xlsx") {
     const rows = Array.from(table.querySelectorAll("tr"));
 
     const data = rows
-        .filter((row) => !row.classList.contains("bg-blue-200")) // skip subtotal row
+        .filter((row) => !row.classList.contains("bg-blue-200")) // Skip subtotal row
         .map((row) => {
             return Array.from(row.querySelectorAll("td, th")).map((cell) => {
-                // Remove sort-icon and trim whitespace from header
+                // Remove sort icon and trim
                 let text = cell.textContent.replace(/↕/g, "").trim();
-                // Use dataset.value if exists (numeric) otherwise text
-                return cell.dataset.value ?? text;
+
+                // Prefer numeric dataset value if available
+                let value = cell.dataset.value ?? text;
+
+                if (typeof value === "string") {
+                    // Remove commas and currency/percent symbols
+                    let cleaned = value.replace(/,/g, "").replace(/[$%]/g, "");
+
+                    // Convert to number if valid numeric
+                    if (cleaned !== "" && !isNaN(cleaned)) {
+                        return Number(cleaned);
+                    }
+                }
+
+                return value;
             });
         });
 
@@ -3170,7 +3398,10 @@ function exportTableToExcelXLSX(tableId, filename = "sales.xlsx") {
             const cell_address = { c: C, r: R };
             const cell_ref = XLSX.utils.encode_cell(cell_address);
             if (!ws[cell_ref]) continue;
-            ws[cell_ref].s = { alignment: { horizontal: "left" } };
+
+            ws[cell_ref].s = {
+                alignment: { horizontal: "left" },
+            };
         }
     }
 

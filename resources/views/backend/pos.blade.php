@@ -1414,7 +1414,7 @@
                     </div>
                     <div>
                         <label for="display_pay_amount_converted" class="block text-gray-600 font-medium mb-1">Total in
-                            Khmer</label>
+                            Other</label>
                         <input type="text" id="display_pay_amount_converted" disabled
                             class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
                     </div>
@@ -1498,34 +1498,34 @@
 
             <br>
             <!-- Buttons -->
-            <div class="flex justify-end space-x-3">
+                <div class="w-full grid grid-cols-3 gap-2 px-5 ">
                 <button data-quotation-cancel class=" bg-rose-200 text-gray-700 rounded-xl hover:bg-rose-300 transition">
                     Cancel
                 </button>
-                &ensp;
-                <button onclick="print_document('Quotation')"
+
+                <button id="btn-print-quote" onclick="print_document('Quotation')"
                     class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
                     Quote
                 </button>
-                &ensp;
+
                 <button onclick="print_document('Order')"
                     class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
                     Order
                 </button>
 
-                &ensp;
-                <button onclick="print_document('Delivery Note')"
+
+                <button id="btn-print-delivery" onclick="print_document('Delivery Note')"
                     class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
                     Delivery
                 </button>
-                &ensp;
-                <button onclick="print_document('Invoice')"
+
+                <button id="btn-print-invoice" onclick="print_document('Invoice')"
                     class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
                     Invoice
                 </button>
-                &ensp;
+
                 <button id="confirmPayBtn" onclick="Final_Payment()"
-                    class=" bg-gray-400 text-black rounded-xl hover:bg-gray-400 transition shadow-md">
+                    class=" text-nowrap w-24 bg-gray-400 text-black rounded-xl hover:bg-gray-400 transition shadow-md">
                     Enter Amount
 
                 </button>
@@ -1667,7 +1667,9 @@
                                         <th class="px-4 py-3 cursor-pointer" data-column="last_purchase_price">
                                             Last Purchase Price <span class="sort-icon">↕</span>
                                         </th>
-
+                                        <th class="px-4 py-3 cursor-pointer" data-column="category_id">
+                                            Category ID <span class="sort-icon">↕</span>
+                                        </th>
                                         <th class="px-4 py-3 cursor-pointer" data-column="category_name">
                                             Category <span class="sort-icon">↕</span>
                                         </th>
