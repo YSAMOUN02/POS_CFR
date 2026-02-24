@@ -1485,6 +1485,7 @@ function print_document(document_type) {
                             font-family: 'Noto Serif Khmer', serif;
                             font-size:8px;
                             color: black;
+                             font-weight: bold;
                         }
 
                         body {
@@ -1497,7 +1498,10 @@ function print_document(document_type) {
                             margin: 8px 0 !important;
                             border: 1px solid #000;
                         }
-
+                        thead tr{
+                        background-color: black !important;
+                        color:white !important;
+                        }
                         table th:nth-child(6), table td:nth-child(6) {
                          display: none;
                          }
@@ -1506,6 +1510,7 @@ function print_document(document_type) {
                          border: 1px solid #00000050;
                             padding: 1px 2px !important;
                             font-size: 7px;
+                            font-weight: bold;
                         }
                         .font-mid{
                             font-size: 8px;
