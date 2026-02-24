@@ -1639,7 +1639,7 @@ function print_document(document_type) {
                             width: 80mm !important;
                             max-width: 80mm !important;
                             font-family: 'Noto Serif Khmer', serif;
-                            font-size:11px;
+                            font-size:10px;
                             color: black !important;
                             font-weight: bold;
 
@@ -1658,23 +1658,20 @@ function print_document(document_type) {
                             margin: 8px 0 !important;
                             border: 1px solid #000;
                         }
-                        thead tr{
-                        background-color: black !important;
-                        color:white !important;
-                        }
+
                         table th:nth-child(6), table td:nth-child(6) {
                          display: none;
                          }
 
                         th, td {
-                         border: 1px solid #00000050;
+                            border: 1px solid black;
                             padding: 1px 2px !important;
                             font-size: 10px;
                             font-weight: bold;
                             color: black !important;
                         }
                         .font-mid{
-                            font-size: 11px;
+                            font-size: 10px;
                             color: black !important
                         }
                         </style>
@@ -1779,8 +1776,8 @@ function print_document(document_type) {
                         html, body {
 
                             font-family: 'Noto Serif Khmer', serif;
-
-                            color: black;
+                             font-size:10px;
+                            color: black !important;
                         }
                         table {
                         width: 100%;
@@ -1788,17 +1785,19 @@ function print_document(document_type) {
                           margin: 10px 0;
                            }
                         th, td {
-                        border: 1px solid #000;
-                        padding: 6px;
-                         text-align: left;
-                         font-size:12px;
+                            border: 1px solid #000;
+                            padding: 6px;
+                            text-align: left;
+                            font-size:10px;
+                            color: black !important;
                           }
                         th {
                         background-color: #f0f0f0;
                          }
                         .invoice-header h2 { margin: 0; }
                         .font-mid{
-                            font-size:12px;
+                            font-size:10px;
+                             color: black !important;
                         }
                         #seller_name{
                         display:none;
