@@ -15,12 +15,11 @@ return new class extends Migration
             $table->id(); // Primary key
             $table->string('invoice_number')->unique(); // Invoice number
 
-       $table->foreignId('customer_id')
-                ->nullable()
-                ->constrained('customers')
-                ->nullOnDelete(); // if customer deleted → set null
+       $table->string('customer_id')
+                ->nullable();
 
-          
+
+
 
 
             $table->date('invoice_date'); // Date of invoice
