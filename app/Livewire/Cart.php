@@ -85,6 +85,7 @@ class Cart extends Component
                 'discount_amount' => 0,
                 'vat_amount'      => 0,
                 'payment_method'          => $payload['paymentMethod'],
+                'customer_type'          => $payload['customer_type'] ?? 'walk-in',
                 'return_amount'   => $payload['returnedUSD'] ?? 0,
                 'remarks'         => null,
             ]);

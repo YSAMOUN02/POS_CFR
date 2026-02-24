@@ -1263,7 +1263,7 @@ function print(document_type) {
     updatePayment();
     // Handle documents that need modals first
     if (document_type === "Receipt") {
-        openDatePromt_Modal(() => print_document("Receipt"));
+        openDatePromt_Modal(() =>print_document("Receipt"));
         return;
     } else if (document_type === "Invoice") {
         openDatePromt_Modal(() => print_document("Invoice"));
@@ -1314,11 +1314,7 @@ function print_document(document_type) {
     // Open new window
     const printWindow = window.open("", "_blank", "width=800,height=600");
 
-    printWindow.document.open();
 
-    // Promt User Input
-
-    // Personal Data
 
     if (document_type === "Invoice") {
         let footer_panha_invoice = `
@@ -2042,6 +2038,24 @@ function print_document(document_type) {
 
     printWindow.document.close();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const dateInput = document.getElementById("document_dateInput");
 const validInput = document.getElementById("due_date");
@@ -2845,6 +2859,7 @@ function updatePayment() {
         const Payment_Method = document.getElementById("payment_method").value;
         const due_date = new Date(input_due_date_local.value);
         const document_date = new Date(input_document_date_value_local.value);
+        const customer_type = document.getElementById("customer_type").value;
         // Store everything in global object
         paymentData = {
             paymentMethod: Payment_Method,
@@ -2858,7 +2873,9 @@ function updatePayment() {
             currency_other_symbol: currency_other_symbol ?? null,
             due_date: due_date ?? null,
             document_date: document_date ?? null,
+            customer_type: customer_type ?? null,
         };
+
         // enable button
         confirmPayBtn.disabled = false;
         confirmPayBtn.textContent = "Payment";
@@ -3210,7 +3227,9 @@ function renderTable(response) {
                     <td data-value="${header.customer?.name ?? ""}">${header.customer?.name ?? ""}</td>
                     <td data-value="${header.invoice_date ?? ""}">${header.invoice_date ? new Date(header.invoice_date).toLocaleDateString("en-GB") : ""}</td>
                     <td data-value="${header.due_date ?? ""}">${header.due_date ? new Date(header.due_date).toLocaleDateString("en-GB") : ""}</td>
+
                     <td data-value="${header.payment_method ?? ""}">${header.payment_method ?? ""}</td>
+                      <td data-value="${header.customer_type ?? ""}">${header.customer_type ?? ""}</td>
                     <td data-value="${line.item_code ?? ""}">${line.item_code ?? ""}</td>
                     <td data-value="${line.name ?? ""}">${line.name ?? ""}</td>
                     <td data-value="${line.variant ?? ""}">${line.variant ?? ""}</td>
@@ -3256,7 +3275,7 @@ function renderTable(response) {
 
     tbody.innerHTML += `
     <tr class="bg-blue-200 font-semibold text-nowrap">
-    <td colspan="11" class="text-left">Subtotal</td>
+    <td colspan="12" class="text-left">Subtotal</td>
 
     <td class="text-right">${subtotal.quantity.toFixed(0)}</td>
         <td> </td>

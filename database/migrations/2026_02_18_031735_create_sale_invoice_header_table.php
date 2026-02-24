@@ -28,7 +28,7 @@ return new class extends Migration
             $table->decimal('vat_amount', 15, 2)->default(0); // Tax total
             $table->decimal('discount_amount', 15, 2)->default(0); // Discount applied
             $table->decimal('return_amount', 15, 2)->default(0); // Discount applied
-
+            $table->text('customer_type')->nullable(); // Optional notes
             $table->text('payment_method')->nullable(); // Optional notes
             $table->text('remarks')->nullable(); // Optional notes
             $table->timestamps(); // created_at & updated_at
