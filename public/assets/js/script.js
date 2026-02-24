@@ -1497,6 +1497,7 @@ function print_document(document_type) {
                             margin: 8px 0 !important;
                             border: 1px solid #000;
                         }
+
                         table th:nth-child(6), table td:nth-child(6) {
                          display: none;
                          }
@@ -1627,6 +1628,7 @@ function print_document(document_type) {
                             max-width: 80mm !important;
                             font-family: 'Noto Serif Khmer', serif;
                             font-size:8px;
+                            font-weight: bold;
                             color: black;
                         }
 
@@ -1635,6 +1637,7 @@ function print_document(document_type) {
                         }
 
                         table {
+
                             width: 100% !important;
                             border-collapse: collapse;
                             margin: 8px 0 !important;
@@ -1643,12 +1646,21 @@ function print_document(document_type) {
                         table th:nth-child(6), table td:nth-child(6) {
                          display: none;
                          }
-
+                        tr:fist-child{
+                           background-color: black !important;
+                                color:white !important;
+                                }
+                        thead tr{
+                        background-color: black !important;
+                        color:white !important;
+                        }
                         th, td {
                          border: 1px solid #00000050;
                             padding: 1px 2px !important;
                             font-size: 7px;
+                            font-weight: bold;
                         }
+
                         .font-mid{
                             font-size: 8px;
                         }
@@ -1917,6 +1929,7 @@ function print_document(document_type) {
                         }
 
                         th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+
                         th { background-color: #f0f0f0; }
                         .invoice-header h2 { margin: 0; }
                         #seller_name{

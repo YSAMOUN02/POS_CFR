@@ -412,9 +412,6 @@ table thead th:last-child {
     font-size: 25px;
 }
 
-/* #Table-sale-list{
-
-} */
 
 #Table-sale-list thead th {
     position: sticky !important;
@@ -460,6 +457,7 @@ table thead th:last-child {
     .space{
         margin-bottom: 15px;
     }
+
 
 
 }
@@ -527,12 +525,7 @@ table thead th:last-child {
 .bonus{
     padding: 2px !important;
 }
-/* #drawer-swipe{
-    bottom: 50px;
-} */
-/* #drawer-swipe {
-  transform: translateY(0) !important;
-} */
+
 .respond_laptop{
     padding: 5px;
 }
