@@ -1311,7 +1311,6 @@ function print_document(document_type) {
         "table_footer_description",
     );
 
-
     // Open new window
     const printWindow = window.open("", "_blank", "width=800,height=600");
 
@@ -1562,7 +1561,6 @@ function print_document(document_type) {
                 </html>
                 `);
     } else if (document_type === "Order") {
-
         let formattedOrderNo = String(document_no).padStart(3, "0");
         table_footer_description.innerHTML = `
                     <div class="font-mid" style="line-height:1.5;">
@@ -2069,7 +2067,7 @@ function openDatePromt_Modal(onConfirm) {
     const format = (d) => d.toISOString().split("T")[0];
 
     dateInput.value = format(today);
-    validInput.value = format(validUntil);
+    validInput.value = format(today);
 
     modal.classList.remove("hidden");
 
