@@ -232,25 +232,25 @@
             <input type="text" id="count_cart_input" value="{{ $count_cart }}" hidden>
             @php
                 // CFR
-                // $logo = 'logo_cfr.png';
+                $logo = 'logo_cfr.png';
                 // Panha
-                   $logo = 'logo.jpg';
+                //    $logo = 'logo.jpg';
             @endphp
 
             <div id="logo" style="flex: 0 0 auto; margin-right:15px;">
 
                 {{-- CFR  --}}
-                {{-- <img class="logo" style="width: 80px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo"> --}}
+                <img class="logo" style="width: 80px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo">
                 {{-- Panha --}}
-                <img class="logo" style="width: 250px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo">
+                {{-- <img class="logo" style="width: 250px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo"> --}}
             </div>
 
               <div id="logo_80mm" style="flex: 0 0 auto; margin-right:15px;">
 
                 {{-- CFR  --}}
-                {{-- <img class="logo" style="width: 80px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo"> --}}
+                <img class="logo" style="width: 80px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo">
                 {{-- Panha --}}
-                <img class="logo" style="width: 120px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo">
+                {{-- <img class="logo" style="width: 120px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo"> --}}
             </div>
             <div id="document_title">
                 <h1> </h1>
@@ -273,7 +273,7 @@
                     'name' => 'Mr. Troek Panha',
                 ];
 
-                $sellerInfo = $sellerInfo_panha;
+                $sellerInfo = $shopInfo_CFR;
             @endphp
 
 
@@ -380,17 +380,20 @@
                         <!-- TOTALS -->
                         <tr class="total_print">
                             <td colspan="7" style="text-align:end;">
-                                Subtotal: {{ floor($this->totals['total_original'] * 100) / 100 }}$
+
+                                Subtotal: {{ number_format(($this->totals['total_original'] * 100) / 100 , 2) }}$
                             </td>
                         </tr>
                         <tr class="total_print">
                             <td colspan="7" style="text-align:end;">
-                                Discount: {{ floor($this->totals['total_discount'] * 100) / 100 }}$
+                                Discount: {{ number_format(($this->totals['total_discount'] * 100) / 100, 2) }}$
+
                             </td>
                         </tr>
                         <tr class="total_print">
                             <td colspan="7" style="text-align:end;">
-                                Total Amount: {{ floor($this->totals['total_net'] * 100) / 100 }}$
+                                Total Amount: {{ number_format(($this->totals['total_net'] * 100) / 100, 2) }}$
+
                             </td>
                         </tr>
                         @if ($currency != 'USD')
