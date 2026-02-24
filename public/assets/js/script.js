@@ -1483,11 +1483,15 @@ function print_document(document_type) {
                             width: 80mm !important;
                             max-width: 80mm !important;
                             font-family: 'Noto Serif Khmer', serif;
-                            font-size:8px;
-                            color: black;
-                             font-weight: bold;
-                        }
+                            font-size:11px;
+                            color: black !important;
+                            font-weight: bold;
 
+
+                        }
+                         img {
+                              image-rendering: pixelated; /* tries to make logos sharper */
+                            }
                         body {
                             padding: 3mm !important; /* tiny inner safe padding */
                         }
@@ -1509,11 +1513,13 @@ function print_document(document_type) {
                         th, td {
                          border: 1px solid #00000050;
                             padding: 1px 2px !important;
-                            font-size: 7px;
+                            font-size: 10px;
                             font-weight: bold;
+                            color: black !important;
                         }
                         .font-mid{
-                            font-size: 8px;
+                            font-size: 11px;
+                            color: black !important
                         }
                         </style>
                 </head>
@@ -1628,48 +1634,49 @@ function print_document(document_type) {
                             unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
                         }
 
+
                         html, body {
                             width: 80mm !important;
                             max-width: 80mm !important;
                             font-family: 'Noto Serif Khmer', serif;
-                            font-size:8px;
+                            font-size:11px;
+                            color: black !important;
                             font-weight: bold;
-                            color: black;
-                        }
 
+
+                        }
+                         img {
+                              image-rendering: pixelated; /* tries to make logos sharper */
+                            }
                         body {
                             padding: 3mm !important; /* tiny inner safe padding */
                         }
 
                         table {
-
                             width: 100% !important;
                             border-collapse: collapse;
                             margin: 8px 0 !important;
                             border: 1px solid #000;
                         }
-                        table th:nth-child(6), table td:nth-child(6) {
-                         display: none;
-                         }
-                        tr:fist-child{
-                           background-color: black !important;
-                                color:white !important;
-                                }
                         thead tr{
                         background-color: black !important;
                         color:white !important;
                         }
+                        table th:nth-child(6), table td:nth-child(6) {
+                         display: none;
+                         }
+
                         th, td {
                          border: 1px solid #00000050;
                             padding: 1px 2px !important;
-                            font-size: 7px;
+                            font-size: 10px;
                             font-weight: bold;
+                            color: black !important;
                         }
-
                         .font-mid{
-                            font-size: 8px;
+                            font-size: 11px;
+                            color: black !important
                         }
-
                         </style>
                 </head>
                 <body onload="window.print(); window.close();">
