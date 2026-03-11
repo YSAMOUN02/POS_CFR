@@ -91,8 +91,9 @@
                     </div>
                 </div>
             </button>
-            <div
-                class="hidden p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+            <div id="openWarehouseModel" data-modal-target="default-modal-warehouse"
+                data-modal-toggle="default-modal-warehouse"
+                class=" p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
                 <div
                     class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
                     <i class="fa-solid fa-boxes-stacked"></i>
@@ -193,7 +194,7 @@
 
     <livewire:scripts />
 
-    
+
     <script src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="{{ asset('assets/js/script.js') }}"></script>

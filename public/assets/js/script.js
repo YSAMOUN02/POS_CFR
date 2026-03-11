@@ -861,13 +861,11 @@ document
         await loadWarehouses();
     });
 async function loadWarehouses() {
-    const tbody = document.getElementById("warehouse-table-body");
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="4" class="px-4 py-4 text-center text-gray-500">
-                Loading...
-            </td>
-        </tr>
+    const select = document.getElementById("warehouseTypeSelect");
+
+    // Reset dropdown
+    select.innerHTML = `
+        <option value="All">All Warehouse</option>
     `;
 
     try {
@@ -875,57 +873,29 @@ async function loadWarehouses() {
         if (!response.ok) throw new Error("Fetch failed");
 
         const warehouses = await response.json();
-        tbody.innerHTML = "";
 
         if (warehouses.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="px-4 py-4 text-center text-gray-500">
-                        No warehouses found
-                    </td>
-                </tr>
-            `;
-            return;
+            return; // keep only "All Warehouse"
         }
 
         warehouses.forEach((w) => {
-            tbody.insertAdjacentHTML(
+            select.insertAdjacentHTML(
                 "beforeend",
                 `
-                <tr class="border-b hover:bg-neutral-tertiary cursor-pointer">
-                    <td class="px-4 py-2">
-                        <input type="radio" name="warehouse_id"
-                               value="${w.id}"
-                               data-name="${w.name}"
-                               data-location="${w.location ?? ""}">
-                    </td>
-                    <td class="px-4 py-2">${w.id}</td>
-                    <td class="px-4 py-2 font-medium">${w.name}</td>
-                    <td class="px-4 py-2">${w.location ?? "-"}</td>
-                    <td class="px-4 py-2 text-center">${w.total_stock ?? 0}</td>
-                </tr>
-            `,
+                <option value="${w.id}">
+                    ${w.name}${w.location ? " - " + w.location : ""}
+                </option>
+                `,
             );
         });
     } catch (err) {
         console.error(err);
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="4" class="px-4 py-4 text-center text-red-500">
-                    Failed to load warehouses
-                </td>
-            </tr>
+
+        select.innerHTML = `
+            <option value="All">All Warehouse</option>
+            <option disabled>Failed to load warehouses</option>
         `;
     }
-}
-document.addEventListener("change", function (e) {
-    if (e.target.name === "warehouse_id") {
-        const name = e.target.dataset.name;
-        const location = e.target.dataset.location;
-    }
-});
-function getSelectedWarehouse() {
-    return document.querySelector('input[name="warehouse_id"]:checked');
 }
 
 // ------------------------
@@ -1040,59 +1010,73 @@ async function updateWarehouse(id) {
     }
 }
 
+let currentSort = {
+    by: "expire", // default sort column
+    dir: "asc", // default direction
+};
+
+document
+    .getElementById("openWarehouseModel")
+    .addEventListener("click", function () {
+        // Load WARE ID In Select
+        loadWarehouses();
+
+        // Fetch and Render Stock
+        loadWarehouseStock(0); // or handle All case
+    });
+document
+    .getElementById("warehouseTypeSelect")
+    .addEventListener("change", function () {
+        const warehouseId = this.value;
+
+        if (warehouseId === "All") {
+            loadWarehouseStock(0,1); // or handle All case
+        } else {
+            loadWarehouseStock(warehouseId,1);
+        }
+    });
 const modal = document.getElementById("warehouse-stock-modal");
 const tbody_stock = document.getElementById("warehouse-stock-tbody");
 const closeBtn = document.getElementById("close-modal");
 const searchInput_stock = document.getElementById("search-stock");
 const statusFilter = document.getElementById("status-filter");
-document
-    .getElementById("view-stock-warehouse")
-    .addEventListener("click", async () => {
-        const selected = getSelectedWarehouse();
-        if (!selected) {
-            showToast({
-                message: "Please select a warehouse first",
-                type: "error",
-            });
-            return;
-        }
-        modal.classList.remove("hidden");
-
-        await loadWarehouseStock(selected.value);
-    });
-// Close modal
-closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
-
-let currentSort = {
-    by: "expire", // default sort column
-    dir: "asc", // default direction
-};
-let currentWarehouseId = null;
-
-async function loadWarehouseStock(warehouseId) {
+async function loadWarehouseStock(warehouseId, page = 1) {
     try {
-        const tbody_stock = document.getElementById("warehouse-stock-tbody");
+        currentWarehouseId = warehouseId;
+
         tbody_stock.innerHTML = `
             <tr>
-                <td colspan="14" class="px-4 py-4 text-center text-rose-500">
+                <td colspan="15" class="px-4 py-4 text-center text-rose-500">
                     Loading...
                 </td>
             </tr>
         `;
 
-        currentWarehouseId = warehouseId;
-        // Only keep active filters
-        const params = new URLSearchParams({
-            search: document.getElementById("search-stock").value,
-            variant: document.getElementById("variant-filter").value,
-            status: document.getElementById("status-filter").value,
-            stock: document.getElementById("stock-filter").value,
-        });
+        // Only include filters if not empty
+        const params = new URLSearchParams();
 
-        const res = await fetch(`/warehouses/${warehouseId}/stock?${params}`);
-        const data = await res.json();
+        const search = searchInput_stock.value.trim();
+        const variant = document.getElementById("variant-filter").value;
+        const status = statusFilter.value;
+        const stock = document.getElementById("stock-filter").value;
 
-        renderStockTable(data.products ?? [], data.warehouse.name);
+        if (search) params.append("search", search);
+        if (variant) params.append("variant", variant);
+        if (status !== "") params.append("status", status);
+        if (stock) params.append("stock", stock);
+
+        params.append("page", page);
+
+        const res = await fetch(
+            `/warehouses/${warehouseId}/stock?${params.toString()}`
+        );
+
+        const result = await res.json();
+
+        console.log(result);
+        renderStockTable(result.data, result.current_page, result.per_page);
+        renderPagination(result);
+
     } catch (err) {
         console.error(err);
         alert("Error fetching stock");
@@ -1109,13 +1093,26 @@ document
         );
     });
 
-function renderStockTable(products, warehouseName) {
+function renderStockTable(products, currentPage = 1, perPage = 10) {
+
     tbody_stock.innerHTML = "";
-    const wh_name = document.getElementById("wh_name");
-    wh_name.textContent = `Warehouse : ${warehouseName}`;
+
+    if (!products || products.length === 0) {
+        tbody_stock.innerHTML = `
+            <tr>
+                <td colspan="15" class="text-center py-4 text-gray-500">
+                    No data found
+                </td>
+            </tr>
+        `;
+        return;
+    }
 
     products.forEach((p, index) => {
-        // Format expire date nicely: YYYY-MM-DD → DD/MM/YYYY
+
+        // Proper row number with pagination
+        const rowNumber = (currentPage - 1) * perPage + index + 1;
+
         let expireText = "N/A";
         if (p.expire) {
             const d = new Date(p.expire);
@@ -1129,96 +1126,138 @@ function renderStockTable(products, warehouseName) {
             "beforeend",
             `
             <tr class="hover:bg-green-50 cursor-pointer transition-colors">
-                <td class="px-3  text-left text-sm text-gray-600">${index + 1}</td>
-                <td class="px-3  text-left text-sm text-gray-600 font-medium truncate max-w-xs" title="${p.code ?? ""}">${p.code ?? ""}</td>
-                <td class="px-3  text-left text-sm text-gray-800 font-medium truncate max-w-xs" title="${p.product_name}">${p.product_name}</td>
-                <td class="px-3  text-left text-sm text-gray-600 truncate max-w-xs" title="${p.variant ?? ""}">${p.variant ?? ""}</td>
-                <td class="px-3  text-left text-sm text-gray-600 truncate max-w-xs" title="${p.description ?? ""}">${p.description ?? ""}</td>
-                <td class="px-3  text-left text-sm text-gray-600 truncate max-w-xs" title="${p.lot}">${p.lot ?? "NOLOT"}</td>
-                <td class="px-3  text-left text-sm text-gray-600 truncate max-w-xs" title="${expireText}">${expireText}</td>
-                <td class="px-3  text-center text-sm font-bold" title="Stock">${p.qty}</td>
-                <td class="px-3  text-center text-sm text-gray-600 font-semibold">${p.unit}</td>
-                <td class="px-3  text-right text-sm text-gray-600">${p.cost_price ?? 0}</td>
-                <td class="px-3  text-right text-sm text-gray-600">${p.vat ?? 0}</td>
-                <td class="px-3  text-right text-sm text-gray-600">${p.sell_price ?? 0}</td>
-                <td class="px-3  text-right text-sm text-gray-600">${p.sell_price_vat ?? 0}</td>
-                <td class="px-3  text-left text-sm text-gray-600 truncate max-w-xs" title="${p.category_name ?? ""}">${p.category_name ?? ""}</td>
-                <td class="px-3  text-center text-sm font-semibold ${p.status ? "text-green-600" : "text-red-500"}">${p.status ? "Active" : "Inactive"}</td>
+                <td class="px-3 text-left text-sm text-gray-600">${rowNumber}</td>
+                <td class="px-3 text-left text-sm">${p.code ?? ""}</td>
+                <td class="px-3 text-left text-sm font-medium">${p.product_name}</td>
+                <td class="px-3 text-left text-sm">${p.variant ?? ""}</td>
+                <td class="px-3 text-left text-sm">${p.description ?? ""}</td>
+                <td class="px-3 text-left text-sm">${p.lot ?? "NOLOT"}</td>
+                <td class="px-3 text-left text-sm">${expireText}</td>
+                <td class="px-3 text-center text-sm font-bold">${p.qty}</td>
+                <td class="px-3 text-center text-sm">${p.unit}</td>
+                <td class="px-3 text-right text-sm">${p.cost_price ?? 0}</td>
+                <td class="px-3 text-right text-sm">${p.vat ?? 0}</td>
+                <td class="px-3 text-right text-sm">${p.sell_price ?? 0}</td>
+                <td class="px-3 text-right text-sm">${p.sell_price_vat ?? 0}</td>
+                <td class="px-3 text-center text-sm ${p.status ? "text-green-600" : "text-red-500"}">
+                    ${p.status ? "Active" : "Inactive"}
+                </td>
             </tr>
-        `,
+            `
         );
     });
 }
 
-const warehouseModal = document.getElementById("warehouse-stock-modal");
-const modalBox = warehouseModal.querySelector("div.bg-white");
+function renderPagination(result) {
 
-function openWarehouseModal() {
-    warehouseModal.classList.remove("hidden");
-    setTimeout(() => {
-        warehouseModal.classList.remove("opacity-0");
-        modalBox.classList.remove(
-            "scale-95",
-            "-translate-x-10",
-            "-translate-y-10",
-            "opacity-0",
-        );
-        modalBox.classList.add(
-            "scale-100",
-            "translate-x-0",
-            "translate-y-0",
-            "opacity-100",
-        );
-    }, 10);
+    const container = document.getElementById("paginationContainer_stock");
+    container.innerHTML = "";
+
+    if (!result.last_page || result.last_page <= 1) return;
+
+    const currentPage = result.current_page;
+    const lastPage = result.last_page;
+
+    // Previous Button
+    if (currentPage > 1) {
+        container.insertAdjacentHTML("beforeend", `
+            <button class="px-3 py-1 border rounded hover:bg-gray-100"
+                onclick="loadWarehouseStock(currentWarehouseId, ${currentPage - 1})">
+                Prev
+            </button>
+        `);
+    }
+
+    // Page Numbers
+    for (let i = 1; i <= lastPage; i++) {
+
+        container.insertAdjacentHTML("beforeend", `
+            <button
+                class="px-3 py-1 border rounded
+                ${i === currentPage ? "bg-blue-500 text-white" : "hover:bg-gray-100"}"
+                onclick="loadWarehouseStock(currentWarehouseId, ${i})">
+                ${i}
+            </button>
+        `);
+    }
+
+    // Next Button
+    if (currentPage < lastPage) {
+        container.insertAdjacentHTML("beforeend", `
+            <button class="px-3 py-1 border rounded hover:bg-gray-100"
+                onclick="loadWarehouseStock(currentWarehouseId, ${currentPage + 1})">
+                Next
+            </button>
+        `);
+    }
 }
 
-function closeWarehouseModal() {
-    // Animate fly out to top-left
-    modalBox.classList.remove(
-        "scale-100",
-        "translate-x-0",
-        "translate-y-0",
-        "opacity-100",
-    );
-    modalBox.classList.add(
-        "scale-95",
-        "-translate-x-20",
-        "-translate-y-20",
-        "opacity-0",
-    );
-    warehouseModal.classList.add("opacity-0");
 
-    setTimeout(() => {
-        warehouseModal.classList.add("hidden");
-        warehouseModal.classList.remove("opacity-0");
-        // Reset modal for next open
-        modalBox.classList.remove(
-            "scale-95",
-            "-translate-x-20",
-            "-translate-y-20",
-            "opacity-0",
-        );
-        modalBox.classList.add(
-            "scale-100",
-            "translate-x-0",
-            "translate-y-0",
-            "opacity-100",
-        );
-    }, 300); // match transition duration
-}
 
-// Close buttons
-document
-    .getElementById("close-modal")
-    .addEventListener("click", closeWarehouseModal);
-document
-    .getElementById("close-footer-modal")
-    .addEventListener("click", closeWarehouseModal);
+
+
+
+
+
+
+// function openWarehouseModal() {
+//     warehouseModal.classList.remove("hidden");
+//     setTimeout(() => {
+//         warehouseModal.classList.remove("opacity-0");
+//         modalBox.classList.remove(
+//             "scale-95",
+//             "-translate-x-10",
+//             "-translate-y-10",
+//             "opacity-0",
+//         );
+//         modalBox.classList.add(
+//             "scale-100",
+//             "translate-x-0",
+//             "translate-y-0",
+//             "opacity-100",
+//         );
+//     }, 10);
+// }
+
+// function closeWarehouseModal() {
+//     // Animate fly out to top-left
+//     modalBox.classList.remove(
+//         "scale-100",
+//         "translate-x-0",
+//         "translate-y-0",
+//         "opacity-100",
+//     );
+//     modalBox.classList.add(
+//         "scale-95",
+//         "-translate-x-20",
+//         "-translate-y-20",
+//         "opacity-0",
+//     );
+//     warehouseModal.classList.add("opacity-0");
+
+//     setTimeout(() => {
+//         warehouseModal.classList.add("hidden");
+//         warehouseModal.classList.remove("opacity-0");
+//         // Reset modal for next open
+//         modalBox.classList.remove(
+//             "scale-95",
+//             "-translate-x-20",
+//             "-translate-y-20",
+//             "opacity-0",
+//         );
+//         modalBox.classList.add(
+//             "scale-100",
+//             "translate-x-0",
+//             "translate-y-0",
+//             "opacity-100",
+//         );
+//     }, 300); // match transition duration
+// }
 
 // Click outside to close
-warehouseModal.addEventListener("click", (e) => {
-    if (e.target === warehouseModal) closeWarehouseModal();
-});
+// warehouseModal.addEventListener("click", (e) => {
+//     if (e.target === warehouseModal) closeWarehouseModal();
+// });
 
 let delivery_note_no = "NA";
 let invoice_no = "NA";
@@ -1263,7 +1302,7 @@ function print(document_type) {
     updatePayment();
     // Handle documents that need modals first
     if (document_type === "Receipt") {
-        openDatePromt_Modal(() =>print_document("Receipt"));
+        openDatePromt_Modal(() => print_document("Receipt"));
         return;
     } else if (document_type === "Invoice") {
         openDatePromt_Modal(() => print_document("Invoice"));
@@ -1313,8 +1352,6 @@ function print_document(document_type) {
 
     // Open new window
     const printWindow = window.open("", "_blank", "width=800,height=600");
-
-
 
     if (document_type === "Invoice") {
         let footer_panha_invoice = `
@@ -2038,24 +2075,6 @@ function print_document(document_type) {
 
     printWindow.document.close();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const dateInput = document.getElementById("document_dateInput");
 const validInput = document.getElementById("due_date");
@@ -3024,11 +3043,9 @@ window.addEventListener("payment-success", (e) => {
     });
 
     // Ask before printing
-    const shouldPrint = confirm("Do you want to print the receipt?");
 
-    if (shouldPrint) {
         print_document("Receipt");
-    }
+
 
     // Clear after confirmation (whether printed or not)
     Livewire.dispatch("clearAll_after_payment");
@@ -3200,7 +3217,7 @@ function renderTable(response) {
         total_amount: 0,
     };
     let rowCount = 0; // for average
-    console.log(response.data.length); // Debug log
+
     response.data.forEach((header) => {
         const lines = header.lines;
         if (!lines.length) return;
@@ -3493,4 +3510,218 @@ function exportTableToExcelXLSX(tableId, filename = "sales.xlsx") {
 // Hook download button
 document.getElementById("downloadSales").addEventListener("click", () => {
     exportTableToExcelXLSX("Table-sale-list");
+});
+
+document
+    .getElementById("btnPrintProduct")
+    .addEventListener("click", function () {
+        let table = document.querySelector("#product-list table");
+
+        if (!table) {
+            alert("No product data to print.");
+            return;
+        }
+
+        let printWindow = window.open("", "", "width=1200,height=800");
+
+        printWindow.document.write(`
+        <html>
+        <head>
+            <title>Product List</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 20px;
+                }
+
+                h2 {
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 12px;
+                }
+
+                th, td {
+                    border: 1px solid #000;
+                    padding: 6px;
+                    text-align: left;
+                    text-wrap: nowrap;
+                }
+
+                th {
+                    background: #f2f2f2;
+                }
+                   th:first-child, td:first-child {
+                    display: none; /* Hide the first column (ID) */
+                }
+                img {
+                    max-height: 40px;
+                }
+
+                @media print {
+                    button { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <h2>Product List</h2>
+            ${table.outerHTML}
+        </body>
+        </html>
+    `);
+
+        printWindow.document.close();
+        printWindow.focus();
+
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
+    });
+
+document
+    .getElementById("btnPrintCustomer")
+    .addEventListener("click", function () {
+        let table = document.querySelector("#customer-list");
+
+        if (!table) {
+            alert("No customer data to print.");
+            return;
+        }
+
+        let printWindow = window.open("", "", "width=1200,height=800");
+
+        let now = new Date();
+        let formattedDate = now.toLocaleString();
+
+        printWindow.document.write(`
+        <html>
+        <head>
+            <title>Customer List</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 20px;
+                }
+
+                h2 {
+                    text-align: center;
+                    margin-bottom: 5px;
+                }
+
+                .print-date {
+                    text-align: right;
+                    font-size: 12px;
+                    margin-bottom: 15px;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 12px;
+                }
+
+                th, td {
+                    border: 1px solid #000;
+                    padding: 6px;
+                    text-align: left;
+                }
+
+                th {
+                    background: #f2f2f2;
+                }
+
+                @media print {
+                    button { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <h2>Customer List</h2>
+            <div class="print-date">Printed: ${formattedDate}</div>
+            ${table.outerHTML}
+        </body>
+        </html>
+    `);
+
+        printWindow.document.close();
+        printWindow.focus();
+
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
+    });
+
+document.getElementById("btnPrintSale").addEventListener("click", function () {
+    let table = document.getElementById("Table-sale-list");
+
+    if (!table) {
+        alert("No sale data to print.");
+        return;
+    }
+
+    let printWindow = window.open("", "", "width=1400,height=900");
+
+    let now = new Date();
+    let formattedDate = now.toLocaleString();
+
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Sale Report</title>
+            <style>
+             @page {
+    size: A4 landscape;
+    margin: 5mm;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    font-size: 7px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;   /* IMPORTANT */
+}
+
+th, td {
+    border: 1px solid #000;
+    padding: 2px;
+    font-size: 8px;        /* Smaller font */
+    word-wrap: break-word; /* Prevent overflow */
+    overflow: hidden;
+}
+
+thead {
+    display: table-header-group;
+}
+
+tr {
+    page-break-inside: avoid;
+}
+            </style>
+        </head>
+        <body>
+            <h2>Sale Report</h2>
+            <div class="print-date">Printed: ${formattedDate}</div>
+            ${table.outerHTML}
+        </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
 });

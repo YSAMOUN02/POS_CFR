@@ -43,79 +43,91 @@ class WarehouseController extends Controller
             ]);
         }
     }
-    public function getStock(Request $request, $warehouseId)
-    {
-        // 1️⃣ Load warehouse with products and pivot
-        $warehouse = Warehouse::with([
-            'products' => function ($q) use ($warehouseId) {
-                $q->withPivot(['qty', 'track_lot', 'lot', 'expire'])
-                    ->wherePivot('warehouse_id', $warehouseId);
-            }
-        ])->findOrFail($warehouseId);
+  public function getStock(Request $request, $warehouseId)
+{
+    $perPage = $request->query('per_page', 10);
 
-        // 2️⃣ Map products to match JS table
-        $products = $warehouse->products->map(function ($product) {
-            $pivot = $product->pivot;
+    $query = \DB::table('warehouse_product')
+        ->join('products', 'products.id', '=', 'warehouse_product.product_id')
+        ->join('warehouses', 'warehouses.id', '=', 'warehouse_product.warehouse_id')
+        ->select(
+            'warehouses.id as warehouse_id',
+            'warehouses.name as warehouse_name',
+            'products.id as product_id',
+            'products.name as product_name',
+            'products.code',
+            'products.variant',
+            'products.description',
+            'warehouse_product.qty',
+            'warehouse_product.track_lot',
+            'warehouse_product.lot',
+            'warehouse_product.expire',
+            'products.unit',
+            'products.cost as cost_price',
+            'products.vat',
+            'products.sell_price',
+            'products.status',
+            'products.min_stock',
+            'products.max_stock'
+        );
 
-            return [
-                'product_id'     => $product->id,
-                'product_name'   => $product->name,
-                'code'           => $product->code,
-                'variant'        => $product->variant,
-                'description'    => $product->description,
-                'lot'            => $pivot->track_lot ? $pivot->lot : null,
-                'expire'         => $pivot->track_lot ? $pivot->expire : null,
-                'qty'            => (int) ($pivot->qty ?? 0),
-                'unit'           => $product->unit,
-                'cost_price'     => (float) $product->cost,
-                'vat'            => (float) $product->vat,
-                'sell_price'     => (float) $product->sell_price,
-                'sell_price_vat' => $product->sell_price * (1 + $product->vat / 100),
-                'status'         => (int) $product->status,
-                'min_stock'      => $product->min_stock,
-                'max_stock'      => $product->max_stock,
-            ];
+    // 🔥 Warehouse filter
+    if ($warehouseId != 0) {
+        $query->where('warehouse_product.warehouse_id', $warehouseId);
+    }
+
+    // 🔍 Filters
+    if ($request->filled('search')) {
+        $search = strtolower($request->search);
+        $query->where(function ($q) use ($search) {
+            $q->whereRaw('LOWER(products.name) LIKE ?', ["%$search%"])
+              ->orWhereRaw('LOWER(products.code) LIKE ?', ["%$search%"]);
         });
-
-
-
-
-        // 3️⃣ FILTERS
-
-
-    // 3️⃣ Apply filters only if values are NOT empty
-    if (($search = $request->query('search')) !== null && $search !== '') {
-        $search = strtolower($search);
-        $products = $products->filter(fn($p) =>
-            str_contains(strtolower($p['product_name']), $search) ||
-            str_contains(strtolower($p['code']), $search)
-        );
     }
 
-    if (($variant = $request->query('variant')) !== null && $variant !== '') {
-        $variant = strtolower($variant);
-        $products = $products->filter(fn($p) =>
-            str_contains(strtolower($p['variant']), $variant)
-        );
+    if ($request->filled('variant')) {
+        $variant = strtolower($request->variant);
+        $query->whereRaw('LOWER(products.variant) LIKE ?', ["%$variant%"]);
     }
 
-    if (($status = $request->query('status')) !== null && $status !== '') {
-        $status = (int) $status; // 0 or 1
-        $products = $products->filter(fn($p) => $p['status'] === $status);
+    if ($request->filled('status')) {
+        $query->where('products.status', (int)$request->status);
     }
 
-    if (($stock = $request->query('stock')) !== null && $stock !== '') {
-        $products = $stock === 'has'
-            ? $products->filter(fn($p) => $p['qty'] > 0)
-            : $products->filter(fn($p) => $p['qty'] <= 0);
+    if ($request->filled('stock')) {
+        if ($request->stock === 'has') {
+            $query->where('warehouse_product.qty', '>', 0);
+        } else {
+            $query->where('warehouse_product.qty', '<=', 0);
+        }
     }
-        // 4️⃣ Return JSON
-        return response()->json([
-            'warehouse' => [
-                'id'   => $warehouse->id,
-                'name' => $warehouse->name
-            ],
-            'products' => $products->values()
-        ]);
-    }
+
+    $products = $query->paginate($perPage);
+
+    // Format result
+    $products->getCollection()->transform(function ($p) {
+        return [
+            'warehouse_id'   => $p->warehouse_id,
+            'warehouse_name' => $p->warehouse_name,
+            'product_id'     => $p->product_id,
+            'product_name'   => $p->product_name,
+            'code'           => $p->code,
+            'variant'        => $p->variant,
+            'description'    => $p->description,
+            'lot'            => $p->track_lot ? $p->lot : null,
+            'expire'         => $p->track_lot ? $p->expire : null,
+            'qty'            => (int) $p->qty,
+            'unit'           => $p->unit,
+            'cost_price'     => (float) $p->cost_price,
+            'vat'            => (float) $p->vat,
+            'sell_price'     => (float) $p->sell_price,
+            'sell_price_vat' => $p->sell_price * (1 + $p->vat / 100),
+            'status'         => (int) $p->status,
+            'min_stock'      => $p->min_stock,
+            'max_stock'      => $p->max_stock,
+        ];
+    });
+
+    return response()->json($products);
+}
 }

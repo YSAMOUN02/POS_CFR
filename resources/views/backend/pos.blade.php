@@ -225,8 +225,7 @@
 
                 products.forEach(product => {
                     const imageSrc = product.image ?
-                        `assets/startic_img/${product.image}` :
-                        'assets/defult/placeholder.jpg';
+                        `assets/startic_img/${product.image}` : ``;
 
 
                     const price = Number(product.sell_price || 0);
@@ -261,19 +260,28 @@
 
                                     <!-- IMAGE -->
                                     <div class="relative w-full">
-                                        <img class="object-cover w-full"
-                                            loading="lazy"
-                                            style="max-height: 150px; min-height: 150px;"
-                                            src="${imageSrc}"
-                                            onerror="this.src='assets/defult/placeholder.jpg'"
-                                            alt="${product.name}" />
+
+                                      ${imageSrc
+                                        ? `<img class="object-cover w-full"
+                                                                                                    loading="lazy"
+                                                                                                    style="max-height:150px; min-height:150px;"
+                                                                                                    src="${imageSrc}"
+                                                                                                    onerror="this.outerHTML=\`
+                                                    <div class='flex items-center justify-center w-full h-[150px] bg-gray-100'>
+                                                        <span class='text-gray-400'>No Image</span>
+                                                    </div>\`"
+                                                                                                />`
+                                        : `<div class="flex items-center justify-center w-full h-[150px] bg-gray-100">
+                                                                                                    <span class="text-gray-400">No Image</span>
+                                                                                            </div>`
+                                    }
 
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
 
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -290,11 +298,11 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                             ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                            <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                            <span class="${stockColor}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                            </span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                            &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="${stockColor}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                &ensp;` : ''}
 
                                             ${product.discount_percent != 0
                                                 ? `<del class="text-gray-400 text-[10px]">${finalPrice.toFixed(2)} $</del> → <span class="${stockColor} font-semibold text-sm">${discountedPrice.toFixed(2)} $</span>`
@@ -422,9 +430,9 @@
                                             src="${imageSrc}" onerror="this.src='assets/defult/placeholder.jpg'" alt="${product.name}" />
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                            <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                                                                                                                                            </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -437,9 +445,9 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                                 ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        &ensp;` : ''}
 
                                               ${product.discount_percent != 0
     ? `<del class="text-gray-400 text-[10px]">${finalPrice.toFixed(2)} $</del> → <span class="${stockColor} font-semibold text-sm">${discountedPrice.toFixed(2)} $</span>`
@@ -954,7 +962,7 @@
                         </button>
                     </div>
                     <!-- Modal body -->
-                    <div id="customer-list" class="max-h-[70vh] overflow-y-auto">
+                    <div class="max-h-[70vh] overflow-y-auto">
                         <div class=" scroll_content_70  overflow-x-auto">
 
                             <table id="customer-list" class="w-full text-sm text-left">
@@ -1012,6 +1020,10 @@
                                 data-modal-toggle="default-modal-customer"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 New
+                            </button>
+                            <button type="button" id="btnPrintCustomer"
+                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                                Print
                             </button>
                         </div>
 
@@ -1188,55 +1200,136 @@
     {{-- <LIST Warehouse > --}}
     <div id="default-modal-warehouse" data-modal-backdrop="static" tabindex="-1" aria-hidden="true"
         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-        <div class="relative p-4 w-full max-w-2xl max-h-[90vh]">
+        {{-- width Custom  --}}
+        <div class="  relative p-4 w-full max-w-10xl max-h-full ">
             <!-- Modal content -->
             <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
                 <!-- Modal header -->
                 <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
-                    <h3 class="text-lg font-medium text-heading">
-                        Warehouse Information
-                    </h3>
+                    <div class="w-full flex flex-col items-center justify-between mb-4">
+                        <div class="flex w-full items-center justify-between mb-4">
+                            <div>
 
-                    <button type="button"
-                        class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
-                        data-modal-hide="default-modal-warehouse">
-                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-                            height="24" fill="none" viewBox="0 0 24 24">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18 17.94 6M18 18 6.06 6" />
-                        </svg>
+                                <h3 id="wh_name" class="text-lg font-medium text-heading">
+                                  All Warehouse Information
+                                </h3>
+                            </div>
+                            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                <!-- Active checkbox -->
+                                <div class="flex items-center gap-2">
+                                    <label for="customerSearchCheckbox" class="text-sm font-medium">Active</label>
+                                    <input type="checkbox" checked id="customerSearchCheckbox" class="w-4 h-4">
+                                </div>
 
-                        <span class="sr-only">Close modal</span>
-                    </button>
 
+                                <!-- Type select -->
+                                <div class="flex items-center gap-2">
+                                    <input type="text" id="customerSearchInput"
+                                        placeholder="Search by code, name, phone, email..."
+                                        class="px-3 py-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <select id="warehouseTypeSelect"
+                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                        <option value="All">All Warehouse</option>
+
+                                    </select>
+                                </div>
+                                <button type="button"
+                                    class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                                    data-modal-hide="default-modal-warehouse">
+                                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                        width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                            stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                                    </svg>
+
+                                    <span class="sr-only">Close modal</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div
+                            class="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 py-3
+                                    border-b border-gray-200 bg-gray-50">
+
+                            <!-- Search -->
+                            <input type="text" id="search-stock" placeholder="Search product..."
+                                class="border rounded-sm px-1 py-1 w-full
+                                                focus:outline-none focus:ring-2 focus:ring-green-400 transition text-lg">
+
+                            <!-- Variant -->
+                            <input type="text" id="variant-filter" placeholder="Variant..."
+                                class="border rounded-sm px-1 py-1 w-full
+                                        focus:outline-none focus:ring-2 focus:ring-green-400 transition text-lg">
+
+                            <!-- Category -->
+                            <select id="category-filter"
+                                class="border rounded-sm px-1 py-1 w-full
+                                                focus:outline-none focus:ring-2 focus:ring-green-400 transition text-lg">
+                                <option value="">All Categories</option>
+                                <option value="1">Accessory</option>
+                            </select>
+
+                            <!-- Status -->
+                            <select id="status-filter"
+                                class="border rounded-sm px-1 py-1 w-full
+                                            focus:outline-none focus:ring-2 focus:ring-green-400 transition text-lg">
+                                <option value="">All Status</option>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+
+                            <!-- Stock -->
+                            <select id="stock-filter"
+                                class="border rounded-sm px-1 py-1 w-full
+                                        focus:outline-none focus:ring-2 focus:ring-green-400 transition text-lg">
+                                <option value="">All Stock</option>
+                                <option value="has">Has Stock</option>
+                                <option value="no">No Stock</option>
+                            </select>
+
+                        </div>
+
+
+
+                    </div>
                 </div>
                 <!-- Modal body -->
 
-                <div class="space-y-4 md:space-y-6 py-4 md:py-6">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left border border-default rounded-base">
-                            <thead class="scroll_content_70  sticky_top text-xs uppercase bg-neutral-secondary">
-                                <tr>
-                                    <th class="px-4 py-3">Select</th>
-                                    <th class="px-4 py-3">ID</th>
-                                    <th class="px-4 py-3">Warehouse Name</th>
-                                    <th class="px-4 py-3">Location</th>
-                                    <th class="px-4 py-3 text-center">Total Stock</th>
+                <div class="max-h-[70vh] overflow-y-auto">
+                    <div class=" scroll_content_70  overflow-x-auto">
+                        <table class="w-full text-left text-sm table-auto">
+                            <thead class="bg-green-50 sticky top-0">
+                                <tr class="text-nowrap">
+                                    <th data-sort="id" class="sortable px-3 py-2">No.</th>
+                                    <th data-sort="code" class="sortable px-3 py-2">Code</th>
+                                    <th data-sort="name" class="sortable px-3 py-2">Product Name</th>
+                                    <th data-sort="variant" class="sortable px-3 py-2">Variant</th>
+                                    <th data-sort="desc" class="sortable px-3 py-2">Description</th>
+                                    <th data-sort="lot" class="sortable px-3 py-2">Lot No</th>
+                                    <th data-sort="expire" class="sortable px-3 py-2">Expire Date</th>
+                                    <th data-sort="qty" class="sortable px-3 py-2">Qty</th>
+                                    <th data-sort="unit" class="sortable px-3 py-2">Unit</th>
+                                    <th data-sort="cost" class="sortable px-3 py-2">Cost</th>
+                                    <th data-sort="vat" class="sortable px-3 py-2">VAT</th>
+                                    <th data-sort="sell" class="sortable px-3 py-2">Unit Price</th>
+                                    <th data-sort="sellvat" class="sortable px-3 py-2">Sell Price (VAT)</th>
+                                    <th data-sort="category" class="sortable px-3 py-2">Category</th>
+                                    <th data-sort="status" class="sortable px-3 py-2">Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="warehouse-table-body">
-                                <!-- async rows -->
+                            <tbody id="warehouse-stock-tbody">
+                                <!-- Dynamic rows inserted here -->
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <!-- Modal footer -->
                 <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
-
-
-
                     <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5">
                         <div>
+                             <div class="flex items-center justify-center gap-1 mt-4 mx-2"
+                            id="paginationContainer_stock">
+                            <!-- JS will render buttons here -->
+                        </div>
                             <button type="button" id="btnEditWarehouse"
                                 class="text-white bg-brand hover:bg-brand-strong rounded-base text-sm px-4 py-2.5">
                                 Edit
@@ -1296,99 +1389,6 @@
 
 
 
-    {{-- <LIST STOCK > --}}
-    <div id="warehouse-stock-modal"
-        class="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 hidden transition-opacity duration-300">
-
-        <!-- Modal Box -->
-        <div style="margin-top:50px;"
-            class="bg-white  shadow-2xl w-[95%] p-4 max-w-6xl mt-5 overflow-hidden transform transition-transform duration-300 scale-100">
-
-            <!-- Modal Header -->
-            <div class="flex justify-between items-center border-b border-gray-200 bg-gray-50">
-                <h2 id="wh_name" class="text-2xl font-semibold text-gray-800">Warehouse Stock</h2>
-                <button id="close-modal"
-                    class="text-gray-500 hover:text-gray-800 text-3xl font-bold transition-colors">&times;</button>
-            </div>
-
-            <!-- Modal Filters -->
-            <div
-                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 py-3
-            border-b border-gray-200 bg-gray-50">
-
-                <!-- Search -->
-                <input type="text" id="search-stock" placeholder="Search product..."
-                    class="border rounded-sm px-3 py-2 w-full
-               focus:outline-none focus:ring-2 focus:ring-green-400 transition text-lg">
-
-                <!-- Variant -->
-                <input type="text" id="variant-filter" placeholder="Variant..."
-                    class="border rounded-sm px-3 py-2 w-full
-               focus:outline-none focus:ring-2 focus:ring-green-400 transition text-lg">
-
-                <!-- Category -->
-                <select id="category-filter"
-                    class="border rounded-sm px-3 py-2 w-full
-               focus:outline-none focus:ring-2 focus:ring-green-400 transition text-lg">
-                    <option value="">All Categories</option>
-                    <option value="1">Accessory</option>
-                </select>
-
-                <!-- Status -->
-                <select id="status-filter"
-                    class="border rounded-sm px-3 py-2 w-full
-               focus:outline-none focus:ring-2 focus:ring-green-400 transition text-lg">
-                    <option value="">All Status</option>
-                    <option value="1">Active</option>
-                    <option value="0">Inactive</option>
-                </select>
-
-                <!-- Stock -->
-                <select id="stock-filter"
-                    class="border rounded-sm px-3 py-2 w-full
-               focus:outline-none focus:ring-2 focus:ring-green-400 transition text-lg">
-                    <option value="">All Stock</option>
-                    <option value="has">Has Stock</option>
-                    <option value="no">No Stock</option>
-                </select>
-
-            </div>
-
-
-            <!-- Table -->
-            <div class="overflow-x-auto max-h-[70vh]">
-                <table class="w-full text-left text-sm table-auto">
-                    <thead class="bg-green-50 sticky top-0">
-                        <tr class="text-nowrap">
-                            <th data-sort="id" class="sortable px-3 py-2">No.</th>
-                            <th data-sort="code" class="sortable px-3 py-2">Code</th>
-                            <th data-sort="name" class="sortable px-3 py-2">Product Name</th>
-                            <th data-sort="variant" class="sortable px-3 py-2">Variant</th>
-                            <th data-sort="desc" class="sortable px-3 py-2">Description</th>
-                            <th data-sort="lot" class="sortable px-3 py-2">Lot No</th>
-                            <th data-sort="expire" class="sortable px-3 py-2">Expire Date</th>
-                            <th data-sort="qty" class="sortable px-3 py-2">Qty</th>
-                            <th data-sort="unit" class="sortable px-3 py-2">Unit</th>
-                            <th data-sort="cost" class="sortable px-3 py-2">Cost</th>
-                            <th data-sort="vat" class="sortable px-3 py-2">VAT</th>
-                            <th data-sort="sell" class="sortable px-3 py-2">Unit Price</th>
-                            <th data-sort="sellvat" class="sortable px-3 py-2">Sell Price (VAT)</th>
-                            <th data-sort="category" class="sortable px-3 py-2">Category</th>
-                            <th data-sort="status" class="sortable px-3 py-2">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="warehouse-stock-tbody">
-                        <!-- Dynamic rows inserted here -->
-                    </tbody>
-                </table>
-            </div>
-            <!-- Modal Footer -->
-            <div class="flex justify-end py-2 border-t border-gray-200 bg-gray-50">
-                <button id="close-footer-modal"
-                    class="px-5 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition text-lg font-semibold">Close</button>
-            </div>
-        </div>
-    </div>
 
     {{-- <MODAL PRINT > --}}
     <div id="DatePromptModal"
@@ -1408,12 +1408,14 @@
                 <!-- Display Total Amounts -->
                 <div class="bg-gray-50 p-4 rounded-xl space-y-3">
                     <div>
-                        <label for="display_pay_amount" class="block text-gray-600 font-medium mb-1">Total Amount</label>
+                        <label for="display_pay_amount" class="block text-gray-600 font-medium mb-1">Total
+                            Amount</label>
                         <input type="text" id="display_pay_amount" disabled
                             class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
                     </div>
                     <div>
-                        <label for="display_pay_amount_converted" class="block text-gray-600 font-medium mb-1">Total in
+                        <label for="display_pay_amount_converted" class="block text-gray-600 font-medium mb-1">Total
+                            in
                             Other</label>
                         <input type="text" id="display_pay_amount_converted" disabled
                             class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
@@ -1739,6 +1741,11 @@
                                 data-modal-toggle="default-modal-add-product"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 New
+                            </button>
+
+                            <button type="button" id="btnPrintProduct"
+                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                                Print
                             </button>
                         </div>
 
@@ -2077,7 +2084,8 @@
                         <span class="text-sm">Track Stock</span>
                         <div class="relative">
                             <input id="prod-track-stock" type="checkbox" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition"></div>
+                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition">
+                            </div>
                             <div
                                 class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5">
                             </div>
@@ -2089,7 +2097,8 @@
                         <span class="text-sm">Allow Discount</span>
                         <div class="relative">
                             <input id="prod-allow-discount" type="checkbox" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition"></div>
+                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition">
+                            </div>
                             <div
                                 class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5">
                             </div>
@@ -2101,7 +2110,8 @@
                         <span class="text-sm">Allow Return</span>
                         <div class="relative">
                             <input id="prod-allow-return" type="checkbox" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition"></div>
+                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition">
+                            </div>
                             <div
                                 class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5">
                             </div>
@@ -2113,7 +2123,8 @@
                         <span class="text-sm">Status</span>
                         <div class="relative">
                             <input id="prod-status" type="checkbox" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition"></div>
+                            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-emerald-500 transition">
+                            </div>
                             <div
                                 class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5">
                             </div>
@@ -2143,7 +2154,7 @@
 
 
 
-    {{-- <LIST TABLE> --}}
+    {{-- <LIST SALE DATA> --}}
     <div id="default-modal-sale-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
         class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
 
@@ -2218,7 +2229,9 @@
 
 
                 <!-- Modal body -->
-
+                <div class="mb-4">
+                    <canvas id="salesCartChart" width="400" height="100"></canvas>
+                </div>
                 <div class="scroll_content_70 overflow-x-auto">
                     <table id="Table-sale-list" class=" text-sm text-left border border-default rounded-base">
                         <thead class="text-xs uppercase bg-neutral-secondary">
@@ -2246,7 +2259,7 @@
                                 <th class="px-4 py-3 cursor-pointer" data-column="payment_method">
                                     Payment Method <span class="sort-icon">↕</span>
                                 </th>
-                                    <th class="px-4 py-3 cursor-pointer" data-column="customer_type">
+                                <th class="px-4 py-3 cursor-pointer" data-column="customer_type">
                                     Customer Type <span class="sort-icon">↕</span>
                                 </th>
 
@@ -2334,6 +2347,9 @@
                     </div>
                     <button type="button" id="downloadSales" class="px-4 py-2 bg-green-600 text-white rounded">
                         Export
+                    </button>
+                    <button type="button" id="btnPrintSale" class="px-4 py-2 bg-blue-600 text-white rounded">
+                        Print
                     </button>
                 </div>
 
