@@ -2229,19 +2229,16 @@
 
 
                 <!-- Modal body -->
-                <div class="mb-4">
-                    <canvas id="salesCartChart" width="400" height="100"></canvas>
-                </div>
-                <div class="scroll_content_70 overflow-x-auto">
+                <div class="scroll_content_70 ">
                     <table id="Table-sale-list" class=" text-sm text-left border border-default rounded-base">
                         <thead class="text-xs uppercase bg-neutral-secondary">
                             <tr class="text-nowrap">
                                 <!-- ===== Invoice Header ===== -->
                                 <th class="px-4 py-3 cursor-pointer" data-column="id">
-                                    ID<span class="sort-icon">↕</span>
+                                    No<span class="sort-icon">↕</span>
                                 </th>
                                 <th class="px-4 py-3 cursor-pointer" data-column="invoice_number">
-                                    Invoice # <span class="sort-icon">↕</span>
+                                    Invoice No <span class="sort-icon">↕</span>
                                 </th>
                                 <th class="px-4 py-3 cursor-pointer" data-column="created_at">Transaction
                                     Date<span class="sort-icon">↕</span></th>
@@ -2253,9 +2250,9 @@
                                     Invoice Date <span class="sort-icon">↕</span>
                                 </th>
 
-                                <th class="px-4 py-3 cursor-pointer" data-column="due_date">
+                                {{-- <th class="px-4 py-3 cursor-pointer" data-column="due_date">
                                     Due Date <span class="sort-icon">↕</span>
-                                </th>
+                                </th> --}}
                                 <th class="px-4 py-3 cursor-pointer" data-column="payment_method">
                                     Payment Method <span class="sort-icon">↕</span>
                                 </th>
@@ -2265,9 +2262,9 @@
 
 
                                 <!-- ===== Line Item Fields ===== -->
-                                <th class="px-4 py-3 cursor-pointer" data-column="item_code">
+                                {{-- <th class="px-4 py-3 cursor-pointer" data-column="item_code">
                                     Item Code <span class="sort-icon">↕</span>
-                                </th>
+                                </th> --}}
 
                                 <th class="px-4 py-3 cursor-pointer" data-column="product_name">
                                     Name <span class="sort-icon">↕</span>
@@ -2296,11 +2293,11 @@
                                 </th> --}}
 
                                 <th class="px-4 py-3 cursor-pointer" data-column="sell_price">
-                                    Sell Price <span class="sort-icon">↕</span>
+                                    Price <span class="sort-icon">↕</span>
                                 </th>
 
                                 <th class="px-4 py-3 cursor-pointer" data-column="line_amount">
-                                    Line Amount <span class="sort-icon">↕</span>
+                                    Gross Amount <span class="sort-icon">↕</span>
                                 </th>
 
                                 <th class="px-4 py-3 cursor-pointer" data-column="discount_percent">
@@ -2321,7 +2318,7 @@
                                     Total Cost Amount<span class="sort-icon">↕</span>
                                 </th> --}}
                                 <th class="px-4 py-3 cursor-pointer" data-column="total_line_amount">
-                                    Total Line <span class="sort-icon">↕</span>
+                                    Total Amount<span class="sort-icon">↕</span>
                                 </th>
 
                             </tr>
@@ -2345,12 +2342,19 @@
                         &ensp;
                         <span id="pageInfo_sale_invoice" class="text-sm text-gray-600"></span>
                     </div>
-                    <button type="button" id="downloadSales" class="px-4 py-2 bg-green-600 text-white rounded">
-                        Export
+                    <div class="flex">
+                        <button type="button" id="downloadSales" class="px-4 py-2 bg-green-600 text-white rounded">
+                    <i class="fa-regular fa-file-excel"></i>
                     </button>
+
+
+
+                        &ensp;
                     <button type="button" id="btnPrintSale" class="px-4 py-2 bg-blue-600 text-white rounded">
-                        Print
+                       <i class="fa-solid fa-print"></i>
                     </button>
+
+                    </div>
                 </div>
 
             </div>

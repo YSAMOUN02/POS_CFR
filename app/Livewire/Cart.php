@@ -181,17 +181,23 @@ class Cart extends Component
 
     protected function generateInvoiceNumber()
     {
-        $lastInvoice = InvoiceHeader::latest('id')->first();
+        $year = date('y'); // e.g. 26
 
-        // Use 2-digit year
-        $year = date('y'); // '26' for 2026
+        // Get latest invoice for current year only
+        $lastInvoice = InvoiceHeader::where('invoice_number', 'like', 'SIN' . $year . '-%')
+            ->orderByDesc('invoice_number')
+            ->first();
 
         if (!$lastInvoice) {
             return 'SIN' . $year . '-0001';
         }
 
-        $lastId = $lastInvoice->id;
-        return 'SIN' . $year . '-' . str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);
+        // Extract last number (e.g. 0165)
+        $lastNumber = intval(substr($lastInvoice->invoice_number, -4));
+
+        $nextNumber = $lastNumber + 1;
+
+        return 'SIN' . $year . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
     #[\Livewire\Attributes\On('transferCartToTable')]
 
@@ -450,7 +456,6 @@ class Cart extends Component
         $this->Current_table_name  = "";
         $this->clearCart();
         $this->clearCustomer();
-
     }
     #[\Livewire\Attributes\On('loadTableToCart')]
     public function loadTableToCart($table_id)
@@ -813,8 +818,8 @@ class Cart extends Component
         $this->count_cart = 0;
         $this->invoiceNo = 'NA';
         $this->DNNo = 'NA';
-         $this->GetInvoiceNo($this->invoiceNo);
-         $this->GetDeliveryNote($this->DNNo);
+        $this->GetInvoiceNo($this->invoiceNo);
+        $this->GetDeliveryNote($this->DNNo);
     }
     // Cart.php (Livewire component)
     public function getTotalsProperty()

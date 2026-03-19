@@ -1030,9 +1030,9 @@ document
         const warehouseId = this.value;
 
         if (warehouseId === "All") {
-            loadWarehouseStock(0,1); // or handle All case
+            loadWarehouseStock(0, 1); // or handle All case
         } else {
-            loadWarehouseStock(warehouseId,1);
+            loadWarehouseStock(warehouseId, 1);
         }
     });
 const modal = document.getElementById("warehouse-stock-modal");
@@ -1068,7 +1068,7 @@ async function loadWarehouseStock(warehouseId, page = 1) {
         params.append("page", page);
 
         const res = await fetch(
-            `/warehouses/${warehouseId}/stock?${params.toString()}`
+            `/warehouses/${warehouseId}/stock?${params.toString()}`,
         );
 
         const result = await res.json();
@@ -1076,7 +1076,6 @@ async function loadWarehouseStock(warehouseId, page = 1) {
         console.log(result);
         renderStockTable(result.data, result.current_page, result.per_page);
         renderPagination(result);
-
     } catch (err) {
         console.error(err);
         alert("Error fetching stock");
@@ -1094,7 +1093,6 @@ document
     });
 
 function renderStockTable(products, currentPage = 1, perPage = 10) {
-
     tbody_stock.innerHTML = "";
 
     if (!products || products.length === 0) {
@@ -1109,7 +1107,6 @@ function renderStockTable(products, currentPage = 1, perPage = 10) {
     }
 
     products.forEach((p, index) => {
-
         // Proper row number with pagination
         const rowNumber = (currentPage - 1) * perPage + index + 1;
 
@@ -1143,13 +1140,12 @@ function renderStockTable(products, currentPage = 1, perPage = 10) {
                     ${p.status ? "Active" : "Inactive"}
                 </td>
             </tr>
-            `
+            `,
         );
     });
 }
 
 function renderPagination(result) {
-
     const container = document.getElementById("paginationContainer_stock");
     container.innerHTML = "";
 
@@ -1160,45 +1156,45 @@ function renderPagination(result) {
 
     // Previous Button
     if (currentPage > 1) {
-        container.insertAdjacentHTML("beforeend", `
+        container.insertAdjacentHTML(
+            "beforeend",
+            `
             <button class="px-3 py-1 border rounded hover:bg-gray-100"
                 onclick="loadWarehouseStock(currentWarehouseId, ${currentPage - 1})">
                 Prev
             </button>
-        `);
+        `,
+        );
     }
 
     // Page Numbers
     for (let i = 1; i <= lastPage; i++) {
-
-        container.insertAdjacentHTML("beforeend", `
+        container.insertAdjacentHTML(
+            "beforeend",
+            `
             <button
                 class="px-3 py-1 border rounded
                 ${i === currentPage ? "bg-blue-500 text-white" : "hover:bg-gray-100"}"
                 onclick="loadWarehouseStock(currentWarehouseId, ${i})">
                 ${i}
             </button>
-        `);
+        `,
+        );
     }
 
     // Next Button
     if (currentPage < lastPage) {
-        container.insertAdjacentHTML("beforeend", `
+        container.insertAdjacentHTML(
+            "beforeend",
+            `
             <button class="px-3 py-1 border rounded hover:bg-gray-100"
                 onclick="loadWarehouseStock(currentWarehouseId, ${currentPage + 1})">
                 Next
             </button>
-        `);
+        `,
+        );
     }
 }
-
-
-
-
-
-
-
-
 
 // function openWarehouseModal() {
 //     warehouseModal.classList.remove("hidden");
@@ -3044,8 +3040,7 @@ window.addEventListener("payment-success", (e) => {
 
     // Ask before printing
 
-        print_document("Receipt");
-
+    print_document("Receipt");
 
     // Clear after confirmation (whether printed or not)
     Livewire.dispatch("clearAll_after_payment");
@@ -3217,7 +3212,7 @@ function renderTable(response) {
         total_amount: 0,
     };
     let rowCount = 0; // for average
-
+    let no = 1;
     response.data.forEach((header) => {
         const lines = header.lines;
         if (!lines.length) return;
@@ -3236,18 +3231,18 @@ function renderTable(response) {
 
             tbody.innerHTML += `
                  <tr class="text-nowrap ">
-                    <td data-value="${line.id}">${line.id}</td>
+                    <td data-value="${line.id}">${no++}</td>
                     <td data-value="${header.invoice_number}">${header.invoice_number ?? ""}</td>
-                    <td data-value="${header.created_at ? new Date(header.created_at).toISOString() : ""}">
+                        <td data-value="${header.created_at ? new Date(header.created_at).toISOString() : ""}">
                         ${header.created_at ? new Date(header.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }) : ""}
                     </td>
                     <td data-value="${header.customer?.name ?? ""}">${header.customer?.name ?? ""}</td>
                     <td data-value="${header.invoice_date ?? ""}">${header.invoice_date ? new Date(header.invoice_date).toLocaleDateString("en-GB") : ""}</td>
-                    <td data-value="${header.due_date ?? ""}">${header.due_date ? new Date(header.due_date).toLocaleDateString("en-GB") : ""}</td>
+
 
                     <td data-value="${header.payment_method ?? ""}">${header.payment_method ?? ""}</td>
-                      <td data-value="${header.customer_type ?? ""}">${header.customer_type ?? ""}</td>
-                    <td data-value="${line.item_code ?? ""}">${line.item_code ?? ""}</td>
+                    <td data-value="${header.customer_type ?? ""}">${header.customer_type ?? ""}</td>
+
                     <td data-value="${line.name ?? ""}">${line.name ?? ""}</td>
                     <td data-value="${line.variant ?? ""}">${line.variant ?? ""}</td>
                     <td data-value="${line.description ?? ""}">${line.description ?? ""}</td>
@@ -3265,7 +3260,9 @@ function renderTable(response) {
                     <td data-value="${line.total_amount ?? 0}" class="text-right">${formatMoney(line.total_amount)} $</td>
                 </tr>
             `;
+            //   <td data-value="${header.due_date ?? ""}">${header.due_date ? new Date(header.due_date).toLocaleDateString("en-GB") : ""}</td>
 
+            //  <td data-value="${line.item_code ?? ""}">${line.item_code ?? ""}</td>
             //  <td data-value="${line.cost ?? 0}" class="text-right">${formatMoney(line.cost)} $</td>
             //         <td data-value="${cost_amount}" class="text-right">${formatMoney(cost_amount)} $</td>
             // Add to subtotal
@@ -3291,21 +3288,21 @@ function renderTable(response) {
     // Subtotal row
 
     tbody.innerHTML += `
-    <tr class="bg-blue-200 font-semibold text-nowrap">
-    <td colspan="12" class="text-left">Subtotal</td>
+    <tr id="subtotal-row" class="bg-blue-200 font-semibold text-nowrap">
+    <td id="subtotal" colspan="10" class="text-left">Subtotal</td>
 
     <td class="text-right">${subtotal.quantity.toFixed(0)}</td>
         <td> </td>
 
-    <td class="text-right">AVG ${subtotal.unit_price.toFixed(2)} $</td>
-    <td class="text-right">AVG ${subtotal.sell_price.toFixed(2)} $</td>
-    <td class="text-right">${subtotal.line_amount.toFixed(2)} $</td>
-    <td class="text-right">AVG ${Math.round(subtotal.discount_percent)} %</td>
-    <td class="text-right">${subtotal.discount_amount.toFixed(2)} $</td>
-    <td class="text-right">AVG ${Math.round(subtotal.vat)} %</td>
-    <td class="text-right">${subtotal.vat_amount.toFixed(2)} $</td>
+    <td id="avg-unit-price"  class="text-right">AVG ${subtotal.unit_price.toFixed(2)} $</td>
+    <td id="avg-sell-price" class="text-right">AVG ${subtotal.sell_price.toFixed(2)} $</td>
+    <td id="avg-line-amount" class="text-right">AVG ${subtotal.line_amount.toFixed(2)} $</td>
+    <td id="avg-discount-percent" class="text-right">AVG ${Math.round(subtotal.discount_percent)} %</td>
+    <td id="discount-amount" class="text-right">${subtotal.discount_amount.toFixed(2)} $</td>
+    <td id="avg-vat" class="text-right">AVG ${Math.round(subtotal.vat)} %</td>
+    <td id="vat-amount" class="text-right">${subtotal.vat_amount.toFixed(2)} $</td>
 
-    <td class="text-right">${subtotal.total_amount.toFixed(2)} $</td>
+    <td id="total-amount" class="text-right">${subtotal.total_amount.toFixed(2)} $</td>
 </tr>
     `;
     // <td class="text-right">AVG ${subtotal.cost.toFixed(2)} $</td>
@@ -3656,7 +3653,6 @@ document
             printWindow.close();
         }, 500);
     });
-
 document.getElementById("btnPrintSale").addEventListener("click", function () {
     let table = document.getElementById("Table-sale-list");
 
@@ -3666,53 +3662,255 @@ document.getElementById("btnPrintSale").addEventListener("click", function () {
     }
 
     let printWindow = window.open("", "", "width=1400,height=900");
+    let from_date = document.getElementById("from_date").value;
+    let to_date = document.getElementById("to_date").value;
+let dateRangeText = "";
 
+if (from_date && to_date) {
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        });
+    };
+
+    if (from_date === to_date) {
+        dateRangeText = `Date: ${formatDate(from_date)}`;
+    } else {
+        const from = formatDate(from_date);
+        const to = formatDate(to_date);
+        dateRangeText = `From ${from} To ${to}`;
+    }
+}
     let now = new Date();
-    let formattedDate = now.toLocaleString();
 
+    let subtotalCell = document.getElementById("subtotal");
+    if (subtotalCell) {
+        subtotalCell.setAttribute("colspan", "4");
+    }
+    let today = new Date().toLocaleDateString();
+
+    let formatted = now.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+    });
     printWindow.document.write(`
         <html>
         <head>
             <title>Sale Report</title>
             <style>
-             @page {
-    size: A4 landscape;
-    margin: 5mm;
-}
+                @page {
+                    size: A4 landscape;
+                    margin: 8mm;
+                    margin-bottom: 0mm; /* extra space for footer */
+                }
 
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    font-size: 7px;
-}
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 10px;
+                    color: #333;
+                       padding-bottom: 60px; /* leave space for footer */
+                         font-family: 'Noto Serif Khmer', serif;
+                }
 
-table {
+                .header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 2px solid #000;
+                    padding-bottom: 10px;
+                    margin-bottom: 10px;
+                }
+
+                .company {
+                    font-size: 18px;
+                    font-weight: bold;
+                }
+
+                .report-title {
+                    text-align: center;
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin: 10px 0;
+                }
+
+                .print-date {
+                    text-align: right;
+                    font-size: 12px;
+                    margin-bottom: 10px;
+                }
+
+                table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;   /* IMPORTANT */
-}
-
-th, td {
-    border: 1px solid #000;
-    padding: 2px;
-    font-size: 8px;        /* Smaller font */
-    word-wrap: break-word; /* Prevent overflow */
-    overflow: hidden;
+    margin-top: 5px;
+    table-layout: fixed; /* ✅ important for fitting */
 }
 
 thead {
     display: table-header-group;
+    background-color: #f2f2f2;
+}
+
+tfoot {
+    display: table-footer-group;
+}
+
+table th, table td {
+    border: 1px solid #ccc;
+    padding: 3px 5px;       /* ✅ smaller padding */
+    font-size: 10px;        /* ✅ smaller text */
+    line-height: 1.2;       /* ✅ tighter rows */
+    word-wrap: break-word;  /* ✅ wrap long text */
+}
+
+table th {
+    text-align: center;
+    font-weight: bold;
+    font-size: 10px;
 }
 
 tr {
     page-break-inside: avoid;
 }
+
+                table th:nth-child(1), table td:nth-child(1) {
+                                width:20px;
+                        }
+                    table th:nth-child(3), table td:nth-child(3) {
+                        display: none;
+                }
+                           table th:nth-child(4), table td:nth-child(4) {
+                        display: none;
+                }
+
+                            table th:nth-child(6), table td:nth-child(6) {
+                        display: none;
+                }
+                                  table th:nth-child(7), table td:nth-child(7) {
+                        display: none;
+                }
+                                    table th:nth-child(8), table td:nth-child(8) {
+                                    width: 40%;
+                            text-align: left;
+                            white-space: nowrap;
+                            }
+                            table th:nth-child(9), table td:nth-child(9) {
+                        display: none;
+                }
+                        table th:nth-child(10), table td:nth-child(10) {
+                        display: none;
+                }
+                                table th:nth-child(11), table td:nth-child(11) ,       table th:nth-child(14), table td:nth-child(14),       table th:nth-child(15), table td:nth-child(15),       table th:nth-child(16), table td:nth-child(16),       table th:nth-child(20), table td:nth-child(20){
+                          text-align: right;
+                }
+                            table th:nth-child(13), table td:nth-child(13) {
+                        display: none;
+                }
+
+                                table th:nth-child(17), table td:nth-child(17) {
+                        display: none;
+                }
+                                    table th:nth-child(18), table td:nth-child(18) {
+                        display: none;
+                }
+                                           table th:nth-child(19), table td:nth-child(19) {
+                        display: none;
+                }
+                .footer {
+                    margin-top: 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 12px;
+                }
+                    #subtotal-row{
+                    display: none;}
+                #avg-unit-price{
+                display: none;
+                }
+                #avg-sell-price{
+                display: none;
+                }
+                #avg-line-amount{
+                display: none;
+                }
+                #avg-discount-percent{
+                display: none;
+                }
+                #discount-amount{
+                display: none;
+                }
+                #avg-vat{
+                display: none;
+                }
+                #vat-amount{
+                display: none;
+                }
+                .sort-icon{
+                display: none;}
+                .footer {
+                    position: fixed;
+                    bottom: 10mm;
+                    left: 0;
+                    width: 100%;
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 0 40px;
+                    font-size: 10px;
+                }
+
+
+
+                @media print {
+                    body {
+                        margin: 5mm;
+                    }
+                }
             </style>
         </head>
+
         <body>
-            <h2>Sale Report</h2>
-            <div class="print-date">Printed: ${formattedDate}</div>
+
+            <!-- HEADER -->
+            <div class="header">
+                <div class="company">Confirel Co., Ltd.</div>
+                <div>Sale Report</div>
+            </div>
+
+            <div class="report-title">SALE REPORT ${ dateRangeText }</div>
+
+            <div class="print-date">
+                Printed: ${formatted}
+            </div>
+
+            <!-- TABLE -->
             ${table.outerHTML}
+
+            <!-- FOOTER (STAYS TOGETHER) -->
+            <div class="no-break">
+               <div class="footer">
+    <div>
+        Prepared by:<br>
+        <div style="margin-top: 20px;">______________________</div><br>
+        Date: ${today}
+    </div>
+
+    <div>
+        Approved by:<br>
+        <div style="margin-top: 20px;">_____________________________________</div><br>
+        Date: ____________
+    </div>
+</div>
+
+            </div>
+
         </body>
         </html>
     `);
@@ -3720,8 +3918,11 @@ tr {
     printWindow.document.close();
     printWindow.focus();
 
+    // wait for render before print
     setTimeout(() => {
         printWindow.print();
         printWindow.close();
-    }, 500);
+    }, 700);
+         subtotalCell.setAttribute("colspan", "10");
 });
+
