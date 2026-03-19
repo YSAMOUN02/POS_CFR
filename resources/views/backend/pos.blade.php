@@ -1619,7 +1619,7 @@
                     <!-- Modal body -->
                     <div id="product-list" class=" max-h-[70vh] overflow-y-auto">
                         <div class="scroll_content_70  overflow-x-auto">
-                            <table class=" w-full text-sm text-left border border-default rounded-base">
+                            <table id="product_table" class=" w-full text-sm text-left border border-default rounded-base">
                                 <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
                                     <tr class="text-nowrap">
                                         <th class="px-4 py-3">Select</th>
