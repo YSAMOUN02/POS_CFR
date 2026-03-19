@@ -349,7 +349,7 @@ table td ,table th{
 
 #Table-sale-list tbody tr:hover {
     background-color: #f9f9f9;
-}
+} 
 
 /* Remove global box-shadow / border-radius for report table */
 #Table-sale-list {
