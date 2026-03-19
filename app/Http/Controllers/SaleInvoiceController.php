@@ -65,15 +65,13 @@ class SaleInvoiceController extends Controller
         $sortColumn = $allowedSorts[$request->sort_column] ?? 'id';
         $sortDirection = $request->sort_direction === 'desc' ? 'desc' : 'asc';
 
-        if ($request->filled('sort_column') && isset($allowedSorts[$request->sort_column])) {
-            // Use requested column
-            $query->orderBy($allowedSorts[$request->sort_column], $sortDirection);
-        } else {
-            // Default fallback
-            $query->orderBy('id', 'desc'); // usually desc is better for latest data
-        }
-
-        $query->orderBy($sortColumn, $sortDirection);
+    if ($request->filled('sort_column') && isset($allowedSorts[$request->sort_column])) {
+    $query->orderBy($allowedSorts[$request->sort_column], $sortDirection)
+          ->orderBy('id', 'desc'); // secondary sort
+} else {
+    $query->orderBy('id', 'desc');
+}
+        // $query->orderBy($sortColumn, $sortDirection);
 
         // -----------------------------
         // Pagination
@@ -103,14 +101,14 @@ class SaleInvoiceController extends Controller
         return response()->json($categories);
     }
     public function getPaymentMethods()
-    {
-        $methods = InvoiceHeader::whereNotNull('payment_method') // or whatever column you use
-            ->distinct()
-            ->orderBy('payment_method')
-            ->pluck('payment_method');
+{
+    $methods = InvoiceHeader::whereNotNull('payment_method') // or whatever column you use
+        ->distinct()
+        ->orderBy('payment_method')
+        ->pluck('payment_method');
 
-        return response()->json($methods);
-    }
+    return response()->json($methods);
+}
     public function searchCustomers(Request $request)
     {
         $query = Customer::query();
