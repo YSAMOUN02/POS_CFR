@@ -2353,7 +2353,10 @@
                     <button type="button" id="btnPrintSale" class="px-4 py-2 bg-blue-600 text-white rounded">
                        <i class="fa-solid fa-print"></i>
                     </button>
-
+                            &ensp;
+                    <button type="button" id="btnReciept" class="px-4 py-2 bg-blue-600 text-white rounded">
+                       Print Reciept
+                    </button>
                     </div>
                 </div>
 

@@ -342,6 +342,72 @@ class Cart extends Component
             logger()->error($e);
         }
     }
+
+    #[\Livewire\Attributes\On('printReciept')]
+    public function printReciept($invoice_no = null)
+    {
+        if (!$invoice_no) {
+            $this->dispatch('payment-error', ['message' => 'Invoice number missing']);
+            return;
+        }
+
+        // Reset cart first
+        $this->cart = [];
+        $this->count_cart = 0;
+
+        // Get invoice with lines and product info
+        $invoice = InvoiceHeader::with(['lines.item'])
+            ->where('invoice_number', $invoice_no)
+            ->first();
+
+        if (!$invoice) {
+            $this->dispatch('payment-error', ['message' => 'Invoice not found']);
+            return;
+        }
+        $this->dispatch('get-date', [
+            'invoice_date' => $invoice->invoice_date,
+            'due_date' => $invoice->due_date,
+            'invoice_no' => $invoice->invoice_number
+        ]);
+
+
+        $order = 1;
+
+        foreach ($invoice->lines as $line) {
+            // if (!$line->product) continue;
+
+            $discountPrice = $line->total_amount / max($line->quantity, 1);
+
+            $this->cart[] = [
+                'id' => $line->product_id,
+                'name' => $line->name,
+                'price' => $line->unit_price,
+                'qty' => $line->quantity,
+                'discount_percent' => $line->discount_percent,
+                'discount_price' => $discountPrice,
+                'order_no' => $order++,
+                'amount_line' => $line->line_amount,
+                'discount_amount_line' => $line->discount_amount,
+                'net_amount_line' => $line->total_amount,
+                'stock' => $line->item->stock ?? 0,
+                'unit' => $line->item->unit ?? 'NA',
+                'track_stock' => $line->product->track_stock ?? false,
+            ];
+        }
+
+        $this->count_cart = count($this->cart);
+
+        // Optional: set invoice number in UI
+        $this->GetInvoiceNo($invoice->invoice_number);
+
+
+
+        $this->dispatch('trigger-print');
+    }
+
+
+
+
     public function assignQueueForOrder($isUpdate = false)
     {
         // 1️⃣ New cart → always new queue
@@ -808,6 +874,7 @@ class Cart extends Component
         $this->customer_id = null;
         $this->Current_table_id = null;
     }
+        #[\Livewire\Attributes\On('clearCart')]
     public function clearCart()
     {
         $this->Current_table_id = null;

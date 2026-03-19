@@ -376,7 +376,7 @@ table td ,table th{
     text-align: left;
     padding: 5px 8px;
 }
-#product_table  th:nth-child(3){
+#product_table  th:nth-child(1){
     position: sticky !important;
     left: 0 ;
     background-color: rgb(0, 0, 129); /* must have background */
@@ -386,9 +386,25 @@ table td ,table th{
         color: white;
     z-index: 999 !important;
 }
- #product_table  td:nth-child(3){
+ #product_table  td:nth-child(1){
     position: sticky !important;
     left: 0 ;
+    background-color: rgb(255, 255, 255); /* must have background */
+    z-index: 9 !important;
+}
+#product_table  th:nth-child(3){
+    position: sticky !important;
+   left: 30px ;
+    background-color: rgb(0, 0, 129); /* must have background */
+        color: white;
+    font-weight: bold;
+    text-align: left;
+        color: white;
+    z-index: 999 !important;
+}
+ #product_table  td:nth-child(3){
+    position: sticky !important;
+    left:30px ;
     background-color: rgb(255, 255, 255); /* must have background */
     z-index: 9 !important;
 }

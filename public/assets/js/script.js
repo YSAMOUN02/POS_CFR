@@ -3664,26 +3664,26 @@ document.getElementById("btnPrintSale").addEventListener("click", function () {
     let printWindow = window.open("", "", "width=1400,height=900");
     let from_date = document.getElementById("from_date").value;
     let to_date = document.getElementById("to_date").value;
-let dateRangeText = "";
+    let dateRangeText = "";
 
-if (from_date && to_date) {
-    const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric"
-        });
-    };
+    if (from_date && to_date) {
+        const formatDate = (dateStr) => {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+            });
+        };
 
-    if (from_date === to_date) {
-        dateRangeText = `Date: ${formatDate(from_date)}`;
-    } else {
-        const from = formatDate(from_date);
-        const to = formatDate(to_date);
-        dateRangeText = `From ${from} To ${to}`;
+        if (from_date === to_date) {
+            dateRangeText = `Date: ${formatDate(from_date)}`;
+        } else {
+            const from = formatDate(from_date);
+            const to = formatDate(to_date);
+            dateRangeText = `From ${from} To ${to}`;
+        }
     }
-}
     let now = new Date();
 
     let subtotalCell = document.getElementById("subtotal");
@@ -3884,7 +3884,7 @@ tr {
                 <div>Sale Report</div>
             </div>
 
-            <div class="report-title">SALE REPORT ${ dateRangeText }</div>
+            <div class="report-title">SALE REPORT ${dateRangeText}</div>
 
             <div class="print-date">
                 Printed: ${formatted}
@@ -3923,6 +3923,45 @@ tr {
         printWindow.print();
         printWindow.close();
     }, 700);
-         subtotalCell.setAttribute("colspan", "10");
+    subtotalCell.setAttribute("colspan", "10");
 });
 
+window.addEventListener("payment-error", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "error",
+    });
+
+    // Ask before printing
+});
+
+document.getElementById("btnReciept").addEventListener("click", function () {
+    let invoiceNo = prompt("Enter Invoice Number:");
+
+    if (invoiceNo !== null && invoiceNo.trim() !== "") {
+        Livewire.dispatch("printReciept", { invoice_no: invoiceNo });
+    } else {
+        alert("Invoice number is required!");
+    }
+});
+window.addEventListener("get-date", (event) => {
+    const input_due_date = document.getElementById("due_date");
+    const input_document_date = document.getElementById("document_dateInput");
+
+    // Livewire sends full ISO string, we need YYYY-MM-DD
+    const dueDate = event.detail[0].due_date.split('T')[0]; // "2026-03-19"
+    const documentDate = event.detail[0].invoice_date.split('T')[0]; // "2026-03-19"
+
+    input_due_date.value = dueDate;
+    input_document_date.value = documentDate;
+
+    reciept_no = event.detail[0].invoice_no;
+
+});
+window.addEventListener("trigger-print", (e) => {
+    print_document("Receipt");
+    Livewire.dispatch("clearCart");
+
+});
