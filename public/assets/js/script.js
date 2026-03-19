@@ -3296,7 +3296,7 @@ function renderTable(response) {
 
     <td id="avg-unit-price"  class="text-right">AVG ${subtotal.unit_price.toFixed(2)} $</td>
     <td id="avg-sell-price" class="text-right">AVG ${subtotal.sell_price.toFixed(2)} $</td>
-    <td id="avg-line-amount" class="text-right">AVG ${subtotal.line_amount.toFixed(2)} $</td>
+    <td id="avg-line-amount" class="text-right">${subtotal.line_amount.toFixed(2)} $</td>
     <td id="avg-discount-percent" class="text-right">AVG ${Math.round(subtotal.discount_percent)} %</td>
     <td id="discount-amount" class="text-right">${subtotal.discount_amount.toFixed(2)} $</td>
     <td id="avg-vat" class="text-right">AVG ${Math.round(subtotal.vat)} %</td>
