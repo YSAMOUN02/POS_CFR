@@ -69,7 +69,7 @@ class SaleInvoiceController extends Controller
     $query->orderBy($allowedSorts[$request->sort_column], $sortDirection)
           ->orderBy('id', 'desc'); // secondary sort
 } else {
-    $query->orderBy('id', 'desc');
+    $query->orderBy('invoice_number', 'desc');
 }
         // $query->orderBy($sortColumn, $sortDirection);
 
