@@ -3453,26 +3453,19 @@ async function fetchProducts(search = "") {
         console.error("Product search error:", error);
     }
 }
-
 function exportTableToExcelXLSX(tableId, filename = "sales.xlsx") {
     const table = document.getElementById(tableId);
     const rows = Array.from(table.querySelectorAll("tr"));
 
-    const data = rows
+    let data = rows
         .filter((row) => !row.classList.contains("bg-blue-200")) // Skip subtotal row
         .map((row) => {
             return Array.from(row.querySelectorAll("td, th")).map((cell) => {
-                // Remove sort icon and trim
                 let text = cell.textContent.replace(/↕/g, "").trim();
-
-                // Prefer numeric dataset value if available
                 let value = cell.dataset.value ?? text;
 
                 if (typeof value === "string") {
-                    // Remove commas and currency/percent symbols
                     let cleaned = value.replace(/,/g, "").replace(/[$%]/g, "");
-
-                    // Convert to number if valid numeric
                     if (cleaned !== "" && !isNaN(cleaned)) {
                         return Number(cleaned);
                     }
@@ -3481,6 +3474,27 @@ function exportTableToExcelXLSX(tableId, filename = "sales.xlsx") {
                 return value;
             });
         });
+
+    // 🔥 SORT BY INVOICE NO (2nd column)
+    const sortColumnIndex = 1;
+
+    const header = data[0];
+    const body = data.slice(1);
+
+    function extractInvoiceNumber(value) {
+        const match = String(value).match(/-(\d+)$/);
+        return match ? parseInt(match[1], 10) : 0;
+    }
+
+    body.sort((a, b) => {
+        const numA = extractInvoiceNumber(a[sortColumnIndex]);
+        const numB = extractInvoiceNumber(b[sortColumnIndex]);
+
+        // return numB - numA; // 🔥 DESC (latest first)
+        return numA - numB; // ✅ ASC
+    });
+
+    data = [header, ...body];
 
     // Create workbook and worksheet
     const wb = XLSX.utils.book_new();
@@ -3503,7 +3517,6 @@ function exportTableToExcelXLSX(tableId, filename = "sales.xlsx") {
     XLSX.utils.book_append_sheet(wb, ws, "Sales Report");
     XLSX.writeFile(wb, filename);
 }
-
 // Hook download button
 document.getElementById("downloadSales").addEventListener("click", () => {
     exportTableToExcelXLSX("Table-sale-list");
