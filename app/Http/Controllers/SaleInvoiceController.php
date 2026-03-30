@@ -68,13 +68,14 @@ class SaleInvoiceController extends Controller
     }
 
     // -----------------------------
-    // Pagination (manual for SQL Server + "All")
+    // Pagination (manual)
     // -----------------------------
-    $page = (int) ($request->page ?? 1);
     $limit = $request->sale_view_limit;
+    $page = (int) ($request->page ?? 1);
+
+    $collection = $query->get(); // GET ALL first (no OFFSET)
 
     if ($limit == 'All') {
-        $collection = $query->get();
         $data = [
             'data' => $collection,
             'current_page' => 1,
@@ -84,23 +85,19 @@ class SaleInvoiceController extends Controller
     } else {
         $limit = (int) $limit;
 
-        $total = (clone $query)->count(); // total before skip/take
-
-        $collection = $query->skip(($page - 1) * $limit)
-                            ->take($limit)
-                            ->get();
+        // slice collection manually
+        $paginated = $collection->slice(($page - 1) * $limit, $limit)->values();
 
         $data = [
-            'data' => $collection,
+            'data' => $paginated,
             'current_page' => $page,
-            'last_page' => ceil($total / $limit),
-            'total' => $total,
+            'last_page' => ceil($collection->count() / $limit),
+            'total' => $collection->count(),
         ];
     }
 
     return response()->json($data);
 }
-
 
 
 
