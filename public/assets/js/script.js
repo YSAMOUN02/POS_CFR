@@ -3152,11 +3152,10 @@ function formatPercent(value) {
 }
 function renderTable(response) {
     const tbody = document.getElementById("salesTableBody");
-    const paginationContainer = document.getElementById(
-        "paginationContainer_sale_invoice",
-    );
+    const paginationContainer = document.getElementById("paginationContainer_sale_invoice");
     const pageInfo = document.getElementById("pageInfo_sale_invoice");
 
+    // Clear previous content
     tbody.innerHTML = "";
     paginationContainer.innerHTML = "";
     pageInfo.innerHTML = "";
@@ -3170,73 +3169,54 @@ function renderTable(response) {
     let subtotal = {
         quantity: 0,
         unit_price: 0,
-        cost: 0,
         sell_price: 0,
         line_amount: 0,
         discount_percent: 0,
         discount_amount: 0,
         vat: 0,
         vat_amount: 0,
-        cost_amount: 0,
         total_amount: 0,
     };
-    let rowCount = 0; // for average
+    let rowCount = 0;
     let no = 1;
+
+    const rows = []; // collect rows first to reduce DOM operations
+
     response.data.forEach((header) => {
-        const lines = header.lines;
+        const lines = header.lines || [];
         if (!lines.length) return;
 
-        const lineCount = lines.length;
-        console.log(lines.length); // Debug log
-        lines.forEach((line, index) => {
-            rowCount++; // increment row count for each line
-            // Calculate cost_amount safely
-            const cost_amount =
-                Math.round(
-                    (Number(line.cost) || 0) *
-                        (Number(line.quantity) || 0) *
-                        100,
-                ) / 100;
+        lines.forEach((line) => {
+            rowCount++;
+            const cost_amount = ((Number(line.cost) || 0) * (Number(line.quantity) || 0));
 
-            tbody.innerHTML += `
-                 <tr class="text-nowrap ">
-                    <td data-value="${line.id}">${no++}</td>
-                    <td data-value="${header.invoice_number}">${header.invoice_number ?? ""}</td>
-                        <td data-value="${header.created_at ? new Date(header.created_at).toISOString() : ""}">
-                        ${header.created_at ? new Date(header.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }) : ""}
-                    </td>
-                    <td data-value="${header.customer?.name ?? ""}">${header.customer?.name ?? ""}</td>
-                    <td data-value="${header.invoice_date ?? ""}">${header.invoice_date ? new Date(header.invoice_date).toLocaleDateString("en-GB") : ""}</td>
-
-
-                    <td data-value="${header.payment_method ?? ""}">${header.payment_method ?? ""}</td>
-                    <td data-value="${header.customer_type ?? ""}">${header.customer_type ?? ""}</td>
-
-                    <td data-value="${line.name ?? ""}">${line.name ?? ""}</td>
-                    <td data-value="${line.variant ?? ""}">${line.variant ?? ""}</td>
-                    <td data-value="${line.description ?? ""}">${line.description ?? ""}</td>
-                    <td data-value="${line.quantity ?? 0}" class="text-right">${line.quantity ?? 0}</td>
-                    <td data-value="${line.unit ?? ""}">${line.unit ?? ""}</td>
-                    <td data-value="${line.unit_price ?? 0}" class="text-right">${formatMoney(line.unit_price)} $</td>
-
-                    <td data-value="${line.sell_price ?? 0}" class="text-right">${formatMoney(line.sell_price)} $</td>
-                    <td data-value="${line.line_amount ?? 0}" class="text-right">${formatMoney(line.line_amount)} $</td>
-                    <td data-value="${line.discount_percent ?? 0}" class="text-right">${formatPercent(line.discount_percent)} %</td>
-                    <td data-value="${line.discount_amount ?? 0}" class="text-right">${formatMoney(line.discount_amount)} $</td>
-                    <td data-value="${line.vat ?? 0}" class="text-right">${formatPercent(line.vat)} %</td>
-                    <td data-value="${line.vat_amount ?? 0}" class="text-right">${formatMoney(line.vat_amount)} $</td>
-
-                    <td data-value="${line.total_amount ?? 0}" class="text-right">${formatMoney(line.total_amount)} $</td>
+            rows.push(`
+                <tr class="text-nowrap">
+                    <td>${no++}</td>
+                    <td>${header.invoice_number ?? ""}</td>
+                    <td>${header.created_at ? new Date(header.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }) : ""}</td>
+                    <td>${header.customer?.name ?? ""}</td>
+                    <td>${header.invoice_date ? new Date(header.invoice_date).toLocaleDateString("en-GB") : ""}</td>
+                    <td>${header.payment_method ?? ""}</td>
+                    <td>${header.customer_type ?? ""}</td>
+                    <td>${line.name ?? ""}</td>
+                    <td>${line.variant ?? ""}</td>
+                    <td>${line.description ?? ""}</td>
+                    <td class="text-right">${line.quantity ?? 0}</td>
+                    <td>${line.unit ?? ""}</td>
+                    <td class="text-right">${formatMoney(line.unit_price)} $</td>
+                    <td class="text-right">${formatMoney(line.sell_price)} $</td>
+                    <td class="text-right">${formatMoney(line.line_amount)} $</td>
+                    <td class="text-right">${formatPercent(line.discount_percent)} %</td>
+                    <td class="text-right">${formatMoney(line.discount_amount)} $</td>
+                    <td class="text-right">${formatPercent(line.vat)} %</td>
+                    <td class="text-right">${formatMoney(line.vat_amount)} $</td>
+                    <td class="text-right">${formatMoney(line.total_amount)} $</td>
                 </tr>
-            `;
-            //   <td data-value="${header.due_date ?? ""}">${header.due_date ? new Date(header.due_date).toLocaleDateString("en-GB") : ""}</td>
+            `);
 
-            //  <td data-value="${line.item_code ?? ""}">${line.item_code ?? ""}</td>
-            //  <td data-value="${line.cost ?? 0}" class="text-right">${formatMoney(line.cost)} $</td>
-            //         <td data-value="${cost_amount}" class="text-right">${formatMoney(cost_amount)} $</td>
-            // Add to subtotal
+            // accumulate totals
             subtotal.quantity += Number(line.quantity) || 0;
-            // subtotal.cost += Number(line.cost) || 0;
             subtotal.unit_price += Number(line.unit_price) || 0;
             subtotal.sell_price += Number(line.sell_price) || 0;
             subtotal.line_amount += Number(line.line_amount) || 0;
@@ -3244,88 +3224,70 @@ function renderTable(response) {
             subtotal.discount_amount += Number(line.discount_amount) || 0;
             subtotal.vat += Number(line.vat) || 0;
             subtotal.vat_amount += Number(line.vat_amount) || 0;
-            // subtotal.cost_amount += cost_amount;
             subtotal.total_amount += Number(line.total_amount) || 0;
         });
     });
 
-    subtotal.discount_percent = subtotal.discount_percent / rowCount; // average discount percent
-    subtotal.sell_price = subtotal.sell_price / rowCount; // average sell price
-    subtotal.cost = subtotal.cost / rowCount; // average cost
-    subtotal.unit_price = subtotal.unit_price / rowCount; // average unit price
-    subtotal.vat = subtotal.vat / rowCount; // average vat percent
-    // Subtotal row
+    // calculate averages
+    subtotal.unit_price = subtotal.unit_price / rowCount;
+    subtotal.sell_price = subtotal.sell_price / rowCount;
+    subtotal.discount_percent = subtotal.discount_percent / rowCount;
+    subtotal.vat = subtotal.vat / rowCount;
 
+    // append all rows at once
+    tbody.innerHTML = rows.join("");
+
+    // append subtotal row
     tbody.innerHTML += `
-    <tr id="subtotal-row" class="bg-blue-200 font-semibold text-nowrap">
-    <td id="subtotal" colspan="10" class="text-left">Subtotal</td>
-
-    <td class="text-right">${subtotal.quantity.toFixed(0)}</td>
-        <td> </td>
-
-    <td id="avg-unit-price"  class="text-right">AVG ${subtotal.unit_price.toFixed(2)} $</td>
-    <td id="avg-sell-price" class="text-right">AVG ${subtotal.sell_price.toFixed(2)} $</td>
-    <td id="avg-line-amount" class="text-right">${subtotal.line_amount.toFixed(2)} $</td>
-    <td id="avg-discount-percent" class="text-right">AVG ${Math.round(subtotal.discount_percent)} %</td>
-    <td id="discount-amount" class="text-right">${subtotal.discount_amount.toFixed(2)} $</td>
-    <td id="avg-vat" class="text-right">AVG ${Math.round(subtotal.vat)} %</td>
-    <td id="vat-amount" class="text-right">${subtotal.vat_amount.toFixed(2)} $</td>
-
-    <td id="total-amount" class="text-right">${subtotal.total_amount.toFixed(2)} $</td>
-</tr>
+        <tr class="bg-blue-200 font-semibold text-nowrap">
+            <td colspan="10" class="text-left">Subtotal</td>
+            <td class="text-right">${subtotal.quantity.toFixed(0)}</td>
+            <td></td>
+            <td class="text-right">AVG ${subtotal.unit_price.toFixed(2)} $</td>
+            <td class="text-right">AVG ${subtotal.sell_price.toFixed(2)} $</td>
+            <td class="text-right">${subtotal.line_amount.toFixed(2)} $</td>
+            <td class="text-right">AVG ${Math.round(subtotal.discount_percent)} %</td>
+            <td class="text-right">${subtotal.discount_amount.toFixed(2)} $</td>
+            <td class="text-right">AVG ${Math.round(subtotal.vat)} %</td>
+            <td class="text-right">${subtotal.vat_amount.toFixed(2)} $</td>
+            <td class="text-right">${subtotal.total_amount.toFixed(2)} $</td>
+        </tr>
     `;
-    // <td class="text-right">AVG ${subtotal.cost.toFixed(2)} $</td>
-    //  <td class="text-right">${subtotal.cost_amount.toFixed(2)} $</td>
 
-    // Pagination
-const totalPages = response.last_page || 1;
-const currentPage = response.current_page || 1;
+    // ----------------------
+    // PAGINATION
+    // ----------------------
+    const totalPages = response.last_page || 1;
+    const currentPage = response.current_page || 1;
 
-paginationContainer.innerHTML = "";
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
 
-// ----------------------
-// PREVIOUS BUTTON
-// ----------------------
-if (currentPage > 1) {
-    const prevBtn = document.createElement("button");
-    prevBtn.textContent = "Prev";
-    prevBtn.className = "px-3 py-1 border rounded bg-white";
-    prevBtn.onclick = () => fetchSalesData(currentPage - 1);
-    paginationContainer.appendChild(prevBtn);
-}
+    // Prev button
+    if (currentPage > 1) {
+        const prevBtn = document.createElement("button");
+        prevBtn.textContent = "Prev";
+        prevBtn.className = "px-3 py-1 border rounded bg-white";
+        prevBtn.onclick = () => fetchSalesData(currentPage - 1);
+        paginationContainer.appendChild(prevBtn);
+    }
 
-// ----------------------
-// PAGE NUMBERS
-// ----------------------
-for (let i = 1; i <= totalPages; i++) {
-    const btn = document.createElement("button");
-    btn.textContent = i;
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.className = `px-3 py-1 border rounded text-sm ${i === currentPage ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-100"}`;
+        btn.onclick = () => fetchSalesData(i);
+        paginationContainer.appendChild(btn);
+    }
 
-    btn.className =
-        "px-3 py-1 border rounded text-sm " +
-        (i === currentPage
-            ? "bg-blue-600 text-white"
-            : "bg-white text-gray-700 hover:bg-gray-100");
-
-    btn.onclick = () => fetchSalesData(i);
-    paginationContainer.appendChild(btn);
-}
-
-// ----------------------
-// NEXT BUTTON
-// ----------------------
-if (currentPage < totalPages) {
-    const nextBtn = document.createElement("button");
-    nextBtn.textContent = "Next";
-    nextBtn.className = "px-3 py-1 border rounded bg-white";
-    nextBtn.onclick = () => fetchSalesData(currentPage + 1);
-    paginationContainer.appendChild(nextBtn);
-}
-
-// ----------------------
-// PAGE INFO
-// ----------------------
-pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+    // Next button
+    if (currentPage < totalPages) {
+        const nextBtn = document.createElement("button");
+        nextBtn.textContent = "Next";
+        nextBtn.className = "px-3 py-1 border rounded bg-white";
+        nextBtn.onclick = () => fetchSalesData(currentPage + 1);
+        paginationContainer.appendChild(nextBtn);
+    }
 }
 
 async function loadCategories() {
