@@ -10,89 +10,96 @@ use Illuminate\Support\Facades\DB;
 
 class SaleInvoiceController extends Controller
 {
-    public function salesReport(Request $request)
-    {
-        // Start query on header with customer + lines, and count lines
-        $query = InvoiceHeader::with(['lines', 'customer'])->withCount('lines');
+  public function salesReport(Request $request)
+{
+    $query = InvoiceHeader::with(['lines', 'customer'])->withCount('lines');
 
-        // -----------------------------
-        // Filters
-        // -----------------------------
-        if ($request->filled('from_date') && $request->filled('to_date')) {
-            $query->whereBetween('invoice_date', [$request->from_date, $request->to_date]);
-        }
-
-        if ($request->filled('invoice_paymentMethod')) {
-            $query->where('payment_method', $request->invoice_paymentMethod);
-        }
-
-        if ($request->filled('customer_filter')) {
-            $query->where('customer_id', $request->customer_filter);
-        }
-
-        if ($request->filled('ProductSearchInput') || $request->filled('category_filter')) {
-            $query->whereHas('lines', function ($q) use ($request) {
-                if ($request->filled('ProductSearchInput')) {
-                    $search = $request->ProductSearchInput;
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('barcode', 'like', "%{$search}%")
-                        ->orWhere('item_code', 'like', "%{$search}%");
-                }
-
-                if ($request->filled('category_filter')) {
-                    $q->where('category_name', $request->category_filter);
-                }
-            });
-        }
-
-        // -----------------------------
-        // Sorting
-        // -----------------------------
-        $allowedSorts = [
-            'invoice_number' => 'invoice_number',
-            'customer_name' => 'customer_id',
-            'invoice_date' => 'invoice_date',
-            'due_date' => 'due_date',
-            'status' => 'status',
-            'invoice_total_amount' => 'total_amount',
-            'invoice_vat_amount' => 'vat_amount',
-            'invoice_discount_amount' => 'discount_amount',
-            'return_amount' => 'return_amount',
-            'lines_count' => 'lines_count',
-            'created_at' => 'created_at',
-        ];
-
-        $sortColumn = $allowedSorts[$request->sort_column] ?? 'id';
-        $sortDirection = $request->sort_direction === 'desc' ? 'desc' : 'asc';
-
-        if ($request->filled('sort_column') && isset($allowedSorts[$request->sort_column])) {
-            $query->orderBy($allowedSorts[$request->sort_column], $sortDirection)
-                ->orderBy('id', 'desc'); // secondary sort
-        } else {
-            $query->orderBy('invoice_number', 'desc');
-        }
-        // $query->orderBy($sortColumn, $sortDirection);
-
-        // -----------------------------
-        // Pagination
-        // -----------------------------
-        $limit =  $request->sale_view_limit;
-
-        if ($limit == 'All') {
-            $collection = $query->get();
-
-            $data = [
-                'data' => $collection,
-                'current_page' => 1,
-                'last_page' => 1,
-                'total' => $collection->count(),
-            ];
-        } else {
-            $data = $query->paginate((int)$limit);
-        }
-
-        return response()->json($data);
+    // -----------------------------
+    // Filters
+    // -----------------------------
+    if ($request->filled('from_date') && $request->filled('to_date')) {
+        $query->whereBetween('invoice_date', [$request->from_date, $request->to_date]);
     }
+    if ($request->filled('invoice_paymentMethod')) {
+        $query->where('payment_method', $request->invoice_paymentMethod);
+    }
+    if ($request->filled('customer_filter')) {
+        $query->where('customer_id', $request->customer_filter);
+    }
+    if ($request->filled('ProductSearchInput') || $request->filled('category_filter')) {
+        $query->whereHas('lines', function ($q) use ($request) {
+            if ($request->filled('ProductSearchInput')) {
+                $search = $request->ProductSearchInput;
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('barcode', 'like', "%{$search}%")
+                  ->orWhere('item_code', 'like', "%{$search}%");
+            }
+            if ($request->filled('category_filter')) {
+                $q->where('category_name', $request->category_filter);
+            }
+        });
+    }
+
+    // -----------------------------
+    // Sorting
+    // -----------------------------
+    $allowedSorts = [
+        'invoice_number' => 'invoice_number',
+        'customer_name' => 'customer_id',
+        'invoice_date' => 'invoice_date',
+        'due_date' => 'due_date',
+        'status' => 'status',
+        'invoice_total_amount' => 'total_amount',
+        'invoice_vat_amount' => 'vat_amount',
+        'invoice_discount_amount' => 'discount_amount',
+        'return_amount' => 'return_amount',
+        'lines_count' => 'lines_count',
+        'created_at' => 'created_at',
+    ];
+
+    $sortColumn = $allowedSorts[$request->sort_column] ?? 'id';
+    $sortDirection = $request->sort_direction === 'desc' ? 'desc' : 'asc';
+
+    if ($request->filled('sort_column') && isset($allowedSorts[$request->sort_column])) {
+        $query->orderBy($allowedSorts[$request->sort_column], $sortDirection)
+              ->orderBy('id', 'desc');
+    } else {
+        $query->orderBy('invoice_number', 'desc');
+    }
+
+    // -----------------------------
+    // Pagination (manual for SQL Server + "All")
+    // -----------------------------
+    $page = (int) ($request->page ?? 1);
+    $limit = $request->sale_view_limit;
+
+    if ($limit == 'All') {
+        $collection = $query->get();
+        $data = [
+            'data' => $collection,
+            'current_page' => 1,
+            'last_page' => 1,
+            'total' => $collection->count(),
+        ];
+    } else {
+        $limit = (int) $limit;
+
+        $total = (clone $query)->count(); // total before skip/take
+
+        $collection = $query->skip(($page - 1) * $limit)
+                            ->take($limit)
+                            ->get();
+
+        $data = [
+            'data' => $collection,
+            'current_page' => $page,
+            'last_page' => ceil($total / $limit),
+            'total' => $total,
+        ];
+    }
+
+    return response()->json($data);
+}
 
 
 

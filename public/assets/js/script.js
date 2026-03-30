@@ -3091,7 +3091,7 @@ function fetchSalesData(page = 1) {
 
     params.append("page", page);
 
-    console.log(sale_view_limit);
+
     fetch(`/sales-report?${params.toString()}`)
         .then((res) => res.json())
         .then((data) => renderTable(data))
@@ -3278,25 +3278,54 @@ function renderTable(response) {
     //  <td class="text-right">${subtotal.cost_amount.toFixed(2)} $</td>
 
     // Pagination
-    const totalPages = response.last_page;
-    const currentPage = response.current_page;
+const totalPages = response.last_page || 1;
+const currentPage = response.current_page || 1;
 
-    if (totalPages > 1) {
-        for (let i = 1; i <= totalPages; i++) {
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.textContent = i;
-            btn.className =
-                "px-3 py-1 rounded border border-gray-300 text-sm " +
-                (i === currentPage
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-100");
-            btn.addEventListener("click", () => fetchSalesData(i));
-            paginationContainer.appendChild(btn);
-        }
-    }
+paginationContainer.innerHTML = "";
 
-    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+// ----------------------
+// PREVIOUS BUTTON
+// ----------------------
+if (currentPage > 1) {
+    const prevBtn = document.createElement("button");
+    prevBtn.textContent = "Prev";
+    prevBtn.className = "px-3 py-1 border rounded bg-white";
+    prevBtn.onclick = () => fetchSalesData(currentPage - 1);
+    paginationContainer.appendChild(prevBtn);
+}
+
+// ----------------------
+// PAGE NUMBERS
+// ----------------------
+for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = i;
+
+    btn.className =
+        "px-3 py-1 border rounded text-sm " +
+        (i === currentPage
+            ? "bg-blue-600 text-white"
+            : "bg-white text-gray-700 hover:bg-gray-100");
+
+    btn.onclick = () => fetchSalesData(i);
+    paginationContainer.appendChild(btn);
+}
+
+// ----------------------
+// NEXT BUTTON
+// ----------------------
+if (currentPage < totalPages) {
+    const nextBtn = document.createElement("button");
+    nextBtn.textContent = "Next";
+    nextBtn.className = "px-3 py-1 border rounded bg-white";
+    nextBtn.onclick = () => fetchSalesData(currentPage + 1);
+    paginationContainer.appendChild(nextBtn);
+}
+
+// ----------------------
+// PAGE INFO
+// ----------------------
+pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
 }
 
 async function loadCategories() {
