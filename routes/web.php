@@ -66,8 +66,7 @@ Route::get('/warehouses/list', [WarehouseController::class, 'list_warehouse']);
 Route::post('/warehouses/update/{id}', [WarehouseController::class, 'update']);
 // get stock
 Route::get('/warehouses/{id}/stock', [WarehouseController::class, 'getStock']);
-
-
+Route::get('/product/categories', [WarehouseController::class, 'getCategories']);
 
 Route::post('/products/store', [ProductController::class, 'store'])->name('products.store');
 Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');

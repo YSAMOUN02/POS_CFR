@@ -1,4 +1,4 @@
-    <div>
+    {{-- <div>
 
         <div class="bg-neutral-primary-soft block max-w-sm border border-default rounded-base shadow-xs">
             <div class="w-full flex justify-between items-center relative">
@@ -48,4 +48,4 @@
             </div>
         </div>
 
-    </div>
+    </div> --}}

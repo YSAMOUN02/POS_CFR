@@ -609,7 +609,7 @@ window.addEventListener("DOMContentLoaded", () => {
     activeCheckbox_product.addEventListener("change", () => loadProducts(1));
     productLimitSelect.addEventListener("change", () => loadProducts(1));
 });
-
+let allProducts = [];
 async function loadProducts(page = 1) {
     const search = searchInput_product_list.value;
     const type = typeSelect_product.value;
@@ -627,7 +627,7 @@ async function loadProducts(page = 1) {
     });
     const res = await fetch(`/products/list_search?${query.toString()}`);
     const result = await res.json();
-
+    allProducts = result.data; // 🔥 store full data
     renderProductTable(result.data);
 
     const pagination = document.getElementById("paginationContainerProduct");
@@ -855,11 +855,6 @@ function validateUpdateCustomerForm() {
     return true; // valid
 }
 
-document
-    .getElementById("openWarehouseModel")
-    .addEventListener("click", async function () {
-        await loadWarehouses();
-    });
 async function loadWarehouses() {
     const select = document.getElementById("warehouseTypeSelect");
 
@@ -874,6 +869,7 @@ async function loadWarehouses() {
 
         const warehouses = await response.json();
 
+          console.log(warehouses);
         if (warehouses.length === 0) {
             return; // keep only "All Warehouse"
         }
@@ -1015,12 +1011,29 @@ let currentSort = {
     dir: "asc", // default direction
 };
 
+async function loadCategories_product() {
+    try {
+        const res = await fetch("/product/categories");
+        const categories = await res.json();
+
+        const select = document.getElementById("category-filter2");
+        select.innerHTML = '<option value="">All Categories</option>'; // Clear existing options
+        categories.forEach((category) => {
+            const option = document.createElement("option");
+            option.value = category.id;
+            option.textContent = category.name;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error loading categories:", error);
+    }
+}
 document
     .getElementById("openWarehouseModel")
     .addEventListener("click", function () {
         // Load WARE ID In Select
         loadWarehouses();
-
+        loadCategories_product();
         // Fetch and Render Stock
         loadWarehouseStock(0); // or handle All case
     });
@@ -1035,35 +1048,51 @@ document
             loadWarehouseStock(warehouseId, 1);
         }
     });
-const modal = document.getElementById("warehouse-stock-modal");
-const tbody_stock = document.getElementById("warehouse-stock-tbody");
-const closeBtn = document.getElementById("close-modal");
-const searchInput_stock = document.getElementById("search-stock");
-const statusFilter = document.getElementById("status-filter");
-async function loadWarehouseStock(warehouseId, page = 1) {
-    try {
-        currentWarehouseId = warehouseId;
+    // Listen to filter inputs (search, variant, status, stock)
+document
+    .querySelectorAll("#limit-filter, #search-stock, #status-filter, #stock-filter, #category-filter2")
+    .forEach((el) => {
+        el.addEventListener("input", () => {
+            loadWarehouseStock(currentWarehouseId);
+        });
+    });
+    const modal = document.getElementById("warehouse-stock-modal");
+    const tbody_stock = document.getElementById("warehouse-stock-tbody");
+    const closeBtn = document.getElementById("close-modal");
+    const searchInput_stock = document.getElementById("search-stock");
+    const statusFilter = document.getElementById("status-filter");
+    const LimitFilter = document.getElementById("limit-filter");
+    const Category = document.getElementById("category-filter2");
 
-        tbody_stock.innerHTML = `
-            <tr>
-                <td colspan="15" class="px-4 py-4 text-center text-rose-500">
-                    Loading...
-                </td>
-            </tr>
-        `;
+    async function loadWarehouseStock(warehouseId, page = 1) {
+        try {
 
-        // Only include filters if not empty
-        const params = new URLSearchParams();
+            currentWarehouseId = warehouseId;
 
-        const search = searchInput_stock.value.trim();
-        const variant = document.getElementById("variant-filter").value;
-        const status = statusFilter.value;
-        const stock = document.getElementById("stock-filter").value;
+            tbody_stock.innerHTML = `
+                <tr>
+                    <td colspan="15" class="px-4 py-4 text-center text-rose-500">
+                        Loading...
+                    </td>
+                </tr>
+            `;
 
-        if (search) params.append("search", search);
-        if (variant) params.append("variant", variant);
-        if (status !== "") params.append("status", status);
-        if (stock) params.append("stock", stock);
+            // Only include filters if not empty
+            const params = new URLSearchParams();
+            const limit = LimitFilter.value.trim();
+
+            const search = searchInput_stock.value.trim();
+            const category_id =  Category.value.trim();
+            const status = statusFilter.value;
+            const stock = document.getElementById("stock-filter").value;
+
+            if (search) params.append("search", search);
+            if(limit) params.append('limit', limit);
+            if (status !== "") params.append("status", status);
+            if (stock) params.append("stock", stock);
+            if(category_id) params.append("category_id", category_id);
+
+
 
         params.append("page", page);
 
@@ -1073,7 +1102,6 @@ async function loadWarehouseStock(warehouseId, page = 1) {
 
         const result = await res.json();
 
-        console.log(result);
         renderStockTable(result.data, result.current_page, result.per_page);
         renderPagination(result);
     } catch (err) {
@@ -1081,21 +1109,12 @@ async function loadWarehouseStock(warehouseId, page = 1) {
         alert("Error fetching stock");
     }
 }
-// Listen to filter inputs (search, variant, status, stock)
-document
-    .querySelectorAll(
-        "#search-stock,#variant-filter,#status-filter,#stock-filter",
-    )
-    .forEach((el) => {
-        el.addEventListener("input", () =>
-            loadWarehouseStock(currentWarehouseId),
-        );
-    });
+
 
 function renderStockTable(products, currentPage = 1, perPage = 10) {
     tbody_stock.innerHTML = "";
 
-    if (!products || products.length === 0) {
+    if (products.length === 0) {
         tbody_stock.innerHTML = `
             <tr>
                 <td colspan="15" class="text-center py-4 text-gray-500">
@@ -1124,6 +1143,8 @@ function renderStockTable(products, currentPage = 1, perPage = 10) {
             `
             <tr class="hover:bg-green-50 cursor-pointer transition-colors">
                 <td class="px-3 text-left text-sm text-gray-600">${rowNumber}</td>
+                <td class="px-3 text-left text-sm">${p.lot_id?? ""}</td>
+
                 <td class="px-3 text-left text-sm">${p.code ?? ""}</td>
                 <td class="px-3 text-left text-sm font-medium">${p.product_name}</td>
                 <td class="px-3 text-left text-sm">${p.variant ?? ""}</td>
@@ -1131,14 +1152,18 @@ function renderStockTable(products, currentPage = 1, perPage = 10) {
                 <td class="px-3 text-left text-sm">${p.lot ?? "NOLOT"}</td>
                 <td class="px-3 text-left text-sm">${expireText}</td>
                 <td class="px-3 text-center text-sm font-bold">${p.qty}</td>
-                <td class="px-3 text-center text-sm">${p.unit}</td>
+                <td class="px-3  text-sm">${p.unit}</td>
                 <td class="px-3 text-right text-sm">${p.cost_price ?? 0}</td>
                 <td class="px-3 text-right text-sm">${p.vat ?? 0}</td>
-                <td class="px-3 text-right text-sm">${p.sell_price ?? 0}</td>
-                <td class="px-3 text-right text-sm">${p.sell_price_vat ?? 0}</td>
-                <td class="px-3 text-center text-sm ${p.status ? "text-green-600" : "text-red-500"}">
+                <td class="px-3 text-right text-sm">${Number(p.sell_price ?? 0).toFixed(2)}</td>
+                <td class="px-3 text-right text-sm">${Number(p.sell_price_vat ?? 0).toFixed(2)}</td>
+                <td class="px-3 text-left text-sm">${p.category_name ?? 'NA'}</td>
+                            <td class="px-3 text-left text-sm">${p.warehouse_name ?? 'NA'}</td>
+
+                <td class="px-3      text-sm ${p.status ? "text-green-600" : "text-red-500"}">
                     ${p.status ? "Active" : "Inactive"}
                 </td>
+
             </tr>
             `,
         );
@@ -1196,64 +1221,7 @@ function renderPagination(result) {
     }
 }
 
-// function openWarehouseModal() {
-//     warehouseModal.classList.remove("hidden");
-//     setTimeout(() => {
-//         warehouseModal.classList.remove("opacity-0");
-//         modalBox.classList.remove(
-//             "scale-95",
-//             "-translate-x-10",
-//             "-translate-y-10",
-//             "opacity-0",
-//         );
-//         modalBox.classList.add(
-//             "scale-100",
-//             "translate-x-0",
-//             "translate-y-0",
-//             "opacity-100",
-//         );
-//     }, 10);
-// }
 
-// function closeWarehouseModal() {
-//     // Animate fly out to top-left
-//     modalBox.classList.remove(
-//         "scale-100",
-//         "translate-x-0",
-//         "translate-y-0",
-//         "opacity-100",
-//     );
-//     modalBox.classList.add(
-//         "scale-95",
-//         "-translate-x-20",
-//         "-translate-y-20",
-//         "opacity-0",
-//     );
-//     warehouseModal.classList.add("opacity-0");
-
-//     setTimeout(() => {
-//         warehouseModal.classList.add("hidden");
-//         warehouseModal.classList.remove("opacity-0");
-//         // Reset modal for next open
-//         modalBox.classList.remove(
-//             "scale-95",
-//             "-translate-x-20",
-//             "-translate-y-20",
-//             "opacity-0",
-//         );
-//         modalBox.classList.add(
-//             "scale-100",
-//             "translate-x-0",
-//             "translate-y-0",
-//             "opacity-100",
-//         );
-//     }, 300); // match transition duration
-// }
-
-// Click outside to close
-// warehouseModal.addEventListener("click", (e) => {
-//     if (e.target === warehouseModal) closeWarehouseModal();
-// });
 
 let delivery_note_no = "NA";
 let invoice_no = "NA";
@@ -3123,6 +3091,7 @@ function fetchSalesData(page = 1) {
 
     params.append("page", page);
 
+    console.log(sale_view_limit);
     fetch(`/sales-report?${params.toString()}`)
         .then((res) => res.json())
         .then((data) => renderTable(data))
@@ -3964,17 +3933,224 @@ window.addEventListener("get-date", (event) => {
     const input_document_date = document.getElementById("document_dateInput");
 
     // Livewire sends full ISO string, we need YYYY-MM-DD
-    const dueDate = event.detail[0].due_date.split('T')[0]; // "2026-03-19"
-    const documentDate = event.detail[0].invoice_date.split('T')[0]; // "2026-03-19"
+    const dueDate = event.detail[0].due_date.split("T")[0]; // "2026-03-19"
+    const documentDate = event.detail[0].invoice_date.split("T")[0]; // "2026-03-19"
 
     input_due_date.value = dueDate;
     input_document_date.value = documentDate;
 
     reciept_no = event.detail[0].invoice_no;
-
 });
 window.addEventListener("trigger-print", (e) => {
     print_document("Receipt");
     Livewire.dispatch("clearCart");
-
 });
+
+document.getElementById("btnPrintProductMenu").addEventListener("click", () => {
+    if (!allProducts || !allProducts.length) {
+        alert("No products loaded to print!");
+        return;
+    }
+
+    // Group products by category
+    const categories = {};
+    allProducts.forEach(product => {
+        const category = (product.category && product.category.name) || "Other";
+        if (!categories[category]) categories[category] = [];
+        categories[category].push(product);
+    });
+
+    // Build HTML: categories with underline
+    let html = '';
+
+    Object.keys(categories).forEach(cat => {
+        html += `<div class="menu-category-block">
+                    <div class="menu-category-title" contenteditable="true">${cat}</div>`;
+
+        categories[cat].forEach(item => {
+            const price = parseFloat(item.sell_price || item.price) || 0;
+            const discount = parseFloat(item.discount_percent || 0);
+            const imgSrc = item.image ? `/assets/startic_img/${encodeURIComponent(item.image)}` : '';
+
+            html += `
+                <div class="menu-card">
+                    ${imgSrc ? `<img src="${imgSrc}" class="menu-img">`
+                              : `<div class="menu-img placeholder">No Image</div>`}
+                    <div class="menu-details">
+                        <div class="menu-name" contenteditable="true">${item.name}</div>
+                        ${discount > 0
+                            ? `<div class="menu-price" contenteditable="true">
+                                    <del>$${price.toFixed(2)}</del> → $${(price * (1 - discount/100)).toFixed(2)} (${discount}% Off)
+                               </div>`
+                            : `<div class="menu-price" contenteditable="true">$${price.toFixed(2)}</div>`}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `</div>`; // close category block
+    });
+
+    openEditableMenuPreview(html);
+});
+
+function openEditableMenuPreview(content) {
+    const win = window.open("", "", "width=1200,height=800,scrollbars=yes,resizable=yes");
+    win.document.write(`
+        <html>
+        <head>
+            <title>Editable Product Menu</title>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Playfair+Display:wght@700&display=swap');
+                body { font-family: 'Montserrat', sans-serif; padding:20px; background:#fff; color:#333; }
+
+                /* Toolbar fixed at bottom */
+                .toolbar {
+                    position: fixed;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    background: #f8f8f8;
+                    border-top: 1px solid #ccc;
+                    padding: 10px;
+                    z-index: 999;
+                }
+                .toolbar label { font-size:12px; display:flex; flex-direction:column; }
+                .toolbar input, .toolbar select, .toolbar button { padding:4px 6px; margin:2px 0; cursor:pointer; }
+
+                /* Category */
+                .menu-category-block { margin-bottom:30px; width:100%; }
+                .menu-category-title {
+                    font-size: 18px;
+                    font-weight: 700;
+                    margin-bottom: 10px;
+                    text-align: center;
+                    border-bottom: 2px solid #000;
+                    padding-bottom: 3px;
+                    width:100%;
+                }
+
+                /* Products grid */
+                .menu-products {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr); /* default 4 columns */
+                    gap: 15px;
+                    width:100%;
+                }
+
+                /* Cards */
+                .menu-card {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    padding: 5px;
+                    background:#fff;
+                    page-break-inside: avoid;
+                    box-shadow:0 1px 3px rgba(0,0,0,0.1);
+                    transition: transform 0.2s;
+                }
+                .menu-card:hover { transform: translateY(-2px); }
+
+                .menu-img { width:100%; height:150px; object-fit:cover; border-radius:4px; margin-bottom:5px; }
+                .menu-img.placeholder {
+                    background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#999; height:150px; width:100%; border-radius:4px; margin-bottom:5px;
+                }
+
+                .menu-details { text-align:center; width:100%; }
+                .menu-name { font-weight:700; font-size:14px; text-transform:capitalize; }
+                .menu-price { font-size:13px; color:#b33; margin-top:3px; font-weight:600; }
+                .menu-price del { color:#888; font-weight:400; margin-right:4px; }
+
+                [contenteditable="true"] { outline:none; padding:2px; }
+
+                @media print { .toolbar { display:none; } body { -webkit-print-color-adjust: exact; } }
+            </style>
+        </head>
+        <body>
+            <div id="menuContainer">${content}</div>
+
+            <div class="toolbar">
+                <button id="printBtn">Print</button>
+                <label>Columns
+                    <input type="number" id="colInput" value="4" min="2" max="6" style="width:50px;">
+                </label>
+                <label>Card Height
+                    <input type="number" id="cardHeightInput" value="150" min="50" max="400" style="width:50px;">px
+                </label>
+                <label><input type="checkbox" id="toggleImage" checked> Show Images</label>
+                <label>Text Align
+                    <select id="textAlignSelect">
+                        <option value="left">Left</option>
+                        <option value="center" selected>Center</option>
+                        <option value="right">Right</option>
+                    </select>
+                </label>
+                <label>Text Color
+                    <input type="color" id="textColorPicker" value="#333">
+                </label>
+                <label>Font Size
+                    <input type="number" id="fontSizeInput" value="14" min="8" max="30">
+                </label>
+            </div>
+
+            <script>
+                const menuContainer = document.getElementById('menuContainer');
+
+                // Print
+                document.getElementById('printBtn').onclick = () => { window.print(); };
+
+                // Columns
+                document.getElementById('colInput').oninput = (e) => {
+                    const cols = parseInt(e.target.value) || 4;
+                    menuContainer.querySelectorAll('.menu-products').forEach(grid => {
+                        grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+                    });
+                };
+
+                // Card Height
+                document.getElementById('cardHeightInput').oninput = (e) => {
+                    const h = parseInt(e.target.value) || 150;
+                    menuContainer.querySelectorAll('.menu-img, .menu-img.placeholder').forEach(img => {
+                        img.style.height = h + 'px';
+                    });
+                };
+
+                // Show / hide images
+                document.getElementById('toggleImage').onchange = (e) => {
+                    const show = e.target.checked;
+                    menuContainer.querySelectorAll('.menu-img, .menu-img.placeholder').forEach(img => {
+                        img.style.display = show ? 'block' : 'none';
+                    });
+                };
+
+                // Text Align
+                document.getElementById('textAlignSelect').onchange = (e) => {
+                    menuContainer.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                        el.style.textAlign = e.target.value;
+                    });
+                };
+
+                // Text Color
+                document.getElementById('textColorPicker').oninput = (e) => {
+                    menuContainer.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                        el.style.color = e.target.value;
+                    });
+                };
+
+                // Font Size
+                document.getElementById('fontSizeInput').oninput = (e) => {
+                    const size = parseInt(e.target.value) || 14;
+                    menuContainer.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                        el.style.fontSize = size + 'px';
+                    });
+                };
+            </script>
+        </body>
+        </html>
+    `);
+}

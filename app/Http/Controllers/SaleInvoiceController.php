@@ -65,19 +65,31 @@ class SaleInvoiceController extends Controller
         $sortColumn = $allowedSorts[$request->sort_column] ?? 'id';
         $sortDirection = $request->sort_direction === 'desc' ? 'desc' : 'asc';
 
-    if ($request->filled('sort_column') && isset($allowedSorts[$request->sort_column])) {
-    $query->orderBy($allowedSorts[$request->sort_column], $sortDirection)
-          ->orderBy('id', 'desc'); // secondary sort
-} else {
-    $query->orderBy('invoice_number', 'desc');
-}
+        if ($request->filled('sort_column') && isset($allowedSorts[$request->sort_column])) {
+            $query->orderBy($allowedSorts[$request->sort_column], $sortDirection)
+                ->orderBy('id', 'desc'); // secondary sort
+        } else {
+            $query->orderBy('invoice_number', 'desc');
+        }
         // $query->orderBy($sortColumn, $sortDirection);
 
         // -----------------------------
         // Pagination
         // -----------------------------
-        $limit =  (int)$request->sale_view_limit ?? 75;
-        $data = $query->paginate($limit);
+        $limit =  $request->sale_view_limit;
+
+        if ($limit == 'All') {
+            $collection = $query->get();
+
+            $data = [
+                'data' => $collection,
+                'current_page' => 1,
+                'last_page' => 1,
+                'total' => $collection->count(),
+            ];
+        } else {
+            $data = $query->paginate((int)$limit);
+        }
 
         return response()->json($data);
     }
@@ -101,14 +113,14 @@ class SaleInvoiceController extends Controller
         return response()->json($categories);
     }
     public function getPaymentMethods()
-{
-    $methods = InvoiceHeader::whereNotNull('payment_method') // or whatever column you use
-        ->distinct()
-        ->orderBy('payment_method')
-        ->pluck('payment_method');
+    {
+        $methods = InvoiceHeader::whereNotNull('payment_method') // or whatever column you use
+            ->distinct()
+            ->orderBy('payment_method')
+            ->pluck('payment_method');
 
-    return response()->json($methods);
-}
+        return response()->json($methods);
+    }
     public function searchCustomers(Request $request)
     {
         $query = Customer::query();

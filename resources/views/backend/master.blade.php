@@ -79,7 +79,7 @@
                     </div>
                 </div>
             </button>
-            <button id="openWarehouseModel" data-modal-target="default-modal-warehouse" class="hidden"
+            {{-- <button id="openWarehouseModel" data-modal-target="default-modal-warehouse" class="hidden"
                 data-modal-toggle="default-modal-warehouse">
                 <div
                     class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
@@ -90,7 +90,7 @@
                     <div class="font-medium text-center text-body">គ្រប់គ្រង ឃ្លាំង
                     </div>
                 </div>
-            </button>
+            </button> --}}
             <div id="openWarehouseModel" data-modal-target="default-modal-warehouse"
                 data-modal-toggle="default-modal-warehouse"
                 class=" p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
@@ -175,9 +175,21 @@
                     <div class="font-medium text-center text-body">អត្រាប្ដូរប្រាក់</div>
                 </button>
             </div>
-
+            <button id="user_data" data-modal-target="default-modal-user-list"
+                data-modal-toggle="default-modal-user-list">
+                <div
+                    class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+                    <div
+                        class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="font-medium text-center text-body">គ្រប់គ្រងអ្នកប្រើប្រាស់
+                    </div>
+                </div>
+            </button>
         </div>
     </div>
+    
     <main>
         @yield('content')
 
@@ -197,7 +209,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="{{ asset('assets/js/script.js') }}"></script>
 
 </body>
