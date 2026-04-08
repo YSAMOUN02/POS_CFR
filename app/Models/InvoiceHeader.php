@@ -22,6 +22,7 @@ class InvoiceHeader extends Model
         'payment_method',
         'vat_amount',
         'return_amount',
+        'created_by',
         'remarks',
     ];
     protected $casts = [

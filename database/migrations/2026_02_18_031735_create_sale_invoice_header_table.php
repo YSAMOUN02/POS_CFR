@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id(); // Primary key
             $table->string('invoice_number')->unique(); // Invoice number
 
-       $table->string('customer_id')
+            $table->string('customer_id')
                 ->nullable();
 
 
@@ -31,6 +31,7 @@ return new class extends Migration
             $table->text('customer_type')->nullable(); // Optional notes
             $table->text('payment_method')->nullable(); // Optional notes
             $table->text('remarks')->nullable(); // Optional notes
+            $table->string('created_by')->nullable();
             $table->timestamps(); // created_at & updated_at
 
 

@@ -7,7 +7,7 @@
 
             <div class=" flex justify-between  mb-2 border-b border-default  mx-5 sticky top-0 bg-amber-400 z-10">
                 <div class="flex items-center gap-2 px-4 py-3">
-
+                    @csrf
                     <!-- Field -->
                     <select id="field-select" class="h-10 px-3 border rounded-md text-sm focus:ring-brand focus:border-brand">
                         <option value="bar_code">Barcode</option>
@@ -38,7 +38,7 @@
                        hover:text-black hover:border-purple-600 text-nowrap
                        focus:outline-none focus:text-black focus:border-purple-600
                        active:text-purple-700">
-                            ALL Product
+                            Recently
                         </button>
                     </li>
                     @foreach ($categories as $categoryName => $products)
@@ -95,6 +95,27 @@
     </div>
 
     <script>
+        let factor = @json($factor);
+        let currency_name = @json($currency_name);
+
+        window.addEventListener("change-currency", (e) => {
+            factor = e.detail[0].factor;
+            currency_name = e.detail[0].currency_name;
+
+            document.querySelectorAll(".pricing").forEach((element) => {
+
+                const basePrice = parseFloat(element.getAttribute("data-base-price")) || 0;
+                console.log(element.getAttribute("data-base-price")); // Debug: Check base price
+                const newPrice = basePrice * factor;
+
+                // ✅ Remove trailing .00 if it's a whole number
+                const displayPrice = Number.isInteger(newPrice) ? newPrice : newPrice.toFixed(2);
+
+                element.textContent = `${displayPrice} ${currency_name}`;
+            });
+        });
+
+
         const toggleBtn = document.getElementById('toggleSidebar');
         const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
@@ -117,11 +138,30 @@
             const card = e.target.closest('.card_style');
             if (!card) return;
 
-            const count = 5; // 💥 MORE + BIGGER
+            const isSuccess = card.classList.contains('card_style_success');
+
+            // ❌ FAIL → FLOAT TEXT ONLY
+            if (!isSuccess) {
+                const float = document.createElement('div');
+                float.className = 'no-stock-float';
+                float.textContent = '🚫 No Stock';
+
+                float.style.left = e.pageX + 'px';
+                float.style.top = e.pageY + 'px';
+
+                document.body.appendChild(float);
+                setTimeout(() => float.remove(), 1000);
+
+                return; // ⛔ STOP here (no icons)
+            }
+
+            // ✅ SUCCESS → BURST ICONS
+            const count = 8;
             const burst = document.createElement('div');
+
             burst.className = 'cart-burst';
-            burst.style.left = e.clientX + 'px';
-            burst.style.top = e.clientY + 'px';
+            burst.style.left = e.pageX + 'px';
+            burst.style.top = e.pageY + 'px';
 
             for (let i = 0; i < count; i++) {
                 const icon = document.createElement('span');
@@ -130,18 +170,18 @@
                 icon.className = `cart-icon ${isCart ? 'cart' : 'plus'}`;
                 icon.textContent = isCart ? '🛒' : '✅';
 
-                // 🎯 RANDOM direction + BIG distance
                 const angle = Math.random() * Math.PI * 2;
-                const distance = 70 + Math.random() * 50;
+                const distance = 100;
 
                 icon.style.setProperty('--x', `${Math.cos(angle) * distance}px`);
                 icon.style.setProperty('--y', `${Math.sin(angle) * distance}px`);
+                icon.style.animationDelay = `${i * 0.03}s`;
 
                 burst.appendChild(icon);
             }
 
             document.body.appendChild(burst);
-            setTimeout(() => burst.remove(), 900);
+            setTimeout(() => burst.remove(), 1000);
         });
 
         function toggleItem(button) {
@@ -177,18 +217,37 @@
         const tabContent = document.getElementById('tab-content');
 
         // Convert Blade categories JSON into JS object
-        const productsByCategory = @json($categories);
+        let productsByCategory = @json($categories);
+        async function reloadProducts() {
+            try {
+                const res = await fetch('/pos/products');
+                const data = await res.json();
+
+
+                // 🔁 Reassign global variable
+                productsByCategory = data;
+
+                renderCategoryProducts(current_tab);
+
+            } catch (err) {
+                console.error("Failed to reload products:", err);
+            }
+        }
 
 
         // Helper: sort products by total_stock DESC
         function sortByStock(products) {
             return products.sort((a, b) => b.total_stock - a.total_stock);
         }
+        let current_tab = 'NA';
+
+
 
         // Event listener for tabs
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const category = tab.dataset.category; // get clicked category
+                current_tab = category;
                 renderCategoryProducts(category); // render products
 
                 // Update active tab styling
@@ -215,7 +274,7 @@
             try {
                 let products = [];
                 if (category === 'top') {
-                    products = sortByStock(Object.values(productsByCategory).flat()).slice(0, 1000);
+                    products = sortByStock(Object.values(productsByCategory).flat()).slice(0, 30);
                 } else {
                     products = sortByStock(productsByCategory[category] || []);
                 }
@@ -242,46 +301,49 @@
                         const stockPercent = (product.total_stock / product.max_stock) * 100;
 
                         if (product.total_stock > product.max_stock) {
-                            stockColor = 'text-blue-600'; // overstock
-                        } else if (stockPercent < 33) {
+                            stockColor = 'text-green-600'; // overstock
+                        } else if (stockPercent < 50) {
                             stockColor = 'text-red-500'; // low stock
-                        } else if (stockPercent < 66) {
-                            stockColor = 'text-yellow-500'; // medium stock warning
+
                         } else {
                             stockColor = 'text-green-600'; // enough stock
                         }
                     }
+                    let style_click = `card_style_fail`;
 
+                    if (product.total_stock > 0 || product.track_stock == 0) {
+                        style_click = `card_style_success`;
+                    }
 
 
                     html += `
-                     <div class="card_style bg-neutral-primary-soft block max-w-sm border border-default shadow-xs relative">
+                     <div  class="card_style ${style_click} bg-neutral-primary-soft block max-w-sm border border-default shadow-xs relative">
                                 <button class="add-to-cart-btn w-full flex flex-col h-full" data-product='${JSON.stringify(product)}'>
 
                                     <!-- IMAGE -->
                                     <div class="relative w-full">
 
                                       ${imageSrc
-                                        ? `<img class="object-cover w-full"
-                                                                                                                                    loading="lazy"
-                                                                                                                                    style="max-height:150px; min-height:150px;"
-                                                                                                                                    src="${imageSrc}"
-                                                                                                                                    onerror="this.outerHTML=\`
+                                        ? `<img class="object-cover w-full" id="product-image${product.id}"
+                                                                                                                                                                                                                        loading="lazy"
+                                                                                                                                                                                                                        style="max-height:150px; min-height:150px;"
+                                                                                                                                                                                                                        src="${imageSrc}"
+                                                                                                                                                                                                                        onerror="this.outerHTML=\`
                                                     <div class='flex items-center justify-center w-full h-[150px] bg-gray-100'>
                                                         <span class='text-gray-400'>No Image</span>
                                                     </div>\`"
-                                                                                                                                />`
+                                                                                                                                                                                                                    />`
                                         : `<div class="flex items-center justify-center w-full h-[150px] bg-gray-100">
-                                                                                                                                    <span class="text-gray-400">No Image</span>
-                                                                                                                            </div>`
+                                                                                                                                                                                                                        <span class="text-gray-400">No Image</span>
+                                                                                                                                                                                                                </div>`
                                     }
 
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
 
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -295,18 +357,18 @@
                                             </h5>
                                         </div>
 
-                                        <div class="text-center mt-1">
+                                        <div  class="text-center mt-1">
                                             <p class="text-xs">
                                             ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="${stockColor}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="${stockColor}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    &ensp;` : ''}
 
                                             ${product.discount_percent != 0
-                                                ? `<del class="text-gray-400 text-[10px]">${finalPrice.toFixed(2)} $</del> → <span class="${stockColor} font-semibold text-sm">${discountedPrice.toFixed(2)} $</span>`
-                                                : `<span class="font-semibold text-sm">${finalPrice.toFixed(2)} $</span>`
+                                                ? `<br><del data-base-price="${finalPrice.toFixed(2)}"  class="pricing text-gray-400 text-sm">${finalPrice.toFixed(2) * factor}  ${currency_name}</del> → <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">${discountedPrice.toFixed(2) *factor} ${currency_name}</span>`
+                                                : `<span data-base-price="${finalPrice.toFixed(2)}"  class="pricing font-semibold text-sm">${finalPrice.toFixed(2) * factor} ${currency_name}</span>`
                                             }
                                         </p>
             </div>
@@ -355,8 +417,7 @@
         searchInput_product.addEventListener('input', async () => {
             const query = searchInput_product.value.trim();
             const field = fieldSelect.value || 'name';
-            const activeTab = document.querySelector('#category-tabs button.border-brand');
-            const category = activeTab ? activeTab.dataset.category : 'top';
+
 
             if (!query) {
                 activeTab.click();
@@ -370,9 +431,20 @@
             </div>
         `;
 
-                const response = await fetch(
-                    `/products/search?field=${field}&query=${encodeURIComponent(query)}&category=${category}`
-                );
+                const response = await fetch('/products/category/search', {
+                    method: 'POST',
+                    headers: {
+                        "X-CSRF-TOKEN": document.querySelector('input[name="_token"]')
+                            .value,
+                        Accept: "application/json",
+                        "Content-Type": "application/json", // 🔥 must have
+                    },
+                    body: JSON.stringify({
+                        field: field,
+                        query: query,
+
+                    })
+                });
 
                 if (!response.ok) throw new Error(response.status);
 
@@ -413,26 +485,35 @@
             // Stock color logic
             let stockColor = 'text-gray-400'; // default out of stock
             if (product.total_stock > 0) {
-                const stockPercent = product.max_stock ? (product.total_stock / product.max_stock) * 100 : 100;
-                if (product.total_stock > product.max_stock) stockColor = 'text-blue-600';
-                else if (stockPercent < 33) stockColor = 'text-red-500';
-                else if (stockPercent < 66) stockColor = 'text-yellow-500';
-                else stockColor = 'text-green-600';
-            }
+                const stockPercent = (product.total_stock / product.max_stock) * 100;
 
+                if (product.total_stock > product.max_stock) {
+                    stockColor = 'text-green-600'; // overstock
+                } else if (stockPercent < 50) {
+                    stockColor = 'text-red-500'; // low stock
+
+                } else {
+                    stockColor = 'text-green-600'; // enough stock
+                }
+            }
+            let style_click = `card_style_fail`;
+
+            if (product.total_stock > 0) {
+                style_click = `card_style_success`;
+            }
             return `
-                            <div class="card_style bg-neutral-primary-soft block max-w-sm border border-default shadow-xs relative">
+                            <div class="card_style ${style_click} bg-neutral-primary-soft block max-w-sm border border-default shadow-xs relative">
                                 <button class="add-to-cart-btn w-full flex flex-col h-full" data-product='${JSON.stringify(product)}'>
 
                                     <!-- IMAGE -->
                                     <div class="relative w-full">
-                                        <img class="object-cover w-full" loading="lazy" style="max-height:150px;min-height:150px;"
+                                        <img id="product-image${product.id}" class="object-cover w-full" loading="lazy" style="max-height:150px;min-height:150px;"
                                             src="${imageSrc}" onerror="this.src='assets/defult/placeholder.jpg'" alt="${product.name}" />
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -445,13 +526,14 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                                 ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            &ensp;` : ''}
 
-                                              ${product.discount_percent != 0
-    ? `<del class="text-gray-400 text-[10px]">${finalPrice.toFixed(2)} $</del> → <span class="${stockColor} font-semibold text-sm">${discountedPrice.toFixed(2)} $</span>`
-    : `<span class="font-semibold text-sm">${finalPrice.toFixed(2)} $</span>`}
+                                       ${product.discount_percent != 0
+                                                ? `<del data-base-price="${finalPrice.toFixed(2)}"  class="pricing text-gray-400 text-[10px]">${finalPrice.toFixed(2) * factor}  ${currency_name}</del> → <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">${discountedPrice.toFixed(2) *factor} ${currency_name}</span>`
+                                                : `<span data-base-price="${finalPrice.toFixed(2)}"  class="pricing font-semibold text-sm">${finalPrice.toFixed(2) * factor} ${currency_name}</span>`
+                                            }
 
                                             </p>
                                         </div>
@@ -912,130 +994,130 @@
         class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
 
         {{-- width Custom  --}}
-        <div class="  relative p-4 w-full max-w-10xl max-h-full ">
+        <div class=" relative p-4 w-full max-w-10xl max-h-full ">
             <!-- Modal content -->
             <div
-                class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
-                <form id="customerFormList">
-                    @csrf
-                    <!-- Modal header -->
-                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
-                        <div class="w-full flex items-center justify-between mb-4">
-                            <div>
-                                <h3 class="text-lg font-medium text-heading">
-                                    Customer Information
-                                </h3>
-                            </div>
-                            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                                <!-- Active checkbox -->
-                                <div class="flex items-center gap-2">
-                                    <label for="customerSearchCheckbox" class="text-sm font-medium">Active</label>
-                                    <input type="checkbox" checked id="customerSearchCheckbox" class="w-4 h-4">
-                                </div>
+                class="min-h-[70vh] max-h-[90vh] respond_laptop relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 flex flex-col">
 
 
-                                <!-- Type select -->
-                                <div class="flex items-center gap-2">
-                                    <input type="text" id="customerSearchInput"
-                                        placeholder="Search by code, name, phone, email..."
-                                        class="px-3 py-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                    <select id="customerTypeSelect"
-                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                        <option value="">All Types</option>
-                                        <option value="walk_in">Walk In</option>
-                                        <option value="member">Member</option>
-                                        <option value="vip">VIP</option>
-                                    </select>
-                                </div>
-                            </div>
-
+                <!-- Modal header -->
+                <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                    <div class="w-full flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-medium text-heading">
+                                Customer Information
+                            </h3>
                         </div>
-                        <button type="button"
-                            class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
-                            data-modal-hide="default-modal-customer-list">
-                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" fill="none" viewBox="0 0 24 24">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
-                            </svg>
-                            <span class="sr-only">Close modal</span>
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <!-- Active checkbox -->
+                            <div class="flex items-center gap-2">
+                                <label for="customerSearchCheckbox" class="text-sm font-medium">Active</label>
+                                <input type="checkbox" checked id="customerSearchCheckbox" class="w-4 h-4">
+                            </div>
+
+
+                            <!-- Type select -->
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="customerSearchInput"
+                                    placeholder="Search by code, name, phone, email..."
+                                    class="px-3 py-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <select id="customerTypeSelect"
+                                    class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <option value="">All Types</option>
+                                    <option value="walk_in">Walk In</option>
+                                    <option value="member">Member</option>
+                                    <option value="vip">VIP</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                    <button type="button"
+                        class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                        data-modal-hide="default-modal-customer-list">
+                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18 17.94 6M18 18 6.06 6" />
+                        </svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+                <!-- Modal body -->
+                <div class="flex-1 overflow-y-auto mt-4">
+                    <div class="scroll_content_70 overflow-x-auto">
+
+                        <table id="customer-list" class="w-full text-sm text-left">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3">Select</th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="id">ID <span
+                                            class="sort-icon">↕</span></th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="customer_code">Code <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="name">Name <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="address1">Address 1 <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="phone">Phone <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="email">Email <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="type">Type <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="credit_limit">Credit Limit <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="balance">Balance <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="point">Point <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="status">Status <span
+                                            class="sort-icon">↕</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="customer-table-body">
+                                <!-- async rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+                <!-- Modal footer -->
+
+                <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5 mt-4">
+                    <div>
+                        <button type="button" id="btnEditCustomer"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            Edit
+                        </button>
+                        &ensp;
+                        <button type="button" id="btnDeleteCustomer"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            Delete
+                        </button>
+
+
+                        <button type="button" data-modal-target="default-modal-customer"
+                            data-modal-toggle="default-modal-customer"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            New
+                        </button>
+                        <button type="button" id="btnPrintCustomer"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            Print
                         </button>
                     </div>
-                    <!-- Modal body -->
-                    <div class="max-h-[70vh] overflow-y-auto">
-                        <div class=" scroll_content_70  overflow-x-auto">
 
-                            <table id="customer-list" class="w-full text-sm text-left">
-                                <thead>
-                                    <tr>
-                                        <th class="px-4 py-3">Select</th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="id">ID <span
-                                                class="sort-icon">↕</span></th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="customer_code">Code <span
-                                                class="sort-icon">↕</span></th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="name">Name <span
-                                                class="sort-icon">↕</span></th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="address1">Address 1 <span
-                                                class="sort-icon">↕</span></th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="phone">Phone <span
-                                                class="sort-icon">↕</span></th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="email">Email <span
-                                                class="sort-icon">↕</span></th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="type">Type <span
-                                                class="sort-icon">↕</span></th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="credit_limit">Credit Limit <span
-                                                class="sort-icon">↕</span></th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="balance">Balance <span
-                                                class="sort-icon">↕</span></th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="point">Point <span
-                                                class="sort-icon">↕</span></th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="status">Status <span
-                                                class="sort-icon">↕</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="customer-table-body">
-                                    <!-- async rows -->
-                                </tbody>
-                            </table>
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="flex items-center justify-center gap-1 mt-4 mx-2" id="paginationContainer">
+                            <!-- JS will render buttons here -->
                         </div>
-
+                        &ensp;
+                        <span id="pageInfo" class="text-sm text-gray-600"></span>
                     </div>
-                    <!-- Modal footer -->
+                </div>
 
-                    <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5">
-                        <div>
-                            <button type="button" id="btnEditCustomer"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                Edit
-                            </button>
-                            &ensp;
-                            <button type="button" id="btnDeleteCustomer"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                Delete
-                            </button>
-
-
-                            <button type="button" data-modal-target="default-modal-customer"
-                                data-modal-toggle="default-modal-customer"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                New
-                            </button>
-                            <button type="button" id="btnPrintCustomer"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                Print
-                            </button>
-                        </div>
-
-                        <div class="flex items-center justify-between mt-4">
-                            <div class="flex items-center justify-center gap-1 mt-4 mx-2" id="paginationContainer">
-                                <!-- JS will render buttons here -->
-                            </div>
-                            &ensp;
-                            <span id="pageInfo" class="text-sm text-gray-600"></span>
-                        </div>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
@@ -1215,18 +1297,12 @@
                                 </h3>
                             </div>
                             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                                <!-- Active checkbox -->
-                                <div class="flex items-center gap-2">
-                                    <label for="customerSearchCheckbox" class="text-sm font-medium">Active</label>
-                                    <input type="checkbox" checked id="customerSearchCheckbox" class="w-4 h-4">
-                                </div>
+
 
 
                                 <!-- Type select -->
                                 <div class="flex items-center gap-2">
-                                    <input type="text" id="customerSearchInput"
-                                        placeholder="Search by code, name, phone, email..."
-                                        class="px-3 py-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
+
                                     <select id="warehouseTypeSelect"
                                         class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
                                         <option value="All">All Warehouse</option>
@@ -1290,7 +1366,7 @@
                                     </select>
 
                                 </div>
-                                 &ensp;
+                                &ensp;
                                 <div class="flex flex-col  mx-2">
                                     <label for="status-filter">Status</label>
                                     <select id="status-filter"
@@ -1301,7 +1377,7 @@
 
                                     </select>
                                 </div>
-                                 &ensp;
+                                &ensp;
                                 <div class="flex flex-col  mx-2">
                                     <label for="stock-filter">Quantity Filter</label>
                                     <select id="stock-filter"
@@ -1326,11 +1402,11 @@
 
                 <div class="max-h-[70vh] overflow-y-auto">
                     <div class=" scroll_content_70  overflow-x-auto">
-                        <table id="wh-product"  class=" w-full text-left text-sm table-auto">
+                        <table id="wh-product" class=" w-full text-left text-sm table-auto">
                             <thead class="bg-green-50 sticky top-0">
                                 <tr class="text-nowrap">
                                     <th data-sort="id" class="sortable px-3 py-2">No.</th>
-                                      <th data-sort="code" class="sortable px-3 py-2">Lot ID</th>
+                                    <th data-sort="code" class="sortable px-3 py-2">Lot ID</th>
                                     <th data-sort="code" class="sortable px-3 py-2">Code</th>
                                     <th data-sort="name" class="sortable px-3 py-2">Product Name</th>
                                     <th data-sort="variant" class="sortable px-3 py-2">Variant</th>
@@ -1345,8 +1421,8 @@
                                     <th data-sort="sellvat" class="sortable px-3 py-2">Sell Price (VAT)</th>
                                     <th data-sort="category" class="sortable px-3 py-2">Category</th>
 
-                                       <th data-sort="status" class="sortable px-3 py-2">Warehouse</th>
-                                        <th data-sort="status" class="sortable px-3 py-2">Status</th>
+                                    <th data-sort="status" class="sortable px-3 py-2">Warehouse</th>
+                                    <th data-sort="status" class="sortable px-3 py-2">Status</th>
                                 </tr>
                             </thead>
                             <tbody id="warehouse-stock-tbody">
@@ -1390,6 +1466,18 @@
                 &ensp;
                 <button id="warehouseConfirmAction"
                     class="px-5 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div id="logoutModal" class="fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
+        <div id="modalContent" class="bg-white rounded-lg p-6 max-w-sm w-full text-center shadow-lg animate-fadeIn">
+            <h2 class="text-lg font-semibold mb-4">Are you sure you want to log out?</h2>
+            <div class="flex justify-center gap-4">
+                <button id="confirmLogout"
+                    class="bg-amber-500 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded">Yes</button>
+                <button id="cancelLogout"
+                    class="bg-amber-500 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded">No</button>
             </div>
         </div>
     </div>
@@ -1449,7 +1537,7 @@
                         <option value="CASH">Cash</option>
                         <option value="CREDIT CARD">Credit Card</option>
                         <option value="BANK TRANSFER">Bank Transfer</option>
-                         <option value="Chip Mong">Chip Mong</option>
+                        <option value="Chip Mong">Chip Mong</option>
                         <option value="PAYPAL">PayPal</option>
                         <option value="WISE BANK">WISE BANK</option>
                         <option value="CHEQ">CHEQ</option>
@@ -1580,208 +1668,207 @@
         <div class="  relative p-4 w-full max-w-10xl max-h-full ">
             <!-- Modal content -->
             <div
-                class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
-                <form id="customerFormList">
-                    @csrf
-                    <!-- Modal header -->
-                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
-                        <div class="w-full flex items-center justify-between mb-4">
-                            <div>
-                                <h3 class="text-lg font-medium text-heading">
-                                    Product Information
-                                </h3>
-                            </div>
-                            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                                <!-- Active checkbox -->
-                                <div class="flex items-center gap-2">
+                class="min-h-[70vh] max-h-[90vh] respond_laptop relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 flex flex-col">
 
-                                    <select id="productSearchCheckbox">
-                                        <option value="">All</option>
-                                        <option value="1">Active</option>
-                                        <option value="0">Inactive</option>
-                                    </select>
-                                </div>
-
-
-                                <!-- Type select -->
-                                <div class="flex items-center gap-2">
-                                    <input type="text" id="ProductSearchInput" placeholder="Search product"
-                                        class="px-3 py-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                    <select id="productTypeSelect"
-                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
-
-
-                                    </select>
-                                    <select id="productLimitSelect"
-                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                        <option value="10">10</option>
-                                        <option value="15">15</option>
-                                        <option selected value="25">25</option>
-                                        <option value="30">30</option>
-                                        <option value="100">100</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                        </div>
-                        <button type="button"
-                            class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
-                            data-modal-hide="default-modal-product-list">
-                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" fill="none" viewBox="0 0 24 24">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
-                            </svg>
-                            <span class="sr-only">Close modal</span>
-                        </button>
-                    </div>
-                    <!-- Modal body -->
-                    <div id="product-list" class=" max-h-[70vh] overflow-y-auto">
-                        <div class="scroll_content_70  overflow-x-auto">
-                            <table id="product_table"
-                                class=" w-full text-sm text-left border border-default rounded-base">
-                                <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
-                                    <tr class="text-nowrap">
-                                        <th class="px-4 py-3">Select</th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="id">
-                                            ID <span class="sort-icon">↕</span>
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="image">
-                                            Image <span class="sort-icon">↕</span>
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="bar_code">
-                                            Bar Code <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="code">
-                                            Code <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="name">
-                                            Name <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="variant">
-                                            Variant <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="description">
-                                            Description <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="min_stock">
-                                            Min Stock <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="max_stock">
-                                            Max Stock <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="sell_price">
-                                            Unit Price <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="cost">
-                                            Cost <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="vat">
-                                            VAT <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="discount_percent">
-                                            Discount % <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="last_purchase_price">
-                                            Last Purchase Price <span class="sort-icon">↕</span>
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="category_id">
-                                            Category ID <span class="sort-icon">↕</span>
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="category_name">
-                                            Category <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="unit">
-                                            Unit <span class="sort-icon">↕</span>
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="category_name">
-                                            Display On <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="track_stock">
-                                            Track Stock <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="allow_discount">
-                                            Allow Discount <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="allow_return">
-                                            Allow Return <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="status">
-                                            Status <span class="sort-icon">↕</span>
-                                        </th>
-                                    </tr>
-
-                                </thead>
-                                <tbody id="product-table-body">
-                                    <!-- async rows -->
-                                </tbody>
-                            </table>
-                        </div>
-
-                    </div>
-                    <!-- Modal footer -->
-
-                    <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5">
+                @csrf
+                <!-- Modal header -->
+                <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                    <div class="w-full flex items-center justify-between mb-4">
                         <div>
-                            {{-- <button type="button" data-modal-target="default-modal-customer"
+                            <h3 class="text-lg font-medium text-heading">
+                                ព័ត៌មានផលិតផល
+                            </h3>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <!-- Active checkbox -->
+                            <div class="flex items-center gap-2">
+
+                                <select id="productSearchCheckbox">
+                                    <option value="">All</option>
+                                    <option value="1">Active</option>
+                                    <option value="0">Inactive</option>
+                                </select>
+                            </div>
+
+
+                            <!-- Type select -->
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="ProductSearchInput" placeholder="Search product"
+                                    class="px-3 py-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <select id="productTypeSelect"
+                                    class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
+
+
+                                </select>
+                                <select id="productLimitSelect"
+                                    class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <option value="10">10</option>
+                                    <option value="15">15</option>
+                                    <option selected value="25">25</option>
+                                    <option value="30">30</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                    <button type="button"
+                        class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                        data-modal-hide="default-modal-product-list">
+                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18 17.94 6M18 18 6.06 6" />
+                        </svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+                <!-- Modal body -->
+                <div class="flex-1 overflow-y-auto mt-4">
+                    <div class="scroll_content_70 overflow-x-auto">
+                        <table id="product_table" class=" w-full text-sm text-left border border-default rounded-base">
+                            <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
+                                <tr class="text-nowrap">
+                                    <th class="px-4 py-3">Select</th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="id">
+                                        ID <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="image">
+                                        Image <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="bar_code">
+                                        Bar Code <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="code">
+                                        Code <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="name">
+                                        Name <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="variant">
+                                        Variant <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="description">
+                                        Description <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="min_stock">
+                                        Min Stock <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="max_stock">
+                                        Max Stock <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="sell_price">
+                                        Unit Price <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="cost">
+                                        Cost <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="vat">
+                                        VAT <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="discount_percent">
+                                        Discount % <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="last_purchase_price">
+                                        Last Purchase Price <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="category_id">
+                                        Category ID <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="category_name">
+                                        Category <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="unit">
+                                        Unit <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="category_name">
+                                        Display On <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="track_stock">
+                                        Track Stock <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="allow_discount">
+                                        Allow Discount <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="allow_return">
+                                        Allow Return <span class="sort-icon">↕</span>
+                                    </th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="status">
+                                        Status <span class="sort-icon">↕</span>
+                                    </th>
+                                </tr>
+
+                            </thead>
+                            <tbody id="product-table-body">
+                                <!-- async rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+                <!-- Modal footer -->
+
+                <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5 mt-4">
+                    <div>
+                        {{-- <button type="button" data-modal-target="default-modal-customer"
                                 data-modal-toggle="default-modal-customer"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Product Category
                             </button> --}}
-                            <button type="button" {{-- id="btnEditCustomer" --}} id="btnEditProduct"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                Edit
-                            </button>
-                            &ensp;
-                            {{-- <button type="button"
+                        <button type="button" {{-- id="btnEditCustomer" --}} id="btnEditProduct"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            Edit
+                        </button>
+                        &ensp;
+                        {{-- <button type="button"
                              id="btnDeleteCustomer"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Delete
                             </button> --}}
 
 
-                            <button type="button" id="btnAddProduct" data-modal-target="default-modal-add-product"
-                                data-modal-toggle="default-modal-add-product"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                New
-                            </button>
+                        <button type="button" id="btnAddProduct" data-modal-target="default-modal-add-product"
+                            data-modal-toggle="default-modal-add-product"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            New
+                        </button>
 
-                            <button type="button" id="btnPrintProduct"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                Print
-                            </button>
-                            <button type="button" id="btnPrintProductMenu"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                Print Menu
-                            </button>
-                        </div>
-
-                        <div class="flex items-center justify-between mt-4">
-                            <div class="flex items-center justify-center gap-1 mt-4 mx-2" id="paginationContainerProduct">
-                                <!-- JS will render buttons here -->
-                            </div>
-                            &ensp;
-                            <span id="pageInfo" class="text-sm text-gray-600"></span>
-                        </div>
+                        <button type="button" id="btnPrintProduct"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            Print
+                        </button>
+                        <button type="button" id="btnPrintProductMenu"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            Print Menu
+                        </button>
                     </div>
-                </form>
+
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="flex items-center justify-center gap-1 mt-4 mx-2" id="paginationContainerProduct">
+                            <!-- JS will render buttons here -->
+                        </div>
+                        &ensp;
+                        <span id="pageInfo" class="text-sm text-gray-600"></span>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -2235,7 +2322,7 @@
                                 <option selected value="75">75 Invoice</option>
                                 <option value="100">100 Invoice</option>
                                 <option value="200">200 Invoice</option>
-                                          <option value="All">All Invoices</option>
+                                <option value="All">All Invoices</option>
                             </select>
                         </div>
                     </div>
@@ -2395,8 +2482,10 @@
     {{-- <LIST TABLE > --}}
     <div id="default-modal-table-select-list" tabindex="-1" aria-hidden="true"
         class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center p-4">
-        <div class="relative p-4 w-full max-w-4xl max-h-full">
-            <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
+        <div
+            class="min-h-[70vh] max-h-[90vh] respond_laptop relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 flex flex-col">
+            <div
+                class="relative min-h-[70vh] max-h-[90vh] bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
                 <div class="flex justify-between w-full p-2">
                     <h3 class="text-lg font-medium text-heading mb-4">Table\Quote</h3>
                     <div>
@@ -2470,7 +2559,7 @@
 
 
 
-      {{-- <LIST User > --}}
+    {{-- <LIST User > --}}
     <div id="default-modal-user-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
         class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
 
@@ -2478,210 +2567,310 @@
         <div class="  relative p-4 w-full max-w-10xl max-h-full ">
             <!-- Modal content -->
             <div
-                class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
+                class="min-h-[70vh] max-h-[90vh] respond_laptop relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 flex flex-col">
 
-                    @csrf
-                    <!-- Modal header -->
-                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
-                        <div class="w-full flex items-center justify-between mb-4">
+
+                <!-- Modal header -->
+                <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                    <div class="w-full flex flex-col items-center justify-between mb-4">
+                        <div class="flex w-full items-center justify-between mb-4">
                             <div>
-                                <h3 class="text-lg font-medium text-heading">
-                                    User Information
+
+                                <h3 id="wh_name" class="text-lg font-medium text-heading">
+                                    User List
                                 </h3>
                             </div>
                             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                                 <!-- Active checkbox -->
-                                <div class="flex items-center gap-2">
+                                <select id="active"
+                                    class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <option value="All">All Status</option>
+                                    <option value="1">Active</option>
+                                    <option value="0">Inactive</option>
 
-                                    <select id="productSearchCheckbox">
-                                        <option value="">All</option>
-                                        <option value="1">Active</option>
-                                        <option value="0">Inactive</option>
-                                    </select>
-                                </div>
+                                </select>
+                                <select id="role_filter"
+                                    class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <option value="All">All Roles</option>
+                                    <option value="Cashier">Cashier</option>
+                                    <option value="Supervisor">Supervisor</option>
+
+                                    <option value="Admin">Admin</option>
+                                </select>
 
 
                                 <!-- Type select -->
                                 <div class="flex items-center gap-2">
-                                    <input type="text" id="ProductSearchInput" placeholder="Search product"
+                                    <input type="text" id="userSearchInput" placeholder="Search by name ,email..."
                                         class="px-3 py-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                    <select id="productTypeSelect"
-                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
 
-
-                                    </select>
-                                    <select id="productLimitSelect"
-                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                        <option value="10">10</option>
-                                        <option value="15">15</option>
-                                        <option selected value="25">25</option>
-                                        <option value="30">30</option>
-                                        <option value="100">100</option>
-                                    </select>
                                 </div>
+                                <button type="button"
+                                    class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                                    data-modal-hide="default-modal-user-list">
+                                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                        width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                            stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                                    </svg>
+
+                                    <span class="sr-only">Close modal</span>
+                                </button>
                             </div>
-
-                        </div>
-                        <button type="button"
-                            class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
-                            data-modal-hide="default-modal-user-list">
-                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" fill="none" viewBox="0 0 24 24">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
-                            </svg>
-                            <span class="sr-only">Close modal</span>
-                        </button>
-                    </div>
-                    <!-- Modal body -->
-                    <div  class=" max-h-[70vh] overflow-y-auto">
-                        <div class="scroll_content_70  overflow-x-auto">
-                            {{-- <table id="product_table"
-                                class=" w-full text-sm text-left border border-default rounded-base">
-                                <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
-                                    <tr class="text-nowrap">
-                                        <th class="px-4 py-3">Select</th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="id">
-                                            ID <span class="sort-icon">↕</span>
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="image">
-                                            Image <span class="sort-icon">↕</span>
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="bar_code">
-                                            Bar Code <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="code">
-                                            Code <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="name">
-                                            Name <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="variant">
-                                            Variant <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="description">
-                                            Description <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="min_stock">
-                                            Min Stock <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="max_stock">
-                                            Max Stock <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="sell_price">
-                                            Unit Price <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="cost">
-                                            Cost <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="vat">
-                                            VAT <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="discount_percent">
-                                            Discount % <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="last_purchase_price">
-                                            Last Purchase Price <span class="sort-icon">↕</span>
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="category_id">
-                                            Category ID <span class="sort-icon">↕</span>
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="category_name">
-                                            Category <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="unit">
-                                            Unit <span class="sort-icon">↕</span>
-                                        </th>
-                                        <th class="px-4 py-3 cursor-pointer" data-column="category_name">
-                                            Display On <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="track_stock">
-                                            Track Stock <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="allow_discount">
-                                            Allow Discount <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="allow_return">
-                                            Allow Return <span class="sort-icon">↕</span>
-                                        </th>
-
-                                        <th class="px-4 py-3 cursor-pointer" data-column="status">
-                                            Status <span class="sort-icon">↕</span>
-                                        </th>
-                                    </tr>
-
-                                </thead>
-                                <tbody id="product-table-body">
-                                    <!-- async rows -->
-                                </tbody>
-                            </table> --}}
                         </div>
 
-                    </div>
-                    <!-- Modal footer -->
 
-                    <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5">
-                        <div>
-                            {{-- <button type="button" data-modal-target="default-modal-customer"
+
+
+                    </div>
+                </div>
+                <!-- Modal body -->
+                <div class="flex-1 overflow-y-auto mt-4">
+                    <div class="scroll_content_70 overflow-x-auto">
+                        <table id="user-table" class=" w-full text-sm text-left border border-default rounded-base">
+                            <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
+
+                                <tr class="text-nowrap">
+                                    <th class="px-4 py-3 text-center">Select</th>
+                                    <th class="px-4 py-3">ID</th>
+                                    <th class="px-4 py-3">Name</th>
+                                    <th class="px-4 py-3">Email</th>
+                                    <th class="px-4 py-3">Phone</th>
+                                    <th class="px-4 py-3">Role</th>
+                                    <th class="px-4 py-3 text-center">Active</th>
+                                </tr>
+                                </tr>
+
+                            </thead>
+                            <tbody id="user-table-body">
+                                <!-- async rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+                <!-- Modal footer -->
+
+                <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5 mt-4">
+                    <div>
+                        {{-- <button type="button" data-modal-target="default-modal-customer"
                                 data-modal-toggle="default-modal-customer"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Product Category
                             </button> --}}
-                            <button type="button" {{-- id="btnEditCustomer" --}} id="btnEditProduct"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                Edit
-                            </button>
-                            &ensp;
-                            {{-- <button type="button"
+                        <button type="button" {{-- id="btnEditCustomer" --}} id="btnEditProduct"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            Edit
+                        </button>
+                        &ensp;
+                        {{-- <button type="button"
                              id="btnDeleteCustomer"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Delete
                             </button> --}}
 
 
-                            <button type="button" id="btnAddProduct" data-modal-target="default-modal-add-product"
-                                data-modal-toggle="default-modal-add-product"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                New
-                            </button>
-
-                            <button type="button" id="btnPrintProduct"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                Print
-                            </button>
-                            <button type="button" id="btnPrintProductMenu"
-                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                                Print Menu
-                            </button>
-                        </div>
-
-                        <div class="flex items-center justify-between mt-4">
-                            <div class="flex items-center justify-center gap-1 mt-4 mx-2" id="paginationContainerProduct">
-                                <!-- JS will render buttons here -->
-                            </div>
-                            &ensp;
-                            <span id="pageInfo" class="text-sm text-gray-600"></span>
-                        </div>
+                        <button type="button" id="btnUser" data-modal-target="default-modal-add-user"
+                            data-modal-toggle="default-modal-add-user"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            New User
+                        </button>
                     </div>
+
+
+                </div>
 
             </div>
         </div>
     </div>
+    {{-- <ADD User > --}}
+    <div id="default-modal-add-user" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
+        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="  relative p-4 w-full max-w-5xl max-h-full ">
+            <!-- Modal content -->
+
+            <div class="relative bg-white border border-slate-600 shadow-md rounded-base p-4 md:p-6">
+
+
+                <form id="AddUserForm" enctype="multipart/form-data">
+                    @csrf
+                    <!-- Modal header -->
+                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                        <h3 class="text-lg font-medium text-heading">
+                            Add New User <div id="formError" class="text-red-500 text-sm mb-3 hidden"></div>
+                        </h3>
+
+                        <button type="button"
+                            class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                            data-modal-hide="default-modal-add-user">
+                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                            </svg>
+                            <span class="sr-only">Close modal</span>
+                        </button>
+
+
+                    </div>
+                    <!-- Modal body -->
+                    <div class="space-y-4 md:space-y-6 py-4 md:py-6">
+
+
+
+                        <!-- Name & Variant -->
+                        <div class="grid gap-6 md:grid-cols-1">
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Display Name <span class="text-rose-600">*</span>
+                                </label>
+                                <input type="text" name="display_name" id="display_name" required
+                                    placeholder="Candy"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    User login <span class="text-rose-600">*</span>
+                                </label>
+                                <input type="text" name="username" id="username" required placeholder="candy"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    User Role<span class="text-rose-600">*</span>
+                                </label>
+                                <select id="role" name="role" id="role" required
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+
+                                    <option selected value="Cashier">Cashier</option>
+                                    <option value="Supervisor">Supervisor</option>
+
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Email
+                                </label>
+                                <input type="email" name="email" id="email"
+                                    placeholder="jonhdoe@example.com"
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Password
+                                </label>
+                                <input type="password" name="password" id="password" placeholder="••••••••"
+                                    required
+                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            </div>
+                        </div>
+                        &ensp;
+                        <div class="mt-4">
+                            <label class="block mb-2.5 text-sm font-medium text-heading">
+                                User Can Use Warehouses
+                            </label>
+
+                            <div id="warehouseList" class="grid grid-cols-2 gap-2">
+                                <!-- JS render here -->
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Modal footer -->
+                    <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
+                        <button type="submit" id="submitBtn" disabled
+                            class="bg-gray-400 text-gray-200 cursor-not-allowed font-medium rounded-base text-sm px-4 py-2.5 transition">
+                            Required More Info
+                        </button>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <div id="lotModal" class="fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
+        <div class="bg-white rounded-2xl shadow-2xl w-4xl max-w-5xl p-6 animate-scaleUp">
+            <!-- Header / Close -->
+            <div class="flex justify-end mb-4">
+                <button onclick="closeLotModal()"
+                    class="text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
+            </div>
+
+            <!-- Main content: image + info + lots -->
+            <div class="flex gap-6">
+                <!-- Product Image -->
+                <div class="flex-shrink-0">
+                    <img id="display_img" src="" alt="Product Image"
+                        class="w-64 h-64 object-cover rounded-lg border shadow">
+                </div>
+
+                <!-- Right side: Name + lots table -->
+                <div class="flex-1 flex flex-col">
+                    <!-- Product Name / ID / Track Qty -->
+                    <h2 id="item-id" class="text-2xl font-bold text-gray-800 mb-4">Loading...</h2>
+
+                    <!-- Lots Table -->
+                    <div id="lotModalBody" class="overflow-y-auto max-h-80 border rounded p-4 bg-gray-50 grid gap-2">
+                        <!-- JS will inject lots rows here -->
+                    </div>
+
+                    <!-- Footer: warning + save -->
+                    &ensp;
+                    <div class="flex justify-between items-center mt-4 ">
+                        <button id="save-lot-btn" onclick="saveLots()"
+                            class="px-5 py-2 rounded-xl transition bg-gray-400" disabled>
+                            Save
+                        </button>
+                        <p id="lot-warning" class="text-red-500 hidden text-sm"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div id="viewLotModal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
+         <div class="bg-white rounded-2xl shadow-2xl w-4xl max-w-5xl p-6 animate-scaleUp">
+
+            <!-- Header: Image left, Title right -->
+            <div class="flex items-start mb-4 gap-4">
+                <!-- Product Image -->
+                <div class="flex-shrink-0">
+                    <img id="display_img2" src="" alt="Product Image"
+                        class="w-32 h-32 object-cover rounded-lg border shadow">
+                </div>
+
+                <!-- Title & Info -->
+                <div class="flex-1">
+                    <h2 id="view-lot-title" class="text-xl font-bold text-gray-800 mb-2">Loading...</h2>
+                    <p id="view-lot-info" class="text-gray-600 text-sm">
+                        <!-- Optional: show product ID, stock, or other info -->
+                    </p>
+                </div>
+
+                <!-- Close button -->
+                <button onclick="closeViewLotModal()"
+                    class="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+
+            <!-- Table Body -->
+            <div id="viewLotModalBody" class=" overflow-y-auto max-h-72 space-y-2">
+                <!-- JS injects rows here -->
+            </div>
+
+            <!-- Footer -->
+            <div class="flex justify-end mt-4">
+                <button onclick="closeViewLotModal()"
+                    class="px-5 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition">Close</button>
+            </div>
+        </div>
+    </div>
+
 
 @endpush

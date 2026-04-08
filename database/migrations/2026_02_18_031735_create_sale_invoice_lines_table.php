@@ -46,7 +46,7 @@ return new class extends Migration
             $table->decimal('vat', 5, 2)->default(0);
             $table->decimal('vat_amount', 15, 2)->default(0);
             $table->decimal('total_amount', 15, 2);
-
+            $table->string('created_by')->nullable();
             $table->text('remarks')->nullable();
             $table->timestamps();
 

@@ -497,7 +497,7 @@ function renderCustomerTable(data) {
     if (data.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="4" class="px-4 py-4 text-center text-gray-500">
+                <td colspan="12" class="px-4 py-4 text-center text-rose-500">
                     No customers found
                 </td>
             </tr>
@@ -855,6 +855,7 @@ function validateUpdateCustomerForm() {
     return true; // valid
 }
 
+// Load Warehouse for select Stock
 async function loadWarehouses() {
     const select = document.getElementById("warehouseTypeSelect");
 
@@ -868,20 +869,14 @@ async function loadWarehouses() {
         if (!response.ok) throw new Error("Fetch failed");
 
         const warehouses = await response.json();
+        console.log(warehouses); // check your data
 
-          console.log(warehouses);
-        if (warehouses.length === 0) {
-            return; // keep only "All Warehouse"
-        }
+        if (!warehouses.length) return; // no warehouses
 
         warehouses.forEach((w) => {
             select.insertAdjacentHTML(
                 "beforeend",
-                `
-                <option value="${w.id}">
-                    ${w.name}${w.location ? " - " + w.location : ""}
-                </option>
-                `,
+                `<option value="${w.id}">${w.name}${w.location ? " - " + w.location : ""}</option>`,
             );
         });
     } catch (err) {
@@ -1035,7 +1030,7 @@ document
         loadWarehouses();
         loadCategories_product();
         // Fetch and Render Stock
-        loadWarehouseStock(0); // or handle All case
+        loadWarehouseStock(0, 1); // or handle All case
     });
 document
     .getElementById("warehouseTypeSelect")
@@ -1048,51 +1043,50 @@ document
             loadWarehouseStock(warehouseId, 1);
         }
     });
-    // Listen to filter inputs (search, variant, status, stock)
+// Listen to filter inputs (search, variant, status, stock)
 document
-    .querySelectorAll("#limit-filter, #search-stock, #status-filter, #stock-filter, #category-filter2")
+    .querySelectorAll(
+        "#limit-filter, #search-stock, #status-filter, #stock-filter, #category-filter2",
+    )
     .forEach((el) => {
         el.addEventListener("input", () => {
             loadWarehouseStock(currentWarehouseId);
         });
     });
-    const modal = document.getElementById("warehouse-stock-modal");
-    const tbody_stock = document.getElementById("warehouse-stock-tbody");
-    const closeBtn = document.getElementById("close-modal");
-    const searchInput_stock = document.getElementById("search-stock");
-    const statusFilter = document.getElementById("status-filter");
-    const LimitFilter = document.getElementById("limit-filter");
-    const Category = document.getElementById("category-filter2");
+const modal = document.getElementById("warehouse-stock-modal");
+const tbody_stock = document.getElementById("warehouse-stock-tbody");
+const closeBtn = document.getElementById("close-modal");
+const searchInput_stock = document.getElementById("search-stock");
+const statusFilter = document.getElementById("status-filter");
+const LimitFilter = document.getElementById("limit-filter");
+const Category = document.getElementById("category-filter2");
 
-    async function loadWarehouseStock(warehouseId, page = 1) {
-        try {
+async function loadWarehouseStock(warehouseId, page = 1) {
+    try {
+        currentWarehouseId = warehouseId;
 
-            currentWarehouseId = warehouseId;
-
-            tbody_stock.innerHTML = `
+        tbody_stock.innerHTML = `
                 <tr>
-                    <td colspan="15" class="px-4 py-4 text-center text-rose-500">
+                    <td colspan="17" class="px-4 py-4 text-center text-rose-500">
                         Loading...
                     </td>
                 </tr>
             `;
 
-            // Only include filters if not empty
-            const params = new URLSearchParams();
-            const limit = LimitFilter.value.trim();
+        // Only include filters if not empty
+        const params = new URLSearchParams();
+        const limit = LimitFilter.value.trim();
 
-            const search = searchInput_stock.value.trim();
-            const category_id =  Category.value.trim();
-            const status = statusFilter.value;
-            const stock = document.getElementById("stock-filter").value;
+        const search = searchInput_stock.value.trim();
+        const category_id = Category.value.trim();
+        const status = statusFilter.value;
+        const stock = document.getElementById("stock-filter").value;
 
-            if (search) params.append("search", search);
-            if(limit) params.append('limit', limit);
-            if (status !== "") params.append("status", status);
-            if (stock) params.append("stock", stock);
-            if(category_id) params.append("category_id", category_id);
-
-
+        if (search) params.append("search", search);
+        if (limit) params.append("limit", limit);
+        if (status !== "") params.append("status", status);
+        if (stock) params.append("stock", stock);
+        if (category_id) params.append("category_id", category_id);
 
         params.append("page", page);
 
@@ -1110,14 +1104,13 @@ document
     }
 }
 
-
 function renderStockTable(products, currentPage = 1, perPage = 10) {
     tbody_stock.innerHTML = "";
 
     if (products.length === 0) {
         tbody_stock.innerHTML = `
             <tr>
-                <td colspan="15" class="text-center py-4 text-gray-500">
+                <td colspan="17" class="text-center py-4 text-rose-500">
                     No data found
                 </td>
             </tr>
@@ -1143,7 +1136,7 @@ function renderStockTable(products, currentPage = 1, perPage = 10) {
             `
             <tr class="hover:bg-green-50 cursor-pointer transition-colors">
                 <td class="px-3 text-left text-sm text-gray-600">${rowNumber}</td>
-                <td class="px-3 text-left text-sm">${p.lot_id?? ""}</td>
+                <td class="px-3 text-left text-sm">${p.lot_id ?? ""}</td>
 
                 <td class="px-3 text-left text-sm">${p.code ?? ""}</td>
                 <td class="px-3 text-left text-sm font-medium">${p.product_name}</td>
@@ -1157,8 +1150,8 @@ function renderStockTable(products, currentPage = 1, perPage = 10) {
                 <td class="px-3 text-right text-sm">${p.vat ?? 0}</td>
                 <td class="px-3 text-right text-sm">${Number(p.sell_price ?? 0).toFixed(2)}</td>
                 <td class="px-3 text-right text-sm">${Number(p.sell_price_vat ?? 0).toFixed(2)}</td>
-                <td class="px-3 text-left text-sm">${p.category_name ?? 'NA'}</td>
-                            <td class="px-3 text-left text-sm">${p.warehouse_name ?? 'NA'}</td>
+                <td class="px-3 text-left text-sm">${p.category_name ?? "NA"}</td>
+                            <td class="px-3 text-left text-sm">${p.warehouse_name ?? "NA"}</td>
 
                 <td class="px-3      text-sm ${p.status ? "text-green-600" : "text-red-500"}">
                     ${p.status ? "Active" : "Inactive"}
@@ -1220,8 +1213,6 @@ function renderPagination(result) {
         );
     }
 }
-
-
 
 let delivery_note_no = "NA";
 let invoice_no = "NA";
@@ -2882,6 +2873,43 @@ function updatePayment() {
         confirmPayBtn.classList.add("bg-gray-400", "cursor-not-allowed");
     }
 }
+function initializePayment() {
+    // Reset inputs
+    payUSDInput.value = "";
+    payOtherInput.value = "";
+    returnedInput.value = formatCurrency(0, "$");
+    returnedInputOther.value = formatCurrency(
+        0,
+        document.querySelector("#currency_display_symbol").value,
+    );
+
+    // Reset display (if needed)
+    displayUSD.value = "0.000";
+
+    // Reset global object
+    paymentData = {};
+
+    // Reset button
+    confirmPayBtn.disabled = true;
+    confirmPayBtn.textContent = "Enter Amount";
+    confirmPayBtn.classList.remove(
+        "bg-emerald-600",
+        "hover:bg-emerald-700",
+        "cursor-pointer",
+    );
+    confirmPayBtn.classList.add("bg-gray-400", "cursor-not-allowed");
+
+    // Optional: reset extra fields
+    document.getElementById("payment_method").value = "";
+    document.getElementById("customer_type").value = "";
+
+    // Optional: reset dates
+    document.getElementById("due_date").value = "";
+    document.getElementById("document_dateInput").value = "";
+
+    // Reset currency factor if needed
+    currencyFactorInput.value = 1;
+}
 confirmPayBtn.addEventListener("click", Final_Payment);
 function Final_Payment() {
     Livewire.dispatch("paymentConfirmed", {
@@ -2898,6 +2926,7 @@ updatePayment();
 
 window.addEventListener("cart-loaded", (e) => {
     document.querySelector("#count_cart_input").value = 1;
+    initializePayment();
     updatePayment();
     print("Receipt");
 });
@@ -3012,6 +3041,8 @@ window.addEventListener("payment-success", (e) => {
 
     // Clear after confirmation (whether printed or not)
     Livewire.dispatch("clearAll_after_payment");
+
+    reloadProducts();
 });
 
 /*
@@ -3091,7 +3122,6 @@ function fetchSalesData(page = 1) {
 
     params.append("page", page);
 
-
     fetch(`/sales-report?${params.toString()}`)
         .then((res) => res.json())
         .then((data) => renderTable(data))
@@ -3152,7 +3182,9 @@ function formatPercent(value) {
 }
 function renderTable(response) {
     const tbody = document.getElementById("salesTableBody");
-    const paginationContainer = document.getElementById("paginationContainer_sale_invoice");
+    const paginationContainer = document.getElementById(
+        "paginationContainer_sale_invoice",
+    );
     const pageInfo = document.getElementById("pageInfo_sale_invoice");
 
     // Clear previous content
@@ -3188,7 +3220,8 @@ function renderTable(response) {
 
         lines.forEach((line) => {
             rowCount++;
-            const cost_amount = ((Number(line.cost) || 0) * (Number(line.quantity) || 0));
+            const cost_amount =
+                (Number(line.cost) || 0) * (Number(line.quantity) || 0);
 
             rows.push(`
                 <tr class="text-nowrap">
@@ -3945,35 +3978,42 @@ document.getElementById("btnPrintProductMenu").addEventListener("click", () => {
 
     // Group products by category
     const categories = {};
-    allProducts.forEach(product => {
+    allProducts.forEach((product) => {
         const category = (product.category && product.category.name) || "Other";
         if (!categories[category]) categories[category] = [];
         categories[category].push(product);
     });
 
     // Build HTML: categories with underline
-    let html = '';
+    let html = "";
 
-    Object.keys(categories).forEach(cat => {
+    Object.keys(categories).forEach((cat) => {
         html += `<div class="menu-category-block">
                     <div class="menu-category-title" contenteditable="true">${cat}</div>`;
 
-        categories[cat].forEach(item => {
+        categories[cat].forEach((item) => {
             const price = parseFloat(item.sell_price || item.price) || 0;
             const discount = parseFloat(item.discount_percent || 0);
-            const imgSrc = item.image ? `/assets/startic_img/${encodeURIComponent(item.image)}` : '';
+            const imgSrc = item.image
+                ? `/assets/startic_img/${encodeURIComponent(item.image)}`
+                : "";
 
             html += `
                 <div class="menu-card">
-                    ${imgSrc ? `<img src="${imgSrc}" class="menu-img">`
-                              : `<div class="menu-img placeholder">No Image</div>`}
+                    ${
+                        imgSrc
+                            ? `<img src="${imgSrc}" class="menu-img">`
+                            : `<div class="menu-img placeholder">No Image</div>`
+                    }
                     <div class="menu-details">
                         <div class="menu-name" contenteditable="true">${item.name}</div>
-                        ${discount > 0
-                            ? `<div class="menu-price" contenteditable="true">
-                                    <del>$${price.toFixed(2)}</del> → $${(price * (1 - discount/100)).toFixed(2)} (${discount}% Off)
+                        ${
+                            discount > 0
+                                ? `<div class="menu-price" contenteditable="true">
+                                    <del>$${price.toFixed(2)}</del> → $${(price * (1 - discount / 100)).toFixed(2)} (${discount}% Off)
                                </div>`
-                            : `<div class="menu-price" contenteditable="true">$${price.toFixed(2)}</div>`}
+                                : `<div class="menu-price" contenteditable="true">$${price.toFixed(2)}</div>`
+                        }
                     </div>
                 </div>
             `;
@@ -3986,7 +4026,11 @@ document.getElementById("btnPrintProductMenu").addEventListener("click", () => {
 });
 
 function openEditableMenuPreview(content) {
-    const win = window.open("", "", "width=1200,height=800,scrollbars=yes,resizable=yes");
+    const win = window.open(
+        "",
+        "",
+        "width=1200,height=800,scrollbars=yes,resizable=yes",
+    );
     win.document.write(`
         <html>
         <head>
@@ -4145,3 +4189,574 @@ function openEditableMenuPreview(content) {
         </html>
     `);
 }
+
+// Filters
+document.getElementById("user_data").addEventListener("click", fetchUsers);
+document
+    .getElementById("userSearchInput")
+    .addEventListener("input", fetchUsers);
+document.getElementById("role_filter").addEventListener("change", fetchUsers);
+document.getElementById("active").addEventListener("change", fetchUsers);
+
+async function fetchUsers() {
+    const search = document.getElementById("userSearchInput").value.trim();
+    const role = document.getElementById("role_filter").value;
+    const active = document.getElementById("active").value;
+
+    const params = new URLSearchParams({ search, role, active });
+
+    try {
+        const res = await fetch(`/users-list-data?${params.toString()}`);
+        const users = await res.json();
+        renderUsers(users);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function renderUsers(users) {
+    const tbody = document.getElementById("user-table-body");
+    tbody.innerHTML = "";
+
+    if (!users.length) {
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">No users found</td></tr>`;
+        return;
+    }
+
+    users.forEach((user) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td class="px-4 py-2 text-center">
+                <input type="radio" name="selectUser" value="${user.id}">
+            </td>
+            <td class="px-4 py-2">${user.id}</td>
+            <td class="px-4 py-2">${user.name}</td>
+            <td class="px-4 py-2">${user.email}</td>
+            <td class="px-4 py-2">${user.phone || "-"}</td>
+            <td class="px-4 py-2">${user.role}</td>
+
+             <td class="px-3      text-sm ${user.status ? "text-green-600" : "text-red-500"}">
+                    ${user.status ? "Active" : "Inactive"}
+                </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+// Trigger fetch when modal opens
+document
+    .getElementById("default-modal-user-list")
+    .addEventListener("transitionend", function () {
+        if (!this.classList.contains("hidden")) {
+            fetchUsers();
+        }
+    });
+
+document
+    .getElementById("btnUser")
+    .addEventListener("click", loadWarehouses_user);
+
+async function loadWarehouses_user() {
+    try {
+        const res = await fetch("/warehouse-list-data");
+        const data = await res.json();
+
+        const container = document.getElementById("warehouseList");
+        container.innerHTML = "";
+
+        if (!data.length) {
+            container.innerHTML =
+                "<p class='text-gray-500'>No warehouse found</p>";
+            return;
+        }
+
+        data.forEach((w) => {
+            const div = document.createElement("label");
+            div.className = `
+        flex items-center gap-3 p-3 rounded-lg border border-gray-300
+        cursor-pointer transition-all duration-150
+        hover:border-amber-500 hover:bg-amber-50
+    `;
+
+            div.innerHTML = `
+        <input type="checkbox" name="warehouses[]" value="${w.id}"
+            class="w-4 h-4 accent-amber-500">
+
+        <span class="text-sm font-medium text-gray-700">
+            ${w.name}
+        </span>
+    `;
+
+            // active style when checked
+            const checkbox = div.querySelector("input");
+            checkbox.addEventListener("change", () => {
+                if (checkbox.checked) {
+                    div.classList.add("border-amber-500", "bg-amber-100");
+                } else {
+                    div.classList.remove("border-amber-500", "bg-amber-100");
+                }
+            });
+
+            container.appendChild(div);
+        });
+    } catch (err) {
+        console.error("Error loading warehouses:", err);
+    }
+}
+const displayName = document.getElementById("display_name");
+const username = document.getElementById("username");
+const role = document.getElementById("role");
+const email = document.getElementById("email");
+const submitBtn = document.getElementById("submitBtn");
+
+const password = document.getElementById("password");
+const formError = document.getElementById("formError");
+
+function validateForm() {
+    let errors = [];
+
+    const nameValid = displayName.value.trim() !== "";
+    const userValid = username.value.trim() !== "";
+    const roleValid = role.value !== "";
+
+    const emailValue = email.value.trim();
+    const isEmailFormatValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
+
+    const passwordValid = password.value.trim() !== "";
+
+    const warehouseChecked =
+        document.querySelectorAll('input[name="warehouses[]"]:checked').length >
+        0;
+
+    // 🔴 Collect errors
+    if (!nameValid) errors.push("Display name is required");
+    if (!userValid) errors.push("Username is required");
+    if (!roleValid) errors.push("Role is required");
+    if (!passwordValid) errors.push("Password is required");
+    if (!warehouseChecked) errors.push("Select at least 1 warehouse");
+    if (emailValue !== "" && !isEmailFormatValid) {
+        errors.push("Email format is invalid");
+    }
+
+    // 🔥 Show ALL messages in ONE place
+    if (errors.length > 0) {
+        formError.classList.remove("hidden");
+        formError.innerHTML = errors.join("<br>");
+    } else {
+        formError.classList.add("hidden");
+        formError.innerHTML = "";
+    }
+
+    // ✅ Enable / disable button
+    if (errors.length === 0) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
+        submitBtn.classList.add("bg-green-500", "text-white");
+        submitBtn.textContent = "Create User";
+    } else {
+        submitBtn.disabled = true;
+        submitBtn.classList.add("bg-gray-400", "cursor-not-allowed");
+        submitBtn.textContent = "Required More Info";
+    }
+}
+// warehouse checkbox change (IMPORTANT)
+displayName.addEventListener("input", validateForm);
+username.addEventListener("input", validateForm);
+role.addEventListener("change", validateForm);
+email.addEventListener("input", validateForm);
+
+document.addEventListener("change", function (e) {
+    if (e.target.name === "warehouses[]") {
+        validateForm();
+    }
+});
+
+document
+    .getElementById("AddUserForm")
+    .addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+
+        try {
+            const res = await fetch("/users/store", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'input[name="_token"]',
+                    ).value,
+                },
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                showToast({
+                    message: data.message || "User created successfully ✅",
+                    type: "success",
+                });
+                form.reset();
+            } else {
+                showToast({
+                    message: data.message || "Failed to create user ❌",
+                    type: "error",
+                });
+            }
+        } catch (err) {
+            console.error(err);
+
+            showToast({
+                message: "Error",
+                type: "error",
+            });
+        }
+    });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const welcome = document.getElementById("welcomeScreen");
+    const main = document.getElementById("mainContent");
+
+    // Only show first time
+    if (!sessionStorage.getItem("welcomeShown")) {
+        sessionStorage.setItem("welcomeShown", "true");
+
+        setTimeout(() => {
+            welcome.style.display = "none";
+            main.style.opacity = 1; // show main content
+        }, 5000); // 5 seconds animation
+    } else {
+        // skip welcome if already shown
+        welcome.style.display = "none";
+        main.style.opacity = 1;
+    }
+});
+const logoutBtn = document.getElementById("logout");
+const modal_logout = document.getElementById("logoutModal");
+const confirmBtn_logout = document.getElementById("confirmLogout");
+const cancelBtn_logout = document.getElementById("cancelLogout");
+
+// Show modal
+logoutBtn.addEventListener("click", () => {
+    modal_logout.classList.remove("hidden");
+    document.body.style.overflow = "hidden"; // prevent scroll
+});
+
+// Confirm logout
+confirmBtn_logout.addEventListener("click", () => {
+    window.location.href = "/logout";
+});
+
+const puchasing_btn = document.getElementById("purchasing");
+// Confirm purchasing
+puchasing_btn.addEventListener("click", () => {
+    window.location.href = "/Purchasing";
+});
+// Cancel logout
+cancelBtn_logout.addEventListener("click", () => {
+    modal_logout.classList.add("hidden");
+    document.body.style.overflow = ""; // restore scroll
+});
+
+// Optional: click outside modal to close
+modal_logout.addEventListener("click", (e) => {
+    if (e.target === modal_logout) {
+        modal_logout.classList.add("hidden");
+        document.body.style.overflow = "";
+    }
+});
+let currentCartIndex = null;
+let currentProductId = null;
+let currentTrackQty = 0;
+
+function openLotModal(cart_index, product_id, product_name) {
+    currentCartIndex = cart_index;
+    currentProductId = product_id;
+    const qtyInput = document.querySelector(`#qty_order_${cart_index}`);
+
+    let maxQty = parseInt(qtyInput.max);
+    // Current value (number)
+    currentTrackQty = parseInt(qtyInput.value) || 0;
+
+    if (currentTrackQty > maxQty) {
+        showToast({
+            message: `Quantity adjusted to max available (${maxQty})`,
+            type: "error",
+        });
+
+        currentTrackQty = maxQty;
+    }
+    document.getElementById("item-id").textContent =
+        `Product: ${product_name} (ID: ${product_id}) | Track Qty: ${currentTrackQty}`;
+
+    // Grab original product image from main page
+    let img = document.getElementById("product-image" + product_id);
+    let display_img = document.getElementById("display_img");
+
+    if (img) {
+        display_img.src = img.src; // copy image URL
+    } else {
+        display_img.src = "https://via.placeholder.com/150"; // fallback
+    }
+
+    document.getElementById("lotModal").classList.remove("hidden");
+
+    loadLotData(product_id);
+}
+
+async function loadLotData(product_id) {
+    try {
+        const modalBody = document.getElementById("lotModalBody");
+        modalBody.innerHTML = "<p class='text-gray-500'>Loading lots...</p>";
+
+        const res = await fetch(`/get-lot-data/${product_id}`);
+        const data = await res.json();
+
+        if (!data.length) {
+            modalBody.innerHTML =
+                "<p class='text-red-500'>No stock available</p>";
+            return;
+        }
+
+        modalBody.innerHTML = ""; // clear previous
+
+        // Table header
+        const header = document.createElement("div");
+        header.className =
+            "grid grid-cols-5 gap-2 font-semibold border-b pb-1 mb-2 text-gray-700";
+        header.innerHTML = `
+            <div>Lot No</div>
+            <div>Qty to pick</div>
+            <div>Stock</div>
+            <div>Expire</div>
+
+        `;
+        modalBody.appendChild(header);
+
+        // Table rows
+        data.forEach((lot) => {
+            const row = document.createElement("div");
+            row.className =
+                "grid grid-cols-5 gap-2 items-center p-1 bg-white rounded shadow-sm";
+
+            // Expired check
+            let expireClass = "";
+            if (lot.expire && new Date(lot.expire) < new Date()) {
+                expireClass = "text-red-500 font-bold";
+            }
+
+            // Low stock color
+            let stockClass = "";
+            if (lot.qty <= 5) stockClass = "text-yellow-600 font-semibold";
+            let formattedExpire = "-";
+            if (lot.expire) {
+                const d = new Date(lot.expire);
+                const months = [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "May",
+                    "Jun",
+                    "Jul",
+                    "Aug",
+                    "Sep",
+                    "Oct",
+                    "Nov",
+                    "Dec",
+                ];
+                const day = String(d.getDate()).padStart(2, "0");
+                const month = months[d.getMonth()];
+                const year = d.getFullYear();
+                formattedExpire = `${day}-${month}-${year}`;
+            }
+            row.innerHTML = `
+        <!-- Hidden Warehouse Product ID -->
+        <input type="hidden" class="lot-id" value="${lot.id}">
+
+        <input type="text" value="${lot.lot ?? "NO LOT"}" readonly
+            class="border px-2 py-1 rounded bg-gray-100 w-full">
+
+        <input type="number" min="0" max="${lot.qty}" value="0"
+            class="border px-2 py-1 rounded lot-qty w-full"
+            oninput="updateLotWarning()">
+
+        <span class="${stockClass} text-center">${lot.qty}</span>
+
+        <span class="${expireClass} text-center">${formattedExpire}</span>
+    `;
+
+            modalBody.appendChild(row);
+        });
+    } catch (err) {
+        console.error("Error loading lot data:", err);
+        modalBody.innerHTML =
+            "<p class='text-red-500'>Failed to load lots.</p>";
+    }
+}
+function saveLots() {
+    const rows = document.querySelectorAll("#lotModalBody .lot-id");
+    let lots = [];
+    let total = 0;
+
+    rows.forEach((lotInput) => {
+        const row = lotInput.closest("div"); // get parent row
+        const lotId = lotInput.value;
+        const qty = parseInt(row.querySelector(".lot-qty").value || 0);
+
+        if (qty > 0) {
+            lots.push({ id: lotId, qty });
+            total += qty;
+        }
+    });
+
+    const warning = document.getElementById("lot-warning");
+    const saveBtn = document.getElementById("save-lot-btn");
+
+    if (total !== currentTrackQty) {
+        warning.textContent = `Total lot qty (${total}) must equal item qty (${currentTrackQty})`;
+        warning.classList.remove("hidden");
+
+        saveBtn.disabled = true;
+        saveBtn.classList.remove("bg-emerald-500", "hover:bg-emerald-600");
+        saveBtn.classList.add("bg-gray-400", "cursor-not-allowed");
+        return;
+    }
+
+    console.log("Selected lots:", lots);
+    // ✅ Send to Livewire/cart with warehouse_product IDs
+
+
+    Livewire.dispatch("set-item-lots", {
+        index: currentCartIndex,
+        lots: lots,
+    });
+
+    // Clear warning and close modal
+    warning.classList.add("hidden");
+    closeLotModal();
+
+    // Optional: show small toast confirmation
+    showToast({ message: "Lots saved successfully!", type: "success" });
+}
+
+window.addEventListener("view-cart-lots", (event) => {
+    const { lots, product_name , product_id } = event.detail[0]; // <-- remove [0]
+
+    // Grab original product image from main page
+    const img = document.getElementById("product-image" +  product_id); // optional, only if you have image IDs
+    const display_img = document.getElementById("display_img2");
+
+    if (img) {
+        display_img.src = img.src; // copy image URL
+    } else {
+        display_img.src = "https://via.placeholder.com/150"; // fallback
+    }
+
+    const modalBody = document.getElementById("viewLotModalBody");
+    const modalTitle = document.getElementById("view-lot-title");
+    modalBody.innerHTML = "";
+
+    modalTitle.textContent = `Tracked Lots for: ${product_name}`;
+
+    if (!lots.length) {
+        modalBody.innerHTML = "<p class='text-gray-500'>No lots tracked yet.</p>";
+    } else {
+        // Header
+        const header = document.createElement("div");
+        header.className = "grid grid-cols-5 gap-2 font-semibold border-b pb-1 text-gray-700";
+        header.innerHTML = `
+
+         <div>Warehouse</div>
+            <div>Lot No</div>
+            <div>Qty</div>
+            <div>Stock</div>
+            <div>Expire</div>
+        `;
+        modalBody.appendChild(header);
+
+        // Rows
+        lots.forEach((lot) => {
+            const row = document.createElement("div");
+            row.className = "grid grid-cols-5 gap-2 items-center p-1 bg-gray-50 rounded";
+
+            let expireClass = "";
+            if (lot.expire && new Date(lot.expire) < new Date()) {
+                expireClass = "text-red-500 font-bold";
+            }
+
+            row.innerHTML = `
+                <span class="text-left px-2">${lot.warehouse}</span>
+                <span class="text-left px-2">${lot.lot}</span>
+                <span class="text-center px-2">${lot.qty}</span>
+                <span class="text-center px-2">${lot.stock}</span>
+                <span class="text-center px-2 text-nowrap ${expireClass}">${lot.expire}</span>
+            `;
+            modalBody.appendChild(row);
+        });
+    }
+
+    // Show modal
+    document.getElementById("viewLotModal").classList.remove("hidden");
+});
+// Close function
+function closeViewLotModal() {
+    document.getElementById("viewLotModal").classList.add("hidden");
+}
+
+
+
+
+
+function updateLotWarning() {
+    const inputs = document.querySelectorAll("#lotModalBody .lot-qty");
+    let total = 0;
+
+    inputs.forEach((input) => {
+        let val = parseInt(input.value || 0);
+
+        // clamp each lot to 0..max allowed for that lot
+        const maxLot = parseInt(input.max || 0);
+        if (val > maxLot) {
+            val = maxLot;
+            input.value = val;
+        }
+
+        total += val;
+    });
+
+    const warning = document.getElementById("lot-warning");
+    const saveBtn = document.getElementById("save-lot-btn");
+
+    if (total !== currentTrackQty) {
+        warning.textContent = `Total lot qty (${total}) must equal item qty (${currentTrackQty})!`;
+        warning.classList.remove("hidden");
+
+        saveBtn.disabled = true;
+        saveBtn.classList.remove("bg-emerald-500", "hover:bg-emerald-600");
+        saveBtn.classList.add("bg-gray-400", "cursor-not-allowed");
+    } else {
+        warning.classList.add("hidden");
+
+        saveBtn.disabled = false;
+        saveBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
+        saveBtn.classList.add("bg-emerald-500", "hover:bg-emerald-600");
+    }
+}
+function closeLotModal() {
+    document.getElementById("lotModal").classList.add("hidden");
+}
+
+window.addEventListener("error", (event) => {
+    let message = event.detail[0].message;
+
+     // ✅ SUCCESS
+            showToast({
+                message: message,
+                type: "error",
+            });
+});
+
+

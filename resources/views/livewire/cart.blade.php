@@ -4,16 +4,16 @@
             class="border-b bg-white border-default pb-2  p-2 flex items-center justify-between sticky top-0">
             <h1 id="chasier" class="mb-2 font-bold">
                 @if (!empty($this->Current_table_id))
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
-                        Editing Data :
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r to-amber-600 from-amber-400">
+                        កំពុងតែកែ ទិន្នន័យតាមតុ :
                     </span>
                     {{ $this->Current_table_name }}
                 @else
                     <span id="tittle_span"
-                        class="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
-                        {{ $prefix }}
+                        class="text-transparent bg-clip-text bg-gradient-to-r to-amber-600 from-amber-400">
+                    Sales Order
                     </span>
-                    {{ $title }}
+
                 @endif
 
             </h1>
@@ -69,10 +69,10 @@
                                 <p class="text-sm text-gray-400">
                                     តម្លៃ:
                                     @if ($item['discount_percent'] != 0)
-                                        <del>{{ number_format($item['price'], 2) }}</del>$
-                                        -{{ number_format((float) $item['discount_price'], 2) }}$
+                                        <del>{{ $item['price'] * $this->factor }}</del> {{$this->currency_name}}
+                                        -{{ (float) $item['discount_price'] * $this->factor }}{{ $this->currency_name }}
                                     @else
-                                        {{ number_format((float) $item['price'], 2) }} $
+                                        {{ (float) $item['price']* $this->factor  }} {{ $this->currency_name }}
                                     @endif
                                 </p>
                             </div>
@@ -80,10 +80,10 @@
                         <div class="text-right">
                             <p class="font-semibold">
                                 @if ($item['discount_percent'] != 0)
-                                    <del>{{ number_format($item['amount_line'], 2) }}$</del> -
-                                    {{ number_format($item['net_amount_line'], 2) }}$
+                                    <del>{{ $item['amount_line'] * $this->factor }} {{ $this->currency_name }}</del> -
+                                    {{ (float) $item['net_amount_line'] * $this->factor }}{{ $this->currency_name }}
                                 @else
-                                    {{ number_format($item['amount_line'], 2) }}$
+                                    {{ (float) $item['amount_line'] * $this->factor }} {{ $this->currency_name }}
                                 @endif
 
 
@@ -93,24 +93,47 @@
 
                     <!-- Dropdown Content -->
                     <div class="hidden  bonus border-b p-2">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
+                        <div class="grid grid-cols-5 gap-4">
+                            <div class="col-span-2">
                                 <label class="text-sm text-gray-500">ចំនួន</label>
-                                <input type="number" min="1" max="{{ $item['stock'] }}"
+                                <input id="qty_order_{{ $loop->index }}" type="number" min="1" max="{{ $item['stock'] }}"
+                                 oninput="this.value = Math.max(1, Math.floor(this.value));currentTrackQty = parseInt(this.value);"
                                     wire:model.lazy="cart.{{ $loop->index }}.qty"
                                     class="w-full mt-1 border rounded px-3 py-2 focus:outline-none focus:ring" />
                             </div>
-                            <div>
+                            <div class="col-span-2">
                                 <label class="text-sm text-gray-500">បញ្ចុះតម្លៃ (%)</label>
                                 <input type="number" min="0" max="100"
                                     wire:model.lazy="cart.{{ $loop->index }}.discount_percent"
                                     class="w-full mt-1 border rounded px-3 py-2 focus:outline-none focus:ring" />
                             </div>
+                               @if ( $item['track_stock'] == 1 )
+                                      <div>
+
+                            <label class="text-sm text-gray-500">Manage Lot</label>
+                                <div class="flex">
+                                    <button
+                                    onclick="openLotModal({{ $loop->index }}, {{ $item['id'] }}, '{{ $item['name'] }}', {{ $item['qty'] }})"
+                                    class="bg-blue-300 hover:bg-blue-400 text-white font-semibold px-1 py-1 rounded">
+                                    +
+                                     </button>
+                                     &ensp;
+                                    <button
+                                            wire:click="viewLots({{ $loop->index }})"
+                                                class="bg-blue-300 hover:bg-blue-400 text-white font-semibold px-1 py-1 rounded">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                              </div>
+                            </div>
+                                @endif
+
+
                         </div>
                     </div>
                 </div>
 
             </div>
+
         @empty
             <div class="p-4">
                 <p>No items in cart</p>
@@ -121,15 +144,15 @@
         <div id="total" class="grid grid-cols-1 gap-1 p-2">
             <div class="flex items-end flex-col justify-between">
                 <p class="text-sm">
-                    សរុបរង: {{ number_format($this->totals['total_original'], 2) }}$
+                    សរុបរង: {{$this->totals['total_original']* $this->factor }} {{ $this->currency_name }}
 
                 </p>
 
                 <p class="text-sm">
-                    បញ្ចុះតម្លៃ : {{ number_format($this->totals['total_discount'], 2) }}$
+                    បញ្ចុះតម្លៃ : {{ $this->totals['total_discount'] * $this->factor }} {{ $this->currency_name }}
                 </p>
                 <p class="font-semibold">
-                    តម្លៃសរុប : {{ number_format($this->totals['total_net'], 2) }}$
+                    តម្លៃសរុប : {{ $this->totals['total_net'] *$this->factor, }} {{ $this->currency_name }}
                 </p>
                 <input type="hidden" id="total_amount"
                     value="{{ number_format($this->totals['total_net'], 2, '.', '') }}">
@@ -149,15 +172,7 @@
                                 1$ : {{ (float) $factor }}&ensp;{{ $currency }}
                             </span>
                         </div>
-                        <p class="font-semibold">
-                            តម្លៃសរុបគិតជា {{ $currency_name }}:
-                            @php
-                                $converted = $this->totals['total_net'] * $factor;
-                                $truncated = floor($converted * 100) / 100;
-                            @endphp
-                            {{ $truncated == floor($truncated) ? number_format($truncated, 0) : number_format($truncated, 2) }}
-                            {{ $currency }}
-                        </p>
+
 
 
                     </div>

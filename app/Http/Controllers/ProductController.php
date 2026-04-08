@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -189,7 +190,7 @@ class ProductController extends Controller
 
 
 
-   public function update(Request $request, $id)
+    public function update(Request $request, $id)
     {
         // 1️⃣ Find the product
         $product = Product::findOrFail($id);
@@ -260,4 +261,47 @@ class ProductController extends Controller
         }
     }
 
+
+    public function searchByCategory(Request $request)
+    {
+        // 👈 Use input() instead of $request->query
+        $query = $request->input('query', '');
+        $field = $request->input('field', 'name');
+
+        $warehouse_ids = Auth::user()->warehouses->pluck('id');
+
+        // Optional: whitelist allowed fields to prevent SQL injection
+        $allowedFields = ['name', 'description', 'code', 'barcode'];
+        if (!in_array($field, $allowedFields)) {
+            $field = 'name';
+        }
+
+        $products = Product::with(['warehouses' => function ($q) use ($warehouse_ids) {
+            $q->whereIn('warehouse_id', $warehouse_ids);
+        }])
+            ->where('status', 1)
+            ->where('track_stock', 1)
+            // ✅ Dynamic search based on field selected
+            ->when($query !== '', function ($q) use ($field, $query) {
+                $q->where($field, 'LIKE', "%{$query}%");
+            })
+
+            ->limit(41)
+            ->get();
+        // 2️⃣ Sum stock per product (only from this warehouse)
+        $products->each(function ($product) {
+            $product->total_stock = $product->warehouses->sum(function ($wh) {
+                return $wh->pivot->qty ?? 0;
+            });
+        });
+
+        // 3️⃣ Sort: in-stock first, then by name ascending
+        $products = $products->sort(function ($a, $b) {
+            if ($a->total_stock == 0 && $b->total_stock > 0) return 1;
+            if ($a->total_stock > 0 && $b->total_stock == 0) return -1;
+            return strcmp($a->name, $b->name);
+        })->values();
+
+        return response()->json($products);
+    }
 }

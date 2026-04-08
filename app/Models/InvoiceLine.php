@@ -39,7 +39,7 @@ class InvoiceLine extends Model
         'vat',
         'vat_amount',
         'total_amount',
-
+       'created_by',
         'remarks',
     ];
 

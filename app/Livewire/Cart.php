@@ -11,16 +11,17 @@ use App\Models\RestaurantTable;
 use App\Models\Serial_No;
 use App\Models\TableProduct;
 use App\Models\TableQueue;
+use App\Models\WarehouseProduct;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-
+use Livewire\Attributes\On;
+use Livewire\PendingDispatch;
 use Livewire\Component;
 
 class Cart extends Component
 {
-    public $page = 'Sale Invoice';
-    public $prefix = 'Sales';
-    public $title = 'Invoice';
+
+
 
 
 
@@ -33,7 +34,7 @@ class Cart extends Component
     public $currency = 'USD';
     public $currency_name = 'US Dollar';
     public $factor = 1; // Conversion factor
-    public $all_currency = [];
+    public $all_currency;
 
     public $invoiceNo = null;
     public $DNNo = null;
@@ -55,10 +56,45 @@ class Cart extends Component
     public $Current_table_id = null;
     public $Current_table_name = "";
 
+    #[\Livewire\Attributes\On('set-item-lots')]
+    public function setItemLots($index = null, $lots = [])
+    {
+        $this->cart[$index]['lots'] = $lots;
+    }
+    public function viewLots($index)
+    {
+        $lotsInCart = $this->cart[$index]['lots'] ?? [];
+        $productId = $this->cart[$index]['id'] ?? null; // ✅ get product id
 
+        // Get all warehouse products for these lot IDs
+        $lotIds = collect($lotsInCart)->pluck('id')->toArray();
+        $warehouseProducts = WarehouseProduct::with('warehouse')->whereIn('id', $lotIds)->get()->keyBy('id');
 
+        // Merge qty from cart with lot details
+        $lotsToShow = collect($lotsInCart)->map(function ($lot) use ($warehouseProducts) {
+            $wp = $warehouseProducts[$lot['id']] ?? null;
 
+            return [
+                'id' => $lot['id'],
+                'qty' => $lot['qty'],
+                'lot' => $wp->lot ?? 'NO LOT',
+                'expire' => $wp->expire
+                    ? \Carbon\Carbon::parse($wp->expire)->format('d-M-Y')
+                    : '-',
+                'stock' => $wp->qty ?? 0,
 
+                // ✅ ADD THIS
+                'warehouse' => $wp?->warehouse?->name ?? 'NA',
+            ];
+        })->toArray();
+
+        // Dispatch to JS modal, include product_id
+        $this->dispatch('view-cart-lots', [
+            'lots' => $lotsToShow,
+            'product_name' => $this->cart[$index]['name'],
+            'product_id' => $productId, // ✅ added
+        ]);
+    }
     #[\Livewire\Attributes\On('paymentConfirmed')]
     public function paymentConfirmed($payload)
     {
@@ -66,7 +102,7 @@ class Cart extends Component
             $this->dispatch('payment-error', ['message' => 'Cart is empty']);
             return;
         }
-
+        $invoiceNumber = '';
         $totalAmount = 0;
         $totalDiscount = 0;
         $totalVAT = 0;
@@ -89,6 +125,8 @@ class Cart extends Component
                 'return_amount'   => $payload['returnedUSD'] ?? 0,
                 'remarks'         => null,
             ]);
+            // Assign **immediately** to external variable
+            $invoiceNumber = $invoice->invoice_number;
             $this->dispatch('get-reciept-no', ['invoice_number' => $invoice->invoice_number]);
 
             // 2️⃣ Create Invoice Lines
@@ -143,8 +181,59 @@ class Cart extends Component
                     'remarks'          => null,
                 ]);
 
-                if ($product->track_stock && $product->stock >= $qty) {
-                    $product->decrement('stock', $qty);
+                if ($product->track_stock == 1) {
+
+                    $cartLots = $cartItem['lots'] ?? [];
+                    $qtyNeeded = $cartItem['qty'];
+
+                    // 🔥 CASE 1: User selected lots manually
+                    if (!empty($cartLots)) {
+
+                        foreach ($cartLots as $lot) {
+
+                            $warehouseProduct = \App\Models\WarehouseProduct::find($lot['id']);
+
+                            if (!$warehouseProduct) {
+                                $this->dispatch('error', ['message' => "Lot ID {$lot['id']} not found"]);
+                                throw new \Exception("Lot ID {$lot['id']} not found");
+                            }
+
+                            if ($warehouseProduct->qty < $lot['qty']) {
+                                $this->dispatch('error', ['message' => "Not enough stock in Lot" . $warehouseProduct->lot]);
+                                throw new \Exception("Not enough stock in Lot {$warehouseProduct->lot}");
+                            }
+
+                            $warehouseProduct->decrement('qty', $lot['qty']);
+                        }
+                    } else {
+                        // 🔥 CASE 2: AUTO PICK (FEFO - Expire ASC)
+
+                        $warehouseProducts = \App\Models\WarehouseProduct::where('product_id', $product->id)
+                            ->where('qty', '>', 0)
+                            ->orderByRaw('CASE WHEN expire IS NULL THEN 1 ELSE 0 END') // null last
+                            ->orderBy('expire', 'asc') // earliest expiry first
+                            ->lockForUpdate() // 🔒 prevent race condition
+                            ->get();
+
+                        $remaining = $qtyNeeded;
+
+                        foreach ($warehouseProducts as $wp) {
+
+                            if ($remaining <= 0) break;
+
+                            $deductQty = min($wp->qty, $remaining);
+
+                            $wp->decrement('qty', $deductQty);
+
+                            $remaining -= $deductQty;
+                        }
+
+                        // ❗ Not enough stock overall
+                        if ($remaining > 0) {
+                            $this->dispatch('error', ['message' => "Not enough stock in Lot"]);
+                            throw new \Exception("Not enough stock for product {}");
+                        }
+                    }
                 }
             }
 
@@ -161,7 +250,9 @@ class Cart extends Component
 
 
         $this->new_cart = true;
-        $this->dispatch('payment-success', ['message' => 'Payment is successfully']);
+        $this->dispatch('payment-success', [
+            'message' => 'Invoice Payment ' . $invoiceNumber . ' is successfully'
+        ]);
     }
 
     #[\Livewire\Attributes\On('clearAll_after_payment')]
@@ -779,10 +870,11 @@ class Cart extends Component
 
         if ($default) {
             $this->currency = $default->code;
-            $this->currency_name = $default->name;
+            $this->currency_name = $default->code;
             $this->factor   = $default->factor;
         }
     }
+
 
     #[\Livewire\Attributes\On('add-product')]
     public function addProduct($productJson)
@@ -852,6 +944,7 @@ class Cart extends Component
         $this->cart[] = [
             'id' => $product['id'],
             'name' => $product['name'],
+
             'price' => $price,
             'qty' => 1,
             'discount_percent' => $discountPercent,
@@ -874,7 +967,7 @@ class Cart extends Component
         $this->customer_id = null;
         $this->Current_table_id = null;
     }
-        #[\Livewire\Attributes\On('clearCart')]
+    #[\Livewire\Attributes\On('clearCart')]
     public function clearCart()
     {
         $this->Current_table_id = null;
@@ -951,27 +1044,11 @@ class Cart extends Component
         $currency = Currency::where('code', $code)->first();
         if ($currency) {
             $this->currency = $currency->code;
-            $this->currency_name = $currency->name;
+            $this->currency_name = $currency->code;
             $this->factor = $currency->factor;
+
+            $this->dispatch('change-currency', ['factor' => $this->factor,  'currency_name' => $this->currency_name]);
         }
-    }
-    public function pageSelected($page)
-    {
-        // map page → full title
-        $map = [
-            'quote'        => 'Sales Quote',
-            'sale-invoice' => 'Sales Invoice',
-            'sale-order'   => 'Sales Order',
-        ];
-
-        $full = $map[$page] ?? 'Sales Invoice';
-
-        // split
-        $parts = explode(' ', $full, 2);
-
-        $this->prefix = $parts[0]; // Sales
-        $this->title  = $parts[1]; // Quote / Invoice / Order
-        $this->page   = $full;
     }
 
     public function removeItem($id)

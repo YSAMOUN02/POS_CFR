@@ -124,17 +124,6 @@
                 <div class="font-medium text-center text-body">គ្រប់គ្រង QUOTE</div>
             </div>
 
-            {{-- <div
-                class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
-                <div
-                    class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
-                    <i class="fa-solid fa-users-gear"></i>
-                </div>
-                <div class="font-medium text-center text-body">គ្រប់គ្រងអ្នក​លក់</div>
-            </div> --}}
-            <!-- Modal toggle -->
-
-
             <div
                 class="hidden p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium lg:block">
                 <div
@@ -187,9 +176,35 @@
                     </div>
                 </div>
             </button>
+            <button id="purchasing">
+                <div
+                    class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+                    <div
+                        class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
+                        <i class="fa-solid fa-basket-shopping"></i>
+                    </div>
+                    <div class="font-medium text-center text-body">ទិញចូលស្តក
+                    </div>
+                </div>
+            </button>
+            <button id="logout">
+                <div
+                    class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+                    <div
+                        class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </div>
+                    <div class="font-medium text-center text-body">ចាកចេញ
+                    </div>
+                </div>
+            </button>
         </div>
     </div>
-    
+
+    <div id="welcomeScreen" class="fixed inset-0 flex items-center justify-center bg-amber-500 z-50">
+        <h1 class="text-4xl font-bold mb-4 animate-bounce">Welcome {{ Auth::user()->name }}! to POS System 🍕🥤</h1>
+        <br>
+    </div>
     <main>
         @yield('content')
 
@@ -205,7 +220,21 @@
 
 
     <livewire:scripts />
-
+    <script>
+        const warehouse_ids = @json(Auth::user()->warehouses->pluck('id'));
+        // Add fade-out before reload/navigation
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.href && !this.target) {
+                    e.preventDefault();
+                    document.body.classList.add('fade-out');
+                    setTimeout(() => {
+                        window.location = this.href;
+                    }, 300);
+                }
+            });
+        });
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>

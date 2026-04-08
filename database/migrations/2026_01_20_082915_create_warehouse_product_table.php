@@ -19,6 +19,8 @@ return new class extends Migration
             $table->foreignId('warehouse_id')->constrained('warehouses')->cascadeOnDelete();
 
             // Quantity
+            $table->integer('original_qty')->default(0);
+
             $table->integer('qty')->default(0);
 
             // Lot and expiration
