@@ -39,6 +39,15 @@ class PurchaseCart extends Component
     public $generatedLots = []; // Livewire property to track lots per product+warehouse
     public $remark = '';
 
+
+      public $openIndex = null;
+
+    public function toggleItem($index)
+    {
+        $this->openIndex = $this->openIndex === $index ? null : $index;
+    }
+
+    
     public function mount_wh()
     {
         $warehouse_user = UserWarehouse::with('warehouse')

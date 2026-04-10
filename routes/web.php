@@ -64,6 +64,9 @@ Route::middleware(['auth'])->group(function () {
 
     // Get lot
     Route::get('/get-lot-data/{product_id}', [WarehouseController::class, 'getLotData']);
+    // transfer Lot
+    Route::post('/transfer-lot', [WarehouseController::class, 'transfer']);
+
 
     Route::post('/products/store', [ProductController::class, 'store'])->name('products.store');
     Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');

@@ -61,6 +61,18 @@
         </div>
 
         <div id="drawer" class="grid grid-cols-3 gap-4 p-4 lg:grid-cols-8">
+              <button id="openCustomerModal" data-modal-target="default-modal-vendor-list"
+            data-modal-toggle="default-modal-vendor-list">
+            <div
+                class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+                <div
+                    class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
+                  <i class="fa-solid fa-user-tie"></i>
+                </div>
+                <div class="font-medium text-center text-body">គ្រប់គ្រង អ្នកផ្គត់ផ្គង់
+                </div>
+            </div>
+        </button>
             <button id="Sales">
                 <div
                     class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">

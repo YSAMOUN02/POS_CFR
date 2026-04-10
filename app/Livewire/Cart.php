@@ -48,7 +48,12 @@ class Cart extends Component
     public $customer_contact_phone = '';
     public $customer_city = '';
 
+    public $openIndex = null;
 
+    public function toggleItem($index)
+    {
+        $this->openIndex = $this->openIndex === $index ? null : $index;
+    }
 
 
 
@@ -109,6 +114,7 @@ class Cart extends Component
 
         $customer_id_no = Customer::where('customer_code', $this->customer_id)->value('id');
         DB::transaction(function () use ($payload, &$totalAmount, &$totalDiscount, &$totalVAT, $customer_id_no) {
+
 
             // 1️⃣ Create Invoice Header
             $invoice = InvoiceHeader::create([
@@ -1001,42 +1007,84 @@ class Cart extends Component
         ];
     }
 
-    public function updatedCart($value, $key)
-    {
-        $parts = explode('.', $key);
-        $index = $parts[0];
-        $field = $parts[1];
+    // public function updatedCart($value, $key)
+    // {
+    //     $parts = explode('.', $key);
+    //     $index = $parts[0];
+    //     $field = $parts[1];
 
-        $item = $this->cart[$index];
+    //     $item = $this->cart[$index];
 
-        if ($field === 'qty') {
-            // Only check stock if track_stock is true
-            if ($item['qty'] < 1) {
-                $this->cart[$index]['qty'] = 1;
-            } elseif (($item['track_stock'] ?? 0) && $item['qty'] > $item['stock']) {
-                $this->cart[$index]['qty'] = $item['stock'];
-            }
-        }
+    //     if ($field === 'qty') {
+    //         // Only check stock if track_stock is true
+    //         if ($item['qty'] < 1) {
+    //             $this->cart[$index]['qty'] = 1;
+    //         } elseif (($item['track_stock'] ?? 0) && $item['qty'] > $item['stock']) {
+    //             $this->cart[$index]['qty'] = $item['stock'];
+    //         }
+    //     }
 
-        if ($field === 'discount_percent') {
-            if ($this->cart[$index]['discount_percent'] < 0) {
-                $this->cart[$index]['discount_percent'] = 0;
-            } elseif ($this->cart[$index]['discount_percent'] > 100) {
-                $this->cart[$index]['discount_percent'] = 100;
-            }
-        }
+    //     // Validate unit price
+    //     if ($field === 'price') {
+    //         if ($this->cart[$index]['price'] < 0) $this->cart[$index]['price'] = 0;
+    //     }
 
-        // Recalculate totals
-        $price = $item['price'];
-        $discountAmount = ($price * $this->cart[$index]['discount_percent']) / 100;
-        $discountPrice = $price - $discountAmount;
+    //     if ($field === 'discount_percent') {
+    //         if ($this->cart[$index]['discount_percent'] < 0) {
+    //             $this->cart[$index]['discount_percent'] = 0;
+    //         } elseif ($this->cart[$index]['discount_percent'] > 100) {
+    //             $this->cart[$index]['discount_percent'] = 100;
+    //         }
+    //     }
 
-        $this->cart[$index]['discount_price'] = $discountPrice;
-        $this->cart[$index]['amount_line'] = $price * $this->cart[$index]['qty'];
-        $this->cart[$index]['discount_amount_line'] = $discountAmount * $this->cart[$index]['qty'];
-        $this->cart[$index]['net_amount_line'] = $discountPrice * $this->cart[$index]['qty'];
+    //     // Recalculate totals
+    //     $price = $this->cart[$index]['price'];
+    //     $discountAmount = ($price * $this->cart[$index]['discount_percent']) / 100;
+    //     $discountPrice = $price - $discountAmount;
+    //     $qty = $this->cart[$index]['qty'];
+
+    //     $this->cart[$index]['discount_price'] = $discountPrice;
+    //     $this->cart[$index]['amount_line'] = $price * $qty;
+    //     $this->cart[$index]['discount_amount_line'] = $discountAmount * $qty;
+    //     $this->cart[$index]['net_amount_line'] = $discountPrice * $qty;
+    // }
+  public function recalcLine($index, $field, $inputValue = null)
+{
+    $qty = floatval($this->cart[$index]['qty'] ?? 1);
+    $discount = floatval($this->cart[$index]['discount_percent'] ?? 0);
+
+    // Price
+    if ($field === 'price' && $inputValue !== null) {
+        $price = $this->factor != 1 ? floatval($inputValue) / $this->factor : floatval($inputValue);
+        $this->cart[$index]['price'] = $price;
     }
 
+    $price = floatval($this->cart[$index]['price'] ?? 0);
+
+    // Qty changed
+    if ($field === 'qty') {
+        $qty = max(1, $qty);
+        $this->cart[$index]['qty'] = $qty;
+    }
+
+    // Discount percent changed
+    if ($field === 'discount_percent') {
+        $discount = min(max(0, $discount), 100);
+        $this->cart[$index]['discount_percent'] = $discount;
+    }
+
+    // 🔹 Recalculate amounts
+    $discountAmount = ($price * $discount) / 100;
+    $discountPrice = $price - $discountAmount;
+
+    $this->cart[$index]['discount_price'] = $discountPrice;
+    $this->cart[$index]['amount_line'] = $price * $qty;
+    $this->cart[$index]['discount_amount_line'] = $discountAmount * $qty;
+    $this->cart[$index]['net_amount_line'] = $discountPrice * $qty;
+
+    // 🔹 Refresh Livewire
+    $this->cart = array_values($this->cart);
+}
 
     // Set currency and get factor
     public function setCurrency($code)
@@ -1070,6 +1118,7 @@ class Cart extends Component
 
         $this->count_cart = count($this->cart);
     }
+
 
 
 

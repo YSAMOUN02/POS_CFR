@@ -9,6 +9,7 @@ use App\Models\WarehouseProduct;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class WarehouseController extends Controller
 {
@@ -54,12 +55,12 @@ class WarehouseController extends Controller
 
 
 
-
         $query = \DB::table('warehouse_product')
             ->join('product', 'product.id', '=', 'warehouse_product.product_id')
             ->join('warehouses', 'warehouses.id', '=', 'warehouse_product.warehouse_id')
             ->leftJoin('categories', 'categories.id', '=', 'product.category_id')
-            ->orderByDesc('warehouse_product.warehouse_id')
+            ->orderBy('warehouses.id')                 // priority 1
+            ->orderBy('warehouse_product.id')          // priority 2
             ->select(
                 'warehouse_product.id as lot_id',
                 'warehouses.id as warehouse_id',
@@ -82,7 +83,6 @@ class WarehouseController extends Controller
                 'product.max_stock',
                 'categories.name as category_name'
             );
-
         // 🔥 Apply filters FIRST
 
         if ($warehouseId != 0) {
@@ -197,14 +197,133 @@ class WarehouseController extends Controller
         return response()->json($category);
     }
 
-     public function getLotData($product_id)
+    public function getLotData($product_id)
     {
-        // Only track lots with qty > 0
-        $lots = WarehouseProduct::where('product_id', $product_id)
+        $warehouse_ids = Auth::user()->warehouses->pluck('id');
+
+        $lots = WarehouseProduct::with(['warehouse:id,name'])
+            ->whereIn('warehouse_id', $warehouse_ids)
+            ->where('product_id', $product_id)
             ->where('qty', '>', 0)
-            ->orderBy('expire', 'asc') // earliest expire first
-            ->get(['id', 'lot', 'qty', 'expire']);
+            ->orderBy('expire', 'asc')
+            ->get(['id', 'warehouse_id', 'lot', 'qty', 'expire'])
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'lot' => $item->lot,
+                    'qty' => $item->qty,
+                    'expire' => $item->expire,
+                    'warehouse_name' => $item->warehouse->name ?? null,
+                ];
+            });
 
         return response()->json($lots);
+    }
+    public function transfer(Request $request)
+    {
+        $request->validate([
+            'wh_product_id' => 'required|integer|exists:warehouse_product,id',
+            'warehouse_id'  => 'required|integer|exists:warehouses,id',
+            'qty'           => 'required|integer|min:1',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $row = WarehouseProduct::where('id', $request->wh_product_id)->first();
+
+            if (!$row) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Stock row not found'
+                ], 404);
+            }
+
+            $transferQty   = (int) $request->qty;
+            $toWarehouseId = (int) $request->warehouse_id;
+
+            if ($transferQty > $row->qty) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transfer qty cannot be greater than stock'
+                ], 422);
+            }
+
+            if ($row->warehouse_id == $toWarehouseId) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot transfer to the same warehouse'
+                ], 422);
+            }
+
+            $targetRow = WarehouseProduct::where('product_id', $row->product_id)
+                ->where('warehouse_id', $toWarehouseId)
+                ->where('lot', $row->lot)
+                ->where(function ($q) use ($row) {
+                    if ($row->expire) {
+                        $q->whereDate('expire', $row->expire);
+                    } else {
+                        $q->whereNull('expire');
+                    }
+                })
+                ->first();
+
+            if ($targetRow) {
+                $targetRow->qty += $transferQty;
+                $targetRow->original_qty += $transferQty;
+                $targetRow->save();
+
+                if ($transferQty == $row->qty) {
+                    $row->delete();
+                } else {
+                    $row->qty -= $transferQty;
+                    $row->save();
+                }
+            } else {
+                if ($transferQty == $row->qty) {
+                    $row->warehouse_id = $toWarehouseId;
+                    $row->save();
+                } else {
+                    $productId  = $row->product_id;
+                    $trackLot   = $row->track_lot;
+                    $lot        = $row->lot;
+                    $expire     = $row->expire;
+                    $controlExp = $row->control_exp;
+
+                    $row->qty -= $transferQty;
+                    $row->save();
+
+                    WarehouseProduct::create([
+                        'product_id'   => $productId,
+                        'warehouse_id' => $toWarehouseId,
+                        'original_qty' => $transferQty,
+                        'qty'          => $transferQty,
+                        'track_lot'    => $trackLot,
+                        'lot'          => $lot,
+                        'expire'       => $expire,
+                        'control_exp'  => $controlExp,
+                        'created_at'   => now(),
+                        'updated_at'   => now(),
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Stock transferred successfully'
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

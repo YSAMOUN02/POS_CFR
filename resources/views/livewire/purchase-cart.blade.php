@@ -26,17 +26,17 @@
         </div>
 
         @forelse ($cart as $item)
-            <div class="w-full mx-auto">
+                    <div class="w-full mx-auto animate-add">
                 <!-- Item Card -->
                 <div
                     class="card bg-white shadow border-b-amber-600 focus-within:bg-yellow-50 transition-colors duration-200 ">
                     <!-- Header (clickable) -->
-                    <div onclick="toggleItem(this)"
+                    <div
                         class="btn_sale_invoice w-full flex items-center justify-between p-2">
                         <div class="flex items-start gap-3">
                             <div class="flex flex-col items-center justify-center">
-                                <span
-                                    class="text-green-500 text-lg transition-transform duration-300 arrow hover:cursor-pointer">▾</span>
+                                <span wire:click.self="toggleItem({{ $loop->index }})"
+                                    class="text-green-500 text-lg transition-transform duration-300 arrow hover:cursor-pointer ease-in-out">▾</span>
                                 <button wire:click.stop="removeItem({{ $item['id'] }})" title="Remove item"><span
                                         class="text-red-500 text-lg transition-transform duration-300 hover:cursor-pointer arrow"><i
                                             class="fa-solid fa-delete-left fa-flip-horizontal"></i></span></button>
@@ -74,7 +74,7 @@
                     </div>
 
                     <!-- Dropdown Content -->
-                    <div class="hidden  bonus border-b p-2">
+                    <div class="{{ $openIndex === $loop->index ? '' : 'hidden' }} bonus border-b p-2">
                         <div class="grid grid-cols-3 gap-1" wire:key="row-{{ $loop->index }}-{{ $this->factor }}">
 
                             {{-- QTY --}}
@@ -140,7 +140,7 @@
 
         {{-- Totals --}}
 
-        <div id="total" class="grid grid-cols-1 gap-1 p-2">
+        <div id="total" class="grid grid-cols-1 gap-1 p-2 ">
             <div class="flex items-end flex-col justify-between">
 
 

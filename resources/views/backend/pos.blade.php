@@ -5,7 +5,8 @@
         <div id="mainContent"
             class=" tab_control  lg:col-span-6 md:col-span-4 col-span-2  border-1 border-default border-dashed rounded-base">
 
-            <div class=" flex justify-between  mb-2 border-b border-default  mx-5 sticky top-0 bg-amber-400 z-10">
+            <div id="category_show"
+                class=" flex justify-between  mb-2 border-b border-default  mx-5 sticky top-0 bg-amber-400 z-10">
                 <div class="flex items-center gap-2 px-4 py-3">
                     @csrf
                     <!-- Field -->
@@ -184,34 +185,23 @@
             setTimeout(() => burst.remove(), 1000);
         });
 
-        function toggleItem(button) {
-            const allBodies = document.querySelectorAll('.bonus'); // all dropdowns
-            const allArrows = document.querySelectorAll('.arrow'); // all arrows
-            const allCards = document.querySelectorAll('.btn_sale_invoice'); // parent cards
+        // function closeAllItems() {
+        //     document.querySelectorAll('.bonus').forEach(b => {
+        //         b.classList.add('hidden');
+        //     });
 
-            const body = button.nextElementSibling; // clicked dropdown
-            const arrow = button.querySelector('.arrow'); // clicked arrow
-            const card = button; // the parent card button itself
+        //     document.querySelectorAll('.arrow').forEach(a => {
+        //         a.classList.remove('rotate-180');
+        //     });
+        // }
 
-            // Close all other dropdowns
-            allBodies.forEach(b => {
-                if (b !== body) b.classList.add('hidden');
-            });
+        function openItem(card) {
+            const body = card.querySelector('.bonus');
+            const arrow = card.querySelector('.arrow');
 
-            allArrows.forEach(a => {
-                if (a !== arrow) a.classList.remove('rotate-180');
-            });
-
-            allCards.forEach(c => {
-                if (c !== card) c.classList.remove('active-card'); // remove focus from others
-            });
-
-            // Toggle the clicked one
-            body.classList.toggle('hidden');
-            arrow.classList.toggle('rotate-180');
-            card.classList.toggle('active-card'); // toggle focus on current
+            body.classList.remove('hidden');
+            arrow.classList.add('rotate-180');
         }
-
 
         const tabs = document.querySelectorAll('#category-tabs button');
         const tabContent = document.getElementById('tab-content');
@@ -325,25 +315,25 @@
 
                                       ${imageSrc
                                         ? `<img class="object-cover w-full" id="product-image${product.id}"
-                                                                                                                                                                                                                        loading="lazy"
-                                                                                                                                                                                                                        style="max-height:150px; min-height:150px;"
-                                                                                                                                                                                                                        src="${imageSrc}"
-                                                                                                                                                                                                                        onerror="this.outerHTML=\`
+                                                                                                                                                                                                                                                            loading="lazy"
+                                                                                                                                                                                                                                                            style="max-height:150px; min-height:150px;"
+                                                                                                                                                                                                                                                            src="${imageSrc}"
+                                                                                                                                                                                                                                                            onerror="this.outerHTML=\`
                                                     <div class='flex items-center justify-center w-full h-[150px] bg-gray-100'>
                                                         <span class='text-gray-400'>No Image</span>
                                                     </div>\`"
-                                                                                                                                                                                                                    />`
+                                                                                                                                                                                                                                                        />`
                                         : `<div class="flex items-center justify-center w-full h-[150px] bg-gray-100">
-                                                                                                                                                                                                                        <span class="text-gray-400">No Image</span>
-                                                                                                                                                                                                                </div>`
+                                                                                                                                                                                                                                                            <span class="text-gray-400">No Image</span>
+                                                                                                                                                                                                                                                    </div>`
                                     }
 
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
 
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -360,11 +350,11 @@
                                         <div  class="text-center mt-1">
                                             <p class="text-xs">
                                             ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="${stockColor}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="${stockColor}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        &ensp;` : ''}
 
                                             ${product.discount_percent != 0
                                                 ? `<br><del data-base-price="${finalPrice.toFixed(2)}"  class="pricing text-gray-400 text-sm">${finalPrice.toFixed(2) * factor}  ${currency_name}</del> → <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">${discountedPrice.toFixed(2) *factor} ${currency_name}</span>`
@@ -511,9 +501,9 @@
                                             src="${imageSrc}" onerror="this.src='assets/defult/placeholder.jpg'" alt="${product.name}" />
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -526,9 +516,9 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                                 ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                &ensp;` : ''}
 
                                        ${product.discount_percent != 0
                                                 ? `<del data-base-price="${finalPrice.toFixed(2)}"  class="pricing text-gray-400 text-[10px]">${finalPrice.toFixed(2) * factor}  ${currency_name}</del> → <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">${discountedPrice.toFixed(2) *factor} ${currency_name}</span>`
@@ -1406,7 +1396,7 @@
                             <thead class="bg-green-50 sticky top-0">
                                 <tr class="text-nowrap">
                                     <th data-sort="id" class="sortable px-3 py-2">No.</th>
-                                    <th data-sort="code" class="sortable px-3 py-2">Lot ID</th>
+
                                     <th data-sort="code" class="sortable px-3 py-2">Code</th>
                                     <th data-sort="name" class="sortable px-3 py-2">Product Name</th>
                                     <th data-sort="variant" class="sortable px-3 py-2">Variant</th>
@@ -1423,6 +1413,7 @@
 
                                     <th data-sort="status" class="sortable px-3 py-2">Warehouse</th>
                                     <th data-sort="status" class="sortable px-3 py-2">Status</th>
+                                    <th data-sort="status" class="sortable px-3 py-2">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="warehouse-stock-tbody">
@@ -2793,7 +2784,7 @@
 
 
     <div id="lotModal" class="fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
-        <div class="bg-white rounded-2xl shadow-2xl w-4xl max-w-5xl p-6 animate-scaleUp">
+        <div class="bg-white rounded-2xl shadow-2xl w-4xl max-w-7xl p-4 animate-scaleUp">
             <!-- Header / Close -->
             <div class="flex justify-end mb-4">
                 <button onclick="closeLotModal()"
@@ -2801,11 +2792,11 @@
             </div>
 
             <!-- Main content: image + info + lots -->
-            <div class="flex gap-6">
+            <div class="flex gap-4">
                 <!-- Product Image -->
                 <div class="flex-shrink-0">
                     <img id="display_img" src="" alt="Product Image"
-                        class="w-64 h-64 object-cover rounded-lg border shadow">
+                        class="w-40 h-40 object-cover rounded-lg border shadow">
                 </div>
 
                 <!-- Right side: Name + lots table -->
@@ -2836,7 +2827,7 @@
 
     <div id="viewLotModal"
         class="fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
-         <div class="bg-white rounded-2xl shadow-2xl w-4xl max-w-5xl p-6 animate-scaleUp">
+        <div class="bg-white rounded-2xl shadow-2xl w-4xl max-w-5xl p-6 animate-scaleUp">
 
             <!-- Header: Image left, Title right -->
             <div class="flex items-start mb-4 gap-4">
@@ -2873,4 +2864,64 @@
     </div>
 
 
+    <div id="transfer_modal"
+        class="hidden fixed inset-0 bg-black/50 bg-opacity-40 flex items-center justify-center z-50">
+        <div class="bg-white w-3/4 max-w-4xl p-6 rounded-xl shadow-lg">
+            <div class="flex justify-between items-center mb-4">
+
+                    @csrf
+
+                <center>
+                    <h2 class="text-xl font-semibold">Transfer Item</h2>
+                </center>
+                <button onclick="document.getElementById('transfer_modal').classList.add('hidden')"
+                    class="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6">
+                <!-- From Location -->
+                <div class="border p-4 rounded-lg">
+                    <h2 class="font-bold mb-2">From Location <span id="location-display"></span></h2>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr>
+
+                                <th class="text-left">Product</th>
+
+                                <th class="text-left">Lot</th>
+                                <th class="text-right">Qty</th>
+                                <th class="text-left">Unit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="from_location_body">
+                            <!-- JS will populate this -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- To Location -->
+                <div class="border p-4 rounded-lg">
+                    <h3 class="font-medium mb-2">To Location</h3>
+                    <select id="to_location_select" onchange="validateTransferForm()"
+                        class="w-full border rounded-xl p-2">
+                        <option value="">Select warehouse</option>
+                    </select>
+
+
+                    <div class="mt-4">
+                        <label class="block mb-1 font-medium">Qty to Transfer</label>
+
+                        <input id="transfer_qty" type="number" min="1" oninput="validateTransferForm()"
+                            class="w-full border rounded-xl p-2">
+                    </div>
+                    &ensp;
+                    <button type="button" id="confirmTransferBtn" onclick="submitTransfer()" disabled
+                        class="mt-4 w-full bg-gray-400 cursor-not-allowed text-white py-2 rounded-xl transition">
+                        Confirm Transfer
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 @endpush

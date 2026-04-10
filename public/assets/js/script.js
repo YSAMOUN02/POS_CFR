@@ -855,6 +855,7 @@ function validateUpdateCustomerForm() {
     return true; // valid
 }
 
+let wh;
 // Load Warehouse for select Stock
 async function loadWarehouses() {
     const select = document.getElementById("warehouseTypeSelect");
@@ -872,7 +873,7 @@ async function loadWarehouses() {
         console.log(warehouses); // check your data
 
         if (!warehouses.length) return; // no warehouses
-
+        wh = warehouses;
         warehouses.forEach((w) => {
             select.insertAdjacentHTML(
                 "beforeend",
@@ -1130,19 +1131,31 @@ function renderStockTable(products, currentPage = 1, perPage = 10) {
             const year = d.getFullYear();
             expireText = `${day}/${month}/${year}`;
         }
-
+        const warehouseColors = [
+            "#EF4444",
+            "#F97316",
+            "#F59E0B",
+            "#10B981",
+            "#06B6D4",
+            "#3B82F6",
+            "#6366F1",
+            "#8B5CF6",
+            "#EC4899",
+            "#14B8A6",
+        ];
+        let color = warehouseColors[p.warehouse_id % warehouseColors.length];
         tbody_stock.insertAdjacentHTML(
             "beforeend",
             `
-            <tr class="hover:bg-green-50 cursor-pointer transition-colors">
+            <tr  id="transfer_row-${rowNumber}" class="hover:bg-green-50 cursor-pointer transition-colors">
                 <td class="px-3 text-left text-sm text-gray-600">${rowNumber}</td>
-                <td class="px-3 text-left text-sm">${p.lot_id ?? ""}</td>
+
 
                 <td class="px-3 text-left text-sm">${p.code ?? ""}</td>
                 <td class="px-3 text-left text-sm font-medium">${p.product_name}</td>
                 <td class="px-3 text-left text-sm">${p.variant ?? ""}</td>
                 <td class="px-3 text-left text-sm">${p.description ?? ""}</td>
-                <td class="px-3 text-left text-sm">${p.lot ?? "NOLOT"}</td>
+                <td class="px-3 text-left text-sm">${p.lot}</td>
                 <td class="px-3 text-left text-sm">${expireText}</td>
                 <td class="px-3 text-center text-sm font-bold">${p.qty}</td>
                 <td class="px-3  text-sm">${p.unit}</td>
@@ -1151,12 +1164,15 @@ function renderStockTable(products, currentPage = 1, perPage = 10) {
                 <td class="px-3 text-right text-sm">${Number(p.sell_price ?? 0).toFixed(2)}</td>
                 <td class="px-3 text-right text-sm">${Number(p.sell_price_vat ?? 0).toFixed(2)}</td>
                 <td class="px-3 text-left text-sm">${p.category_name ?? "NA"}</td>
-                            <td class="px-3 text-left text-sm">${p.warehouse_name ?? "NA"}</td>
+                            <td class="px-3 text-left text-sm" style="background:${color}">${p.warehouse_name ?? "NA"}</td>
 
                 <td class="px-3      text-sm ${p.status ? "text-green-600" : "text-red-500"}">
                     ${p.status ? "Active" : "Inactive"}
                 </td>
+            <td class="px-3 text-sm">
 
+                ${p.qty > 0 ? `<button onclick="openLotModal_transfer( ${rowNumber},${p.lot_id})" class="px-5 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition mt-2"><i class="fa-classic fa-solid fa-arrow-right-arrow-left"></i></button>` : ""}
+            </td>
             </tr>
             `,
         );
@@ -4531,6 +4547,7 @@ async function loadLotData(product_id) {
             <div>Qty to pick</div>
             <div>Stock</div>
             <div>Expire</div>
+            <div>Warehouse </div>
 
         `;
         modalBody.appendChild(header);
@@ -4586,6 +4603,7 @@ async function loadLotData(product_id) {
         <span class="${stockClass} text-center">${lot.qty}</span>
 
         <span class="${expireClass} text-center">${formattedExpire}</span>
+             <span class="text-center text-nowrap">${lot.warehouse_name}</span>
     `;
 
             modalBody.appendChild(row);
@@ -4628,7 +4646,6 @@ function saveLots() {
     console.log("Selected lots:", lots);
     // ✅ Send to Livewire/cart with warehouse_product IDs
 
-
     Livewire.dispatch("set-item-lots", {
         index: currentCartIndex,
         lots: lots,
@@ -4643,10 +4660,10 @@ function saveLots() {
 }
 
 window.addEventListener("view-cart-lots", (event) => {
-    const { lots, product_name , product_id } = event.detail[0]; // <-- remove [0]
+    const { lots, product_name, product_id } = event.detail[0]; // <-- remove [0]
 
     // Grab original product image from main page
-    const img = document.getElementById("product-image" +  product_id); // optional, only if you have image IDs
+    const img = document.getElementById("product-image" + product_id); // optional, only if you have image IDs
     const display_img = document.getElementById("display_img2");
 
     if (img) {
@@ -4662,11 +4679,13 @@ window.addEventListener("view-cart-lots", (event) => {
     modalTitle.textContent = `Tracked Lots for: ${product_name}`;
 
     if (!lots.length) {
-        modalBody.innerHTML = "<p class='text-gray-500'>No lots tracked yet.</p>";
+        modalBody.innerHTML =
+            "<p class='text-gray-500'>No lots tracked yet.</p>";
     } else {
         // Header
         const header = document.createElement("div");
-        header.className = "grid grid-cols-5 gap-2 font-semibold border-b pb-1 text-gray-700";
+        header.className =
+            "grid grid-cols-5 gap-2 font-semibold border-b pb-1 text-gray-700";
         header.innerHTML = `
 
          <div>Warehouse</div>
@@ -4680,7 +4699,8 @@ window.addEventListener("view-cart-lots", (event) => {
         // Rows
         lots.forEach((lot) => {
             const row = document.createElement("div");
-            row.className = "grid grid-cols-5 gap-2 items-center p-1 bg-gray-50 rounded";
+            row.className =
+                "grid grid-cols-5 gap-2 items-center p-1 bg-gray-50 rounded";
 
             let expireClass = "";
             if (lot.expire && new Date(lot.expire) < new Date()) {
@@ -4705,10 +4725,6 @@ window.addEventListener("view-cart-lots", (event) => {
 function closeViewLotModal() {
     document.getElementById("viewLotModal").classList.add("hidden");
 }
-
-
-
-
 
 function updateLotWarning() {
     const inputs = document.querySelectorAll("#lotModalBody .lot-qty");
@@ -4749,14 +4765,157 @@ function closeLotModal() {
     document.getElementById("lotModal").classList.add("hidden");
 }
 
-window.addEventListener("error", (event) => {
-    let message = event.detail[0].message;
+function openLotModal_transfer(row_id, lot_id) {
+    document.getElementById("transfer_modal").classList.remove("hidden");
+    console.log("row: " + row_id);
+    wh_product_id = lot_id;
+    const row = document.getElementById(`transfer_row-${row_id}`);
+    const cells = row.querySelectorAll("td");
 
-     // ✅ SUCCESS
-            showToast({
-                message: message,
-                type: "error",
-            });
-});
+    document.getElementById("location-display").textContent =
+        cells[14].textContent;
 
+    document.getElementById("from_location_body").innerHTML = `
+      <tr>
+        <td class="text-left">${cells[2].textContent}</td>
+        <td class="text-left">${cells[5].textContent}</td>
+        <td class="text-right">${cells[7].textContent}</td>
+        <td class="text-left">${cells[8].textContent}</td>
+      </tr>
+    `;
 
+    const select = document.getElementById("to_location_select");
+    const qtyInput = document.getElementById("transfer_qty");
+
+    const currentWh = cells[14].textContent.trim();
+
+    select.innerHTML = `<option value="">Select warehouse</option>`;
+
+    wh.forEach((item) => {
+        if (item.name.trim() !== currentWh) {
+            let option = document.createElement("option");
+            option.value = item.id;
+            option.textContent = item.name;
+
+            select.appendChild(option);
+        }
+    });
+
+    const availableQty = Number(cells[7].textContent) || 0;
+
+    qtyInput.min = 1;
+    qtyInput.max = availableQty;
+    qtyInput.value = "";
+
+    validateTransferForm();
+}
+
+function closeLotModal_transfer() {
+    document.getElementById("transfer_modal").classList.add("hidden");
+}
+
+function validateTransferForm() {
+    const btn = document.getElementById("confirmTransferBtn");
+    const qtyInput = document.getElementById("transfer_qty");
+    const warehouseSelect = document.getElementById("to_location_select");
+    const qtyError = document.getElementById("transfer_qty_error");
+
+    if (!btn || !qtyInput || !warehouseSelect) return;
+
+    const min = Number(qtyInput.min) || 1;
+    const max = Number(qtyInput.max) || 0;
+    const qtyValue = qtyInput.value.trim();
+
+    let valid = false;
+
+    if (qtyValue === "") {
+        if (qtyError) {
+            qtyError.textContent = "Please enter quantity";
+            qtyError.classList.remove("hidden");
+        }
+    } else {
+        const qty = Number(qtyValue);
+
+        if (isNaN(qty) || qty < min || qty > max) {
+            if (qtyError) {
+                qtyError.textContent = `Qty must be between ${min} and ${max}`;
+                qtyError.classList.remove("hidden");
+            }
+        } else {
+            if (qtyError) {
+                qtyError.textContent = "";
+                qtyError.classList.add("hidden");
+            }
+
+            if (warehouseSelect.value !== "") {
+                valid = true;
+            }
+        }
+    }
+
+    if (valid) {
+        btn.disabled = false;
+        btn.classList.remove("bg-gray-400", "cursor-not-allowed");
+        btn.classList.add(
+            "bg-green-500",
+            "hover:bg-green-600",
+            "cursor-pointer",
+        );
+    } else {
+        btn.disabled = true;
+        btn.classList.remove(
+            "bg-green-500",
+            "hover:bg-green-600",
+            "cursor-pointer",
+        );
+        btn.classList.add("bg-gray-400", "cursor-not-allowed");
+    }
+}
+let wh_product_id = 0;
+
+async function submitTransfer() {
+    const warehouse_id = document.getElementById("to_location_select").value;
+    const qty = document.getElementById("transfer_qty").value;
+
+    const res = await fetch("/transfer-lot", {
+        method: "POST",
+        headers: {
+            "X-CSRF-TOKEN": document.querySelector('input[name="_token"]')
+                .value,
+            Accept: "application/json",
+            "Content-Type": "application/json", // 🔥 must have
+        },
+        body: JSON.stringify({
+            wh_product_id: wh_product_id,
+            warehouse_id: warehouse_id,
+            qty: qty,
+        }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        // SUCCESS
+        showToast({
+            message: data.message || "Transfer completed",
+            type: "success",
+        });
+
+        let select_wh = document.getElementById("warehouseTypeSelect");
+
+        const warehouseId = select_wh.value;
+        if (warehouseId === "All") {
+            loadWarehouseStock(0, 1); // or handle All case
+        } else {
+            loadWarehouseStock(warehouseId, 1);
+        }
+
+        document.getElementById("transfer_modal").classList.add("hidden");
+    } else {
+        // ERROR
+        showToast({
+            message: data.message || "Transfer failed",
+            type: "error",
+        });
+    }
+}

@@ -32,23 +32,27 @@
         </div>
 
         @forelse ($cart as $item)
-            <div class="w-full mx-auto">
+            <div class="w-full mx-auto animate-add">
                 <!-- Item Card -->
                 <div
                     class="card bg-white shadow border-b-amber-600 focus-within:bg-yellow-50 transition-colors duration-200 ">
                     <!-- Header (clickable) -->
-                    <div onclick="toggleItem(this)"
+                    <div
                         class="btn_sale_invoice w-full flex items-center justify-between p-2">
                         <div class="flex items-start gap-3">
                             <div class="flex flex-col items-center justify-center">
-                                <span
-                                    class="text-green-500 text-lg transition-transform duration-300 arrow hover:cursor-pointer">▾</span>
+                              <span style="font-size:20px"
+                                    wire:click="toggleItem({{ $loop->index }})"
+                                    class="text-green-500 text-lg transition-transform duration-300 hover:cursor-pointer
+                                            {{ $openIndex === $loop->index ? 'rotate-180' : '' }}">
+                                    ▾
+                                </span>
                                 <button wire:click.stop="removeItem({{ $item['id'] }})" title="Remove item"><span
                                         class="text-red-500 text-lg transition-transform duration-300 hover:cursor-pointer arrow"><i
                                             class="fa-solid fa-delete-left fa-flip-horizontal"></i></span></button>
                             </div>
                             <div class="text-left">
-                                <p class="font-semibold">{{ $item['order_no'] }}. {{ $item['name'] }} x
+                                <p class="font-semibold number-change">{{ $item['order_no'] }}. {{ $item['name'] }} x
                                     {{ $item['qty'] }} {{ $item['unit'] }}
 
                                 </p>
@@ -66,7 +70,7 @@
                                         អស់់ស្តុក
                                     </span>
                                 @endif
-                                <p class="text-sm text-gray-400">
+                                <p class="text-sm text-gray-400 number-change">
                                     តម្លៃ:
                                     @if ($item['discount_percent'] != 0)
                                         <del>{{ $item['price'] * $this->factor }}</del> {{$this->currency_name}}
@@ -78,7 +82,7 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="font-semibold">
+                            <p class="font-semibold number-change">
                                 @if ($item['discount_percent'] != 0)
                                     <del>{{ $item['amount_line'] * $this->factor }} {{ $this->currency_name }}</del> -
                                     {{ (float) $item['net_amount_line'] * $this->factor }}{{ $this->currency_name }}
@@ -92,21 +96,40 @@
                     </div>
 
                     <!-- Dropdown Content -->
-                    <div class="hidden  bonus border-b p-2">
-                        <div class="grid grid-cols-5 gap-4">
-                            <div class="col-span-2">
-                                <label class="text-sm text-gray-500">ចំនួន</label>
-                                <input id="qty_order_{{ $loop->index }}" type="number" min="1" max="{{ $item['stock'] }}"
-                                 oninput="this.value = Math.max(1, Math.floor(this.value));currentTrackQty = parseInt(this.value);"
-                                    wire:model.lazy="cart.{{ $loop->index }}.qty"
-                                    class="w-full mt-1 border rounded px-3 py-2 focus:outline-none focus:ring" />
-                            </div>
-                            <div class="col-span-2">
-                                <label class="text-sm text-gray-500">បញ្ចុះតម្លៃ (%)</label>
-                                <input type="number" min="0" max="100"
-                                    wire:model.lazy="cart.{{ $loop->index }}.discount_percent"
-                                    class="w-full mt-1 border rounded px-3 py-2 focus:outline-none focus:ring" />
-                            </div>
+                    <div class="{{ $openIndex === $loop->index ? '' : 'hidden' }} bonus border-b p-2">
+                        <div class="grid grid-cols-7 gap-4">
+
+                                                            <div class="col-span-2">
+                                    <label class="text-sm text-gray-500">ចំនួន</label>
+                                    <input type="number"
+                                        min="1"
+                                        max="{{ $item['stock'] }}"
+                                        id="qty_order_{{ $loop->index }}"
+                                        step="1"
+                                        wire:model.lazy="cart.{{ $loop->index }}.qty"
+                                        wire:change="recalcLine({{ $loop->index }}, 'qty')"
+                                        class="w-full mt-1 border rounded px-3 py-2 focus:outline-none focus:ring" />
+                                </div>
+
+                                <!-- Unit Price -->
+                                <div class="col-span-2">
+                                    <label class="text-sm text-gray-500">តម្លៃ</label>
+                                  <input type="number" min="0" step="0.01"
+                                    wire:key="price-{{ $loop->index }}-{{ $this->cart[$loop->index]['price'] }}-{{ $this->factor }}"
+                                    value="{{ rtrim(rtrim(number_format($item['price'] * $this->factor, 3, '.', ''), '0'), '.') }}"
+                                    wire:change="recalcLine({{ $loop->index }}, 'price', $event.target.value)"
+                                    class="w-full mt-1 border rounded px-3 py-2" />
+                                </div>
+
+                                <!-- Discount -->
+                                <div class="col-span-2">
+                                    <label class="text-sm text-gray-500">បញ្ចុះតម្លៃ (%)</label>
+                                    <input type="number" min="0" max="100"
+                                        wire:model.lazy="cart.{{ $loop->index }}.discount_percent"
+                                        wire:change="recalcLine({{ $loop->index }}, 'discount_percent')"
+                                        class="w-full mt-1 border rounded px-3 py-2 focus:outline-none focus:ring" />
+                                </div>
+
                                @if ( $item['track_stock'] == 1 )
                                       <div>
 

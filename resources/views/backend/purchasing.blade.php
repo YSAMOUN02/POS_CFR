@@ -672,4 +672,140 @@
 
         <button onclick="hideToast()" class="text-gray-500 hover:text-gray-700 text-xl font-bold">&times;</button>
     </div>
+
+
+     {{-- <LIST CUSTOMER> --}}
+    <div id="default-modal-vendor-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
+        class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
+
+        {{-- width Custom  --}}
+        <div class=" relative p-4 w-full max-w-10xl max-h-full ">
+            <!-- Modal content -->
+            <div
+                class="min-h-[70vh] max-h-[90vh] respond_laptop relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 flex flex-col">
+
+
+                <!-- Modal header -->
+                <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                    <div class="w-full flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-medium text-heading">
+                                Customer Information
+                            </h3>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <!-- Active checkbox -->
+                            <div class="flex items-center gap-2">
+                                <label for="customerSearchCheckbox" class="text-sm font-medium">Active</label>
+                                <input type="checkbox" checked id="customerSearchCheckbox" class="w-4 h-4">
+                            </div>
+
+
+                            <!-- Type select -->
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="customerSearchInput"
+                                    placeholder="Search by code, name, phone, email..."
+                                    class="px-3 py-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <select id="customerTypeSelect"
+                                    class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <option value="">All Types</option>
+                                    <option value="walk_in">Walk In</option>
+                                    <option value="member">Member</option>
+                                    <option value="vip">VIP</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                    <button type="button"
+                        class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                        data-modal-hide="default-modal-vendor-list">
+                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18 17.94 6M18 18 6.06 6" />
+                        </svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+                <!-- Modal body -->
+                <div class="flex-1 overflow-y-auto mt-4">
+                    <div class="scroll_content_70 overflow-x-auto">
+
+                        <table id="customer-list" class="w-full text-sm text-left">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3">Select</th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="id">ID <span
+                                            class="sort-icon">↕</span></th>
+
+                                    <th class="px-4 py-3 cursor-pointer" data-column="customer_code">Code <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="name">Name <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="address1">Address 1 <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="phone">Phone <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="email">Email <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="type">Type <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="credit_limit">Credit Limit <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="balance">Balance <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="point">Point <span
+                                            class="sort-icon">↕</span></th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="status">Status <span
+                                            class="sort-icon">↕</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="customer-table-body">
+                                <!-- async rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+                <!-- Modal footer -->
+
+                <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5 mt-4">
+                    <div>
+                        <button type="button" id="btnEditCustomer"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            Edit
+                        </button>
+                        &ensp;
+                        <button type="button" id="btnDeleteCustomer"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            Delete
+                        </button>
+
+
+                        <button type="button" data-modal-target="default-modal-customer"
+                            data-modal-toggle="default-modal-customer"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            New
+                        </button>
+                        <button type="button" id="btnPrintCustomer"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            Print
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="flex items-center justify-center gap-1 mt-4 mx-2" id="paginationContainer">
+                            <!-- JS will render buttons here -->
+                        </div>
+                        &ensp;
+                        <span id="pageInfo" class="text-sm text-gray-600"></span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
 @endpush

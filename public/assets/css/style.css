@@ -783,6 +783,30 @@ table td ,table th{
 .card_style:nth-child(28) { animation-delay: 1.4s; }
 .card_style:nth-child(29) { animation-delay: 1.45s; }
 .card_style:nth-child(30) { animation-delay: 1.5s; }
+/* Fade + slide down animation */
+@keyframes fadeSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-add {
+  animation: fadeSlideDown 0.3s ease forwards;
+}
+
+/* Number count animation (optional) */
+.number-change {
+  transition: all 0.3s ease;
+}
+#total{
+   transition: all 0.3s ease;
+}
+
 @keyframes cardStyleIn {
     to {
         opacity: 1;
@@ -815,7 +839,9 @@ table td ,table th{
     50% { opacity: 1; transform: scale(1.1); }
     100% { opacity: 0; transform: scale(1); }
 }
-
+.rotate-180 {
+    transform: rotate(180deg);
+}
 #welcomeScreen h1 {
     animation: fadeInOut 5s ease-in-out forwards;
 }
@@ -874,8 +900,15 @@ table td ,table th{
 
 }
 @media (min-width: 431px) and (max-width: 999px) {
-
-
+#category_show{
+    zoom: 0.5;
+    flex-direction: column;
+}
+#sidebar{
+    min-height: 50vh;
+    position: sticky;
+    bottom: 0;
+}
 }
 
 
