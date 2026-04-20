@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('phone2')->nullable();
 
             $table->string('website')->nullable();
-
+            $table->boolean('status')->default(1);
             $table->timestamps();
         });
     }

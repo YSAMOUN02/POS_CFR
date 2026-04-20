@@ -98,8 +98,8 @@
         let factor = @json($factor);
         let currency_name = @json($currency_name);
         window.addEventListener("change-currency", (e) => {
-             factor = e.detail[0].factor;
-             currency_name = e.detail[0].currency_name;
+            factor = e.detail[0].factor;
+            currency_name = e.detail[0].currency_name;
 
             document.querySelectorAll(".costs").forEach((element) => {
                 const baseCost = parseFloat(element.getAttribute("data-base-cost")) || 0;
@@ -291,17 +291,17 @@
 
                                       ${imageSrc
                                         ? `<img class="object-cover w-full"
-                                                                                 loading="lazy"
-                                                                                 style="max-height:150px; min-height:150px;"
-                                                                                 src="${imageSrc}"
-                                                                                 onerror="this.outerHTML=\`
+                                                                                     loading="lazy"
+                                                                                     style="max-height:150px; min-height:150px;"
+                                                                                     src="${imageSrc}"
+                                                                                     onerror="this.outerHTML=\`
                                         <div class='flex items-center justify-center w-full h-[150px] bg-gray-100'>
                                          <span class='text-gray-400'>No Image</span>
                                         </div>\`"
-                                                                                                                                                                                                                                                        />`
+                                                                                                                                                                                                                                                            />`
                                         : `<div class="flex items-center justify-center w-full h-[150px] bg-gray-100">
-                                                                                                                                                                                                                                                            <span class="text-gray-400">No Image</span>
-                                                                                                                                                                                                                                                    </div>`
+                                                                                                                                                                                                                                                                <span class="text-gray-400">No Image</span>
+                                                                                                                                                                                                                                                        </div>`
                                     }
 
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
@@ -321,11 +321,11 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                             ${product.track_stock ? `
-                                                                                    <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                    <span class="${stockColor}">
-                                                                                     ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
-                                                                                    </span>
-                                                                                    &ensp;` : ''}
+                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                        <span class="${stockColor}">
+                                                                                         ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
+                                                                                        </span>
+                                                                                        &ensp;` : ''}
 
 
        <span class="costs font-semibold text-sm" data-base-cost="${product.cost}">
@@ -464,17 +464,17 @@
 
                                       ${imageSrc
                                         ? `<img class="object-cover w-full"
-                                                                                 loading="lazy"
-                                                                                 style="max-height:150px; min-height:150px;"
-                                                                                 src="${imageSrc}"
-                                                                                 onerror="this.outerHTML=\`
+                                                                                     loading="lazy"
+                                                                                     style="max-height:150px; min-height:150px;"
+                                                                                     src="${imageSrc}"
+                                                                                     onerror="this.outerHTML=\`
                                         <div class='flex items-center justify-center w-full h-[150px] bg-gray-100'>
                                          <span class='text-gray-400'>No Image</span>
                                         </div>\`"
-                                                                                                                                                                                                                                                        />`
+                                                                                                                                                                                                                                                            />`
                                         : `<div class="flex items-center justify-center w-full h-[150px] bg-gray-100">
-                                                                                                                                                                                                                                                            <span class="text-gray-400">No Image</span>
-                                                                                                                                                                                                                                                    </div>`
+                                                                                                                                                                                                                                                                <span class="text-gray-400">No Image</span>
+                                                                                                                                                                                                                                                        </div>`
                                     }
 
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
@@ -494,11 +494,11 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                             ${product.track_stock ? `
-                                                                                    <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                    <span class="${stockColor}">
-                                                                                     ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
-                                                                                    </span>
-                                                                                    &ensp;` : ''}
+                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                        <span class="${stockColor}">
+                                                                                         ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
+                                                                                        </span>
+                                                                                        &ensp;` : ''}
 
 
                                               <span class="costsfont-semibold text-sm">
@@ -674,7 +674,7 @@
     </div>
 
 
-     {{-- <LIST CUSTOMER> --}}
+    {{-- <LIST CUSTOMER> --}}
     <div id="default-modal-vendor-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
         class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
 
@@ -844,7 +844,7 @@
                                 <label class="block mb-2.5 text-sm font-medium text-heading">
                                     Vendor Code<span class="text-rose-600">*</span>
                                 </label>
-                                <input type="text" name="customer_code" placeholder="C0001" required
+                                <input type="text" name="code" placeholder="V0001" required
                                     class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
                             </div>
 
@@ -853,16 +853,16 @@
                                 <label class="block mb-2.5 text-sm font-medium text-heading">
                                     Name <span class="text-rose-600">*</span>
                                 </label>
-                                <input type="text" name="name" placeholder="John Doe" required
+                                <input type="text" name="name" placeholder="Vendor Name" required
                                     class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
                             </div>
 
-                            <!-- Phone -->
+                            <!-- Contact Person -->
                             <div>
                                 <label class="block mb-2.5 text-sm font-medium text-heading">
-                                    Phone
+                                    Contact Person
                                 </label>
-                                <input type="tel" name="phone" placeholder="012345678"
+                                <input type="text" name="contact_person" placeholder="John Doe"
                                     class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
                             </div>
 
@@ -871,89 +871,89 @@
                                 <label class="block mb-2.5 text-sm font-medium text-heading">
                                     Email
                                 </label>
-                                <input type="email" name="email" placeholder="john@email.com"
+                                <input type="email" name="email" placeholder="example@mail.com"
                                     class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
                             </div>
 
-                            <!-- Vendor Type -->
+                            <!-- Phone 1 -->
                             <div>
                                 <label class="block mb-2.5 text-sm font-medium text-heading">
-                                    Vendor Type <span class="text-rose-600">*</span>
+                                    Phone 1
                                 </label>
-                                <select name="type"
+                                <input type="text" name="phone1" placeholder="012345678"
                                     class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
-                                    <option value="walk_in">Walk-in</option>
-                                    <option value="member">Member</option>
-                                    <option value="vip">VIP</option>
-                                </select>
                             </div>
 
-                            <!-- Credit Limit -->
+                            <!-- Phone 2 -->
                             <div>
                                 <label class="block mb-2.5 text-sm font-medium text-heading">
-                                    Discount (%)
+                                    Phone 2
                                 </label>
-                                <input type="number" name="credit_limit" step="0.01" value="0"
+                                <input type="text" name="phone2" placeholder="098765432"
                                     class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
                             </div>
 
-                        </div>
-                        <br>
-                        <!-- Address -->
-                        <div class="mb-6">
-                            <label class="block mb-6 text-sm font-medium text-heading">
-                                Address <span class="text-rose-600">*</span>
-                            </label>
-                            <input type="text" name="address1" placeholder="Street / Village"
-                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
-                        </div>
+                            <!-- Country -->
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Country
+                                </label>
+                                <input type="text" name="country" placeholder="Cambodia"
+                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                            </div>
 
-                        <br>
-                        <div class="mb-6">
-                            <label class="block mb-6 text-sm font-medium text-heading">
-                                Address 2
-                            </label>
-                            <input type="text" name="address2" placeholder="Street / Village"
-                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
-                        </div>
-                        <br>
-                        <!-- City & Country -->
-                        <div class="grid gap-6 mb-6 md:grid-cols-2">
-                            <input type="text" name="contact_name" placeholder="Contact Name"
-                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                            <!-- City -->
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    City
+                                </label>
+                                <input type="text" name="city" placeholder="Phnom Penh"
+                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                            </div>
 
-                            <input type="text" name="contact_phone" placeholder="Contact Phone"
-                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
-                        </div>
-                        <br>
-                        <!-- City & Country -->
-                        <div class="grid gap-6 mb-6 md:grid-cols-2">
-                            <input type="text" name="city" placeholder="City"
-                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                            <!-- Website -->
+                            <div class="md:col-span-2">
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Website
+                                </label>
+                                <input type="text" name="website" placeholder="https://example.com"
+                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                            </div>
 
-                            <input type="text" name="country" placeholder="Country"
-                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                            <!-- Address 1 -->
+                            <div class="md:col-span-2">
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Address 1
+                                </label>
+                                <textarea name="address1" rows="2"
+                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs"></textarea>
+                            </div>
+
+                            <!-- Address 2 -->
+                            <div class="md:col-span-2">
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Address 2
+                                </label>
+                                <textarea name="address2" rows="2"
+                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs"></textarea>
+                            </div>
+
                         </div>
                         <br>
                         <!-- Status -->
                         <div class="flex items-center mb-6">
-                            <input type="checkbox" name="status" checked
+                            <input type="checkbox" name="status" checked value="1"
                                 class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-brand">
                             &ensp;
                             <label class="ms-2 text-sm font-medium text-heading">
-                                Active Customer
+                                Active Vendor
                             </label>
                         </div>
-
-                        <!-- Submit -->
-
-
-
 
                     </div>
                     <!-- Modal footer -->
                     <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
-                        <button type="submit"
+                        <button type="button" onclick="addVendor()"
                             class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                             Save Vendor
                         </button>
@@ -963,5 +963,4 @@
             </div>
         </div>
     </div>
-
 @endpush

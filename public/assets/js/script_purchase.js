@@ -72,3 +72,47 @@ function hideToast() {
     document.getElementById("toastText").innerText = "";
     document.getElementById("toastIcon").innerText = "✔️";
 }
+
+
+async function addVendor() {
+
+
+    const form = document.getElementById('AddVendorForm');
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch('/vendors', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast({
+                message: 'Vendor added successfully!',
+                type: 'success'
+            });
+
+            form.reset();
+
+        } else {
+            showToast({
+                message: data.message || 'Failed to add vendor',
+                type: 'error'
+            });
+        }
+
+    } catch (error) {
+        console.error(error);
+
+        showToast({
+            message: 'Server error',
+            type: 'error'
+        });
+    }
+}

@@ -12,6 +12,7 @@ use App\Http\Controllers\PurchasingController;
 use App\Http\Controllers\SaleInvoiceController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VendorController;
 use App\Http\Controllers\WarehouseController;
 
 Route::get('/', [AdminController::class, 'login'])->name('login');
@@ -106,5 +107,7 @@ Route::middleware(['auth'])->group(function () {
 
 
     Route::get('/Purchasing', [PurchasingController::class, 'Purchasing']);
+
+    Route::post('/vendors', [VendorController::class, 'store']);
 
 });
