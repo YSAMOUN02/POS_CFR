@@ -189,6 +189,7 @@
             <div class="w-full flex  items-end justify-between gap-2">
                 <select wire:change="setCurrency($event.target.value)"
                     class="col-span-2 border rounded  px-6 py-2 focus:ring focus:ring-green-300">
+
                     @foreach ($all_currency as $currency_symbol)
                         <option value="{{ $currency_symbol->code }}" @selected($currency === $currency_symbol->code)>
                             {{ $currency_symbol->name }}
@@ -229,6 +230,7 @@
                 </button>
                 <select wire:model="warehouse_id"
                     class="col-span-2 border rounded px-6 py-2 focus:ring focus:ring-green-300">
+
                     @foreach ($warehouses as $id => $name)
                         <option value="{{ $id }}" @selected($warehouse_id == $id)>{{ $name }}</option>
                     @endforeach

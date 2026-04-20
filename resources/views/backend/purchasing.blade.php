@@ -783,10 +783,10 @@
                         </button>
 
 
-                        <button type="button" data-modal-target="default-modal-customer"
-                            data-modal-toggle="default-modal-customer"
+                        <button type="button" data-modal-target="default-modal-vendor"
+                            data-modal-toggle="default-modal-vendor"
                             class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                            New
+                            New Vendor
                         </button>
                         <button type="button" id="btnPrintCustomer"
                             class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
@@ -807,5 +807,161 @@
         </div>
     </div>
 
+
+    {{-- <ADD Vendor> --}}
+    <div id="default-modal-vendor" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
+        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-2xl max-h-full">
+            <!-- Modal content -->
+            <div class="relative bg-white border border-slate-600 shadow-md rounded-base p-4 md:p-6">
+
+
+                <form id="AddVendorForm">
+                    @csrf
+                    <!-- Modal header -->
+                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                        <h3 class="text-lg font-medium text-heading">
+                            Vendor Information
+                        </h3>
+                        <button type="button"
+                            class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                            data-modal-hide="default-modal-vendor">
+                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                                height="24" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                            </svg>
+                            <span class="sr-only">Close modal</span>
+                        </button>
+                    </div>
+                    <!-- Modal body -->
+                    <div class="space-y-4 md:space-y-6 py-4 md:py-6">
+
+                        <div class="grid gap-6 mb-6 md:grid-cols-2">
+
+                            <!-- Vendor Code -->
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Vendor Code<span class="text-rose-600">*</span>
+                                </label>
+                                <input type="text" name="customer_code" placeholder="C0001" required
+                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                            </div>
+
+                            <!-- Vendor Name -->
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Name <span class="text-rose-600">*</span>
+                                </label>
+                                <input type="text" name="name" placeholder="John Doe" required
+                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                            </div>
+
+                            <!-- Phone -->
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Phone
+                                </label>
+                                <input type="tel" name="phone" placeholder="012345678"
+                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                            </div>
+
+                            <!-- Email -->
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Email
+                                </label>
+                                <input type="email" name="email" placeholder="john@email.com"
+                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                            </div>
+
+                            <!-- Vendor Type -->
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Vendor Type <span class="text-rose-600">*</span>
+                                </label>
+                                <select name="type"
+                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                                    <option value="walk_in">Walk-in</option>
+                                    <option value="member">Member</option>
+                                    <option value="vip">VIP</option>
+                                </select>
+                            </div>
+
+                            <!-- Credit Limit -->
+                            <div>
+                                <label class="block mb-2.5 text-sm font-medium text-heading">
+                                    Discount (%)
+                                </label>
+                                <input type="number" name="credit_limit" step="0.01" value="0"
+                                    class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                            </div>
+
+                        </div>
+                        <br>
+                        <!-- Address -->
+                        <div class="mb-6">
+                            <label class="block mb-6 text-sm font-medium text-heading">
+                                Address <span class="text-rose-600">*</span>
+                            </label>
+                            <input type="text" name="address1" placeholder="Street / Village"
+                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                        </div>
+
+                        <br>
+                        <div class="mb-6">
+                            <label class="block mb-6 text-sm font-medium text-heading">
+                                Address 2
+                            </label>
+                            <input type="text" name="address2" placeholder="Street / Village"
+                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                        </div>
+                        <br>
+                        <!-- City & Country -->
+                        <div class="grid gap-6 mb-6 md:grid-cols-2">
+                            <input type="text" name="contact_name" placeholder="Contact Name"
+                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+
+                            <input type="text" name="contact_phone" placeholder="Contact Phone"
+                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                        </div>
+                        <br>
+                        <!-- City & Country -->
+                        <div class="grid gap-6 mb-6 md:grid-cols-2">
+                            <input type="text" name="city" placeholder="City"
+                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+
+                            <input type="text" name="country" placeholder="Country"
+                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
+                        </div>
+                        <br>
+                        <!-- Status -->
+                        <div class="flex items-center mb-6">
+                            <input type="checkbox" name="status" checked
+                                class="w-4 h-4 border border-default-medium rounded-xs bg-neutral-secondary-medium focus:ring-brand">
+                            &ensp;
+                            <label class="ms-2 text-sm font-medium text-heading">
+                                Active Customer
+                            </label>
+                        </div>
+
+                        <!-- Submit -->
+
+
+
+
+                    </div>
+                    <!-- Modal footer -->
+                    <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
+                        <button type="submit"
+                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                            Save Vendor
+                        </button>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 @endpush
