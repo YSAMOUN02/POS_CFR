@@ -1227,36 +1227,7 @@ function renderPagination(result) {
     }
 }
 
-let delivery_note_no = "NA";
-let invoice_no = "NA";
-let quotation_no = "NA";
-window.addEventListener("get-delivery-note", (e) => {
-    delivery_note_no = e.detail[0].document_no;
-});
-window.addEventListener("get-invoice-no", (e) => {
-    invoice_no = e.detail[0].document_no;
-});
-window.addEventListener("get-quotation-no", (e) => {
-    quotation_no = e.detail[0].document_no;
-});
-
 function print(document_type) {
-    if (quotation_no == "NA") {
-        document.querySelector("#btn-print-quote").style.display = "none";
-    } else {
-        document.querySelector("#btn-print-quote").style.display = "block";
-    }
-    if (delivery_note_no == "NA") {
-        document.querySelector("#btn-print-delivery").style.display = "none";
-    } else {
-        document.querySelector("#btn-print-delivery").style.display = "block";
-    }
-    if (invoice_no == "NA") {
-        document.querySelector("#btn-print-invoice").style.display = "none";
-    } else {
-        document.querySelector("#btn-print-invoice").style.display = "block";
-    }
-
     // check cart Logic
     let input_count_cart = document.getElementById("count_cart_input");
     let count_cart = input_count_cart.value;
@@ -1285,818 +1256,10 @@ function print(document_type) {
     print_document(document_type);
 }
 
-const input_document_date_value = document.getElementById("document_dateInput");
-function print_document(document_type) {
-    const document_date_value = input_document_date_value.value;
-    const document_date = new Date(document_date_value);
-    const options = { day: "2-digit", month: "short", year: "numeric" };
-    const formattedDocumentDate = document_date.toLocaleDateString(
-        "en-GB",
-        options,
-    );
-
-    // docutment Header
-    const document_header = document.getElementById("document-header");
-    // Title
-    let document_title = document.getElementById("document_title");
-    document_title.querySelector("h1").textContent = document_type;
-    let logo = document.getElementById("logo");
-    const logo_80mm = document.getElementById("logo_80mm").innerHTML;
-    const invoiceContent = document.getElementById("invoice").innerHTML;
-    // Table
-    const table_data = document.getElementById("invoice-table");
-    // Shop Info
-    const shop_info = document.getElementById("shop_info");
-    // customer_info
-    const customer_info = document.getElementById("customer_info");
-    // table Footer
-    const table_footer = document.getElementById("table_footer");
-    let table_footer_description = document.getElementById(
-        "table_footer_description",
-    );
-
-    // Open new window
-    const printWindow = window.open("", "_blank", "width=800,height=600");
-
-    if (document_type === "Invoice") {
-        let footer_panha_invoice = `
-                    <div style="line-height:1.5; margin-top:5px;">
-
-                            <span>PLEASE MAKE PAYABLE CHEQUE TO MR. RITH SOPHANHA </span> <br>
-                            <span>THANK YOU FOR YOUR BUSINESS! </span> <br>
-                            <span><b>Mr. Rith SOPHANHA </b></span>
-                    </div>
-                `;
-
-        let footer_CFR_invoice = `
-                    <div style="width:100%; display:flex; justify-content:center ; margin-top:30px; line-height:1.5;">
-                            <span>THANK YOU FOR YOUR BUSINESS! </span> <br>
-
-                    </div>
-                `;
-
-        table_footer_description.innerHTML = ``;
-        table_footer_description.innerHTML = footer_CFR_invoice;
-
-        printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Invoice</title>
-                    <style>
-                        body {  font-family: 'Noto Serif Khmer', serif; font-size: 14px; margin: 20px; color: black; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
-                        th { background-color: #f0f0f0; }
-                        .invoice-header h2 { margin: 0; }
-                        .font-mid{
-                            font-size:12px;
-                        }
-                        table td ,table th{
-                            font-size: 10px;
-                        }
-                        #seller_name{
-                        display:none;
-                        }
-                        @media print {
-                            button { display: none; }
-                        }
-                    </style>
-                </head>
-                <body onload="window.print(); window.close();">
-
-                    <!-- Header -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        ${logo.innerHTML}
-                        <div style="font-size:25px; font-weight:bold;">
-                            ${document_title.innerHTML}
-                        </div>
-                    </div>
-
-                 <!-- Seller + Date in 2-column grid -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; ">
-
-                               <!-- Left column: Shop info -->
-                            <div  class="font-mid"  style="display: grid; gap:3px; text-align: left;">
-                                ${shop_info.innerHTML}
-                                <strong>BILL TO:</strong>
-                                 ${customer_info.innerHTML}
-                            </div>
-
-                          <!-- Right column: Dates / Invoice (2-grid, all right aligned) -->
-                            <div class="font-mid" style="
-                                display: grid;
-                                grid-template-columns: max-content max-content;
-
-                                justify-content: end;
-                                text-align: right;
-                            ">
-                                <div><b>Date:</b></div>
-                                <div>${formattedDocumentDate}</div>
-
-                                <div><b>Invoice #</b></div>
-                                <div>
-                                  ${invoice_no}
-
-                                </div>
-
-
-                            </div>
-
-
-                        </div>
-
-
-
-
-
-                    <!-- Table -->
-                    ${table_data.innerHTML}
-                    <div class="font-mid">${table_footer.innerHTML} </div>
-                </body>
-                </html>
-                `);
-    } else if (document_type === "Receipt") {
-        table_footer_description.innerHTML = `
-                    <div class="font-mid" style="line-height:1.5;">
-                        <div style="font-weight:bold; text-decoration:underline; margin-bottom:6px;">
-                            <center>Thanks for you! Please come again.</center>
-                        </div>
-
-
-                    </div>
-                `;
-
-        printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Receipt</title>
-                    <style>
-
-                        @page {
-                            size: 80mm auto;
-                            margin: 0 !important;
-                        }
-
-                        * {
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            box-sizing: border-box;
-                            font-family: 'Noto Serif Khmer', serif;
-                        }
-                        /* Khmer */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/khmer.woff2') format('woff2');
-                            unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
-                        }
-
-                        /* Latin Extended */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/latinex.woff2') format('woff2');
-                            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-                        }
-
-                        /* Latin */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/latin.woff2') format('woff2');
-                            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-                        }
-
-                        html, body {
-                            width: 80mm !important;
-                            max-width: 80mm !important;
-                            font-family: 'Noto Serif Khmer', serif;
-                            font-size:11px;
-                            color: black !important;
-                            font-weight: bold;
-
-
-                        }
-                         img {
-                              image-rendering: pixelated; /* tries to make logos sharper */
-                            }
-                        body {
-                            padding: 3mm !important; /* tiny inner safe padding */
-                        }
-
-                        table {
-                            width: 100% !important;
-                            border-collapse: collapse;
-                            margin: 8px 0 !important;
-                            border: 1px solid #000;
-                        }
-                        thead tr{
-                        background-color: black !important;
-                        color:white !important;
-                        }
-                        table th:nth-child(6), table td:nth-child(6) {
-                         display: none;
-                         }
-
-                        th, td {
-                         border: 1px solid #00000050;
-                            padding: 1px 2px !important;
-                            font-size: 10px;
-                            font-weight: bold;
-                            color: black !important;
-                        }
-                        .font-mid{
-                            font-size: 11px;
-                            color: black !important
-                        }
-                        </style>
-                </head>
-                <body onload="window.print(); window.close();">
-
-                    <!-- Header -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        ${logo_80mm}
-                        <div style="font-size:12px; font-weight:bold;">
-
-                        </div>
-                    </div>
-
-                 <!-- Seller + Date in 2-column grid -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0 ;">
-
-                            <!-- Left column: Shop info -->
-                            <div  class="font-mid"  style="display: grid; gap:3px; text-align: left;">
-                                ${shop_info.innerHTML}
-
-                            </div>
-
-                          <!-- Right column: Dates / Invoice (2-grid, all right aligned) -->
-                            <div class="font-mid" style="
-                                display: grid;
-                                grid-template-columns: max-content max-content;
-
-                                justify-content: end;
-                                text-align: right;
-                            ">
-                                <div><b>Date:</b></div>
-                                <div>&ensp; ${formattedDocumentDate}</div>
-
-                                <div><b>Reciept No:</b></div>
-                                <div>
-                                 &ensp; ${reciept_no}
-
-                                </div>
-
-                            </div>
-                        </div>
-                       <div style="font-size:10px; font-weight:bold; margin-bottom:10px;"> <center>${document_title.innerHTML}</center></div>
-                    <!-- Table -->
-                    ${table_data.innerHTML}
-                    <div class="font-mid mt-2">${table_footer.innerHTML} </div>
-
-
-                </body>
-                </html>
-                `);
-    } else if (document_type === "Order") {
-        let formattedOrderNo = String(document_no).padStart(3, "0");
-        table_footer_description.innerHTML = `
-                    <div class="font-mid" style="line-height:1.5;">
-                        <div style="font-weight:bold; text-decoration:underline; margin-bottom:6px;">
-                            <center>Thanks for your Order.</center>
-                        </div>
-
-
-                    </div>
-                `;
-
-        printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Order</title>
-                  <style>
-
-                        @page {
-                            size: 80mm auto;
-                            margin: 0 !important;
-                        }
-
-                        * {
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            box-sizing: border-box;
-                            font-family: 'Noto Serif Khmer', serif;
-                        }
-                        /* Khmer */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/khmer.woff2') format('woff2');
-                            unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
-                        }
-
-                        /* Latin Extended */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/latinex.woff2') format('woff2');
-                            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-                        }
-
-                        /* Latin */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/latin.woff2') format('woff2');
-                            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-                        }
-
-
-                        html, body {
-                            width: 80mm !important;
-                            max-width: 80mm !important;
-                            font-family: 'Noto Serif Khmer', serif;
-                            font-size:10px;
-                            color: black !important;
-                            font-weight: bold;
-
-
-                        }
-                         img {
-                              image-rendering: pixelated; /* tries to make logos sharper */
-                            }
-                        body {
-                            padding: 3mm !important; /* tiny inner safe padding */
-                        }
-
-                        table {
-                            width: 100% !important;
-                            border-collapse: collapse;
-                            margin: 8px 0 !important;
-                            border: 1px solid #000;
-                        }
-
-                        table th:nth-child(6), table td:nth-child(6) {
-                         display: none;
-                         }
-
-                        th, td {
-                            border: 1px solid black;
-                            padding: 1px 2px !important;
-                            font-size: 10px;
-                            font-weight: bold;
-                            color: black !important;
-                        }
-                        .font-mid{
-                            font-size: 10px;
-                            color: black !important
-                        }
-                        </style>
-                </head>
-                <body onload="window.print(); window.close();">
-
-                    <!-- Header -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        ${logo_80mm}
-                        <div style="font-size:12px; font-weight:bold;">
-                            ${document_title.innerHTML}
-                        </div>
-                    </div>
-
-                 <!-- Seller + Date in 2-column grid -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-
-                            <!-- Left column: Shop info -->
-                            <div  class="font-mid"  style="display: grid; gap:3px; text-align: left;">
-                                ${shop_info.innerHTML}
-
-                            </div>
-
-                          <!-- Right column: Dates / Invoice (2-grid, all right aligned) -->
-                            <div class="font-mid" style="
-                                display: grid;
-                                grid-template-columns: max-content max-content;
-
-                                justify-content: end;
-                                text-align: right;
-                            ">
-                                <div><b>Date:</b></div>
-                                <div>${formattedDocumentDate}</div>
-
-                                <div><b>QUEUE No:</b></div>
-                                <div>
-
-                                    ORDER-${formattedOrderNo}
-                                </div>
-
-                            </div>
-                        </div>
-                    <!-- Table -->
-                    ${table_data.innerHTML}
-                    <div class="font-mid">${table_footer.innerHTML} </div>
-
-
-                </body>
-                </html>
-                `);
-    } else if (document_type === "Quotation") {
-        table_footer_description.innerHTML = `
-                    <div class="font-mid" style="line-height:1.5;">
-                        <div style="font-weight:bold; text-decoration:underline; margin-bottom:6px;">
-                            <center>Thanks for your Please come again.</center>
-                        </div>
-
-
-                    </div>
-                `;
-
-        printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Invoice</title>
-                    <style>
-                                /* Khmer */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/khmer.woff2') format('woff2');
-                            unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
-                        }
-
-                        /* Latin Extended */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/latinex.woff2') format('woff2');
-                            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-                        }
-
-                        /* Latin */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/latin.woff2') format('woff2');
-                            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-                        }
-
-                        html, body {
-
-                            font-family: 'Noto Serif Khmer', serif;
-                             font-size:10px;
-                            color: black !important;
-                        }
-                        table {
-                        width: 100%;
-                         border-collapse: collapse;
-                          margin: 10px 0;
-                           }
-                        th, td {
-                            border: 1px solid #000;
-                            padding: 6px;
-                            text-align: left;
-                            font-size:10px;
-                            color: black !important;
-                          }
-                        th {
-                        background-color: #f0f0f0;
-                         }
-                        .invoice-header h2 { margin: 0; }
-                        .font-mid{
-                            font-size:10px;
-                             color: black !important;
-                        }
-                        #seller_name{
-                        display:none;
-                        }
-                        @media print {
-                            button { display: none; }
-                        }
-                    </style>
-                </head>
-                <body onload="window.print(); window.close();">
-
-                    <!-- Header -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        ${logo.innerHTML}
-                        <div style="font-size:25px; font-weight:bold;">
-                            ${document_title.innerHTML}
-                        </div>
-                    </div>
-
-                 <!-- Seller + Date in 2-column grid -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-
-                            <!-- Left column: Shop info -->
-                            <div  class="font-mid"  style="display: grid; gap:3px; text-align: left;">
-                                ${shop_info.innerHTML}
-                                <strong>Quotation for:</strong>
-                                 ${customer_info.innerHTML}
-                            </div>
-
-                          <!-- Right column: Dates / Invoice (2-grid, all right aligned) -->
-                            <div class="font-mid" style="
-                                display: grid;
-                                grid-template-columns: max-content max-content;
-
-                                justify-content: end;
-                                text-align: right;
-                            ">
-                                <div><b>Date:</b></div>
-                                <div>${formattedDocumentDate}</div>
-
-                                <div><b>Quotation:</b></div>
-                                <div>
-                                    &ensp;${quotation_no}
-                                </div>
-
-                            </div>
-                        </div>
-                    <!-- Table -->
-                    ${table_data.innerHTML}
-                    <div class="font-mid">${table_footer.innerHTML} </div>
-
-
-                </body>
-                </html>
-                `);
-    } else if (document_type === "Delivery Note") {
-        let today = new Date().toLocaleDateString(); // e.g., "23/02/2026"
-
-        let footer_panha_delivery_note = `
-
-
-                <!-- Seller -->
-                <div style="width:50%; display:flex; flex-direction:column;">
-                    <div style="font-weight:bold;">Seller</div>
-                    <div style="margin-top:10px;">
-                        Name: <span style="display:inline-block; width:150px; border-bottom:1px solid #000;"></span>
-                    </div>
-                    <div style="margin-top:5px;">
-                        Date: <span style="display:inline-block; width:150px; border-bottom:1px solid #000;">${today}</span>
-                    </div>
-                </div>
-
-                <!-- Receiver -->
-                <div style="width:50%; display:flex; justify-content:flex-end; flex-direction:column;">
-                    <div style="font-weight:bold;">Receiver</div>
-                    <div style="margin-top:10px;">
-                        Name: <span style="display:inline-block; width:150px; border-bottom:1px solid #000;"></span>
-                    </div>
-                    <div style="margin-top:5px;">
-                        Date: <span style="display:inline-block; width:150px; border-bottom:1px solid #000;">${today}</span>
-                    </div>
-                </div>
-
-
-            `;
-        let page_A4_style = `
-        <style>
-                        body {
-                            font-family: 'Noto Serif Khmer', serif;
-                            position: relative;
-
-                            background-color: white;
-                          }
-  /* Khmer */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/khmer.woff2') format('woff2');
-                            unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
-                        }
-
-                        /* Latin Extended */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/latinex.woff2') format('woff2');
-                            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-                        }
-
-                        /* Latin */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/latin.woff2') format('woff2');
-                            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-                        }
-
-                        html, body {
-
-                            font-family: 'Noto Serif Khmer', serif;
-
-
-                        }
-
-                        table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-top: 10px;
-                        }
-
-                        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
-
-                        th { background-color: #f0f0f0; }
-                        .invoice-header h2 { margin: 0; }
-                        #seller_name{
-                        display:none;
-                        }
-                        #invoice-table th:nth-child(4) ,th:nth-child(5) ,th:nth-child(6) ,  th:nth-child(7){
-                        display:none;
-                        }
-                        #invoice-table th:nth-child(4) ,td:nth-child(5) ,td:nth-child(6) ,  td:nth-child(7){
-                        display:none;
-
-                        }
-                       .font-mid{
-                            font-size:12px;
-                        }
-                        .footer {
-
-                            position: absolute;
-                            bottom:0;
-                            width: 100%;
-                            display: flex;
-                            justify-content: space-between;
-
-
-                        }
-                        .total_print{
-                        display:none;}
-                          #currency_exchange{
-                            display:none;}
-                        @media print {
-                            button { display: none; }
-                        }
-                    </style>
-        `;
-        let footer_delivery_note = footer_panha_delivery_note;
-        let page_style = page_A4_style;
-        printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Invoice</title>
-                    ${page_style}
-                </head>
-                <body onload="window.print(); window.close();">
-
-                    <!-- Header -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        ${logo.innerHTML}
-
-                    </div>
-
-                 <!-- Seller + Date in 2-column grid -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 5px;">
-
-                            <!-- Left column: Shop info -->
-                            <div class="font-mid" style="display: grid; gap:3px; text-align: left;">
-                                ${shop_info.innerHTML}
-                                <div style="font-size:15px; margin: 0px 5px;  font-weight:bold;">
-                                    ${document_title.innerHTML}
-                                </div>
-                            <br>
-                            <strong>Bill To:</strong>
-                            ${customer_info.innerHTML}
-
-                            </div>
-
-                          <!-- Right column: Dates / Invoice (2-grid, all right aligned) -->
-                            <div class="font-mid" style="
-                                display: grid;
-                                grid-template-columns: max-content max-content;
-
-                                justify-content: end;
-                                text-align: right;
-                            ">
-                                <div><b>Date:</b></div>
-                                <div>${formattedDocumentDate}</div>
-
-                                <div><b>Delivery No:</b></div>
-                                <div>
-                                  ${delivery_note_no}
-                                </div>
-
-                            </div>
-
-
-                        </div>
-
-                    <!-- Table -->
-                    ${table_data.innerHTML}
-                  <div class="footer">
-                    ${footer_delivery_note}
-                    </div>
-
-                </body>
-                </html>
-                `);
-    }
-
-    printWindow.document.close();
-}
-
 const dateInput = document.getElementById("document_dateInput");
 let quotationNextAction = null;
 let formattedDocDate = null;
 let formattedDueDate = null;
-
-function openDatePromt_Modal(onConfirm) {
-    const payUSDInput = document.getElementById("pay_usd");
-    const payOtherInput = document.getElementById("pay_other");
-
-    // Reset input
-    payUSDInput.value = 0;
-    payOtherInput.value = 0;
-
-    const modal = document.getElementById("DatePromptModal");
-
-    const total_amount = document.querySelector("#total_amount").value;
-    const converted_total_amount = document.querySelector(
-        "#converted_total_amount",
-    ).value;
-
-    const currency_display_name = document.querySelector(
-        "#currency_display_name",
-    );
-    const currency_display_name2 = document.querySelector(
-        "#currency_display_name2",
-    );
-    const currency_display_symbol = document.querySelector(
-        "#currency_display_symbol",
-    );
-    const currency = document.querySelector("#currency_name");
-    const currency_factor = document.querySelector("#currency_display_factor");
-    const currency_factor_input = document.querySelector("#currency_factor");
-
-    document.querySelector("#display_pay_amount").value = total_amount + " $";
-    document.querySelector("#display_pay_amount_converted").value =
-        converted_total_amount + " " + currency_display_symbol.value;
-    currency_display_name.textContent = currency.value;
-    currency_display_name2.textContent = currency.value;
-    currency_factor_input.value = currency_factor.value;
-
-    const today = new Date();
-    const validUntil = new Date();
-    validUntil.setMonth(today.getMonth() + 1);
-
-    const format = (d) => d.toISOString().split("T")[0];
-
-    dateInput.value = format(today);
-
-    modal.classList.remove("hidden");
-
-    // Assign the global callback
-    quotationNextAction = onConfirm;
-
-    modal.querySelector("[data-quotation-cancel]").onclick = () => {
-        modal.classList.add("hidden");
-        quotationNextAction = null; // clear
-    };
-
-    modal.querySelector("#confirmPayBtn").onclick = () => {
-        modal.classList.add("hidden");
-
-        // Parse input values
-        document_date = new Date(dateInput.value);
-    };
-}
 
 function closeDatePromtModal() {
     document.getElementById("DatePromptModal").classList.add("hidden");
@@ -2545,216 +1708,6 @@ function calculateFinalPrice() {
     document.getElementById(id).addEventListener("input", calculateFinalPrice);
 });
 
-let cart_qty = 0;
-let current_id = null;
-
-async function showTableModal(qty_cart, id) {
-    cart_qty = qty_cart;
-
-    const modal = document.getElementById("default-modal-table-select-list");
-    if (modal) modal.classList.remove("hidden");
-
-    const tbody = document.getElementById("table-modal-body");
-    tbody.innerHTML = `<tr><td colspan="4" class="text-center p-4">Loading...</td></tr>`;
-
-    try {
-        const response = await fetch("/tables");
-
-        if (!response.ok) throw new Error("Network error fetching tables");
-
-        const tables = await response.json();
-
-        console.log("Fetched tables:", tables);
-        // Filter rows
-        const tablesToShow = tables;
-
-        tbody.innerHTML = "";
-
-        tablesToShow.forEach((table) => {
-            const tr = document.createElement("tr");
-
-            const isOccupied = table.products && table.products.length > 0;
-
-            const statusText = isOccupied ? "UNAVAILABLE" : "Available";
-            const statusClass = isOccupied
-                ? "text-red-600 font-semibold"
-                : "text-green-600 font-semibold";
-
-            tr.innerHTML = `
-                <td>${table.id}</td>
-                <td>${table.name}</td>
-                <td>${table.queue_no}</td>
-                <td class="${statusClass}">${statusText}</td>
-                <td></td>
-            `;
-
-            const td = tr.querySelector("td:last-child");
-            td.style.display = "flex";
-            td.style.gap = "0.5rem";
-
-            /* =====================
-               ADD ITEM BUTTON
-            ===================== */
-            const addButton = document.createElement("button");
-            addButton.textContent = "Place Order";
-
-            // 🔥 BLOCK LOGIC BASED ON MODE
-            let blockAdd = false;
-            let bockAdd_occupied = false;
-            if (id === "ALL") {
-                // ALL tables view → block any occupied table
-                blockAdd = isOccupied;
-                bockAdd_occupied = isOccupied;
-            } else {
-                // Specific table view → allow only current table if occupied
-                blockAdd = isOccupied && table.id !== current_id;
-                bockAdd_occupied = isOccupied;
-            }
-
-            if (blockAdd) {
-                addButton.disabled = true;
-                addButton.className =
-                    "bg-gray-400 text-white px-3 py-1 rounded cursor-not-allowed";
-                addButton.title = "This table is occupied";
-            } else {
-                addButton.className =
-                    "bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded";
-
-                addButton.addEventListener("click", () => {
-                    selectTable(table.id);
-                });
-            }
-            /* =====================
-               LOAD BUTTON
-            ===================== */
-            const loadButton = document.createElement("button");
-            loadButton.textContent = "Load Order";
-            loadButton.className =
-                "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded";
-
-            if (blockAdd) {
-                loadButton.addEventListener("click", () => {
-                    // 🔥 SET CURRENT TABLE HERE
-                    current_id = table.id;
-
-                    if (id === "ALL" && cart_qty > 0) {
-                        showToast({
-                            message:
-                                "Current cart has items. Cannot load all tables.",
-                            type: "error",
-                        });
-                        return;
-                    }
-
-                    LoadTable_product(table.id);
-
-                    // Disable all Load buttons
-                    modal.querySelectorAll("button").forEach((btn) => {
-                        if (btn.textContent === "Check Out") {
-                            btn.disabled = true;
-                            btn.classList.add(
-                                "bg-gray-400",
-                                "cursor-not-allowed",
-                            );
-                        }
-                    });
-                });
-            } else {
-                loadButton.disabled = true;
-                loadButton.className =
-                    "bg-gray-400 text-white px-3 py-1 rounded cursor-not-allowed";
-                loadButton.title = "This table is occupied";
-            }
-
-            const PayButton = document.createElement("button");
-            PayButton.textContent = "Payment & Print";
-            PayButton.className =
-                "bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded";
-            if (bockAdd_occupied) {
-                PayButton.className =
-                    "bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded";
-
-                PayButton.addEventListener("click", () => {
-                    // 🔥 SET CURRENT TABLE HERE
-                    current_id = table.id;
-                    if (id === "ALL" && cart_qty > 0) {
-                        showToast({
-                            message:
-                                "Current cart has items. Cannot load all tables.",
-                            type: "error",
-                        });
-                        return;
-                    }
-                    table_pay(table.id);
-                });
-            } else {
-                PayButton.disabled = true;
-                PayButton.className =
-                    "bg-gray-400 text-white px-3 py-1 rounded cursor-not-allowed";
-                PayButton.title = "This table is occupied";
-            }
-
-            td.appendChild(addButton);
-            td.appendChild(loadButton);
-            td.appendChild(PayButton);
-
-            tbody.appendChild(tr);
-        });
-
-        // No tables found
-        if (tablesToShow.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center p-4">No tables found</td></tr>`;
-        }
-    } catch (error) {
-        console.error("Error loading tables:", error);
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-red-600 p-4">Failed to load tables</td></tr>`;
-        showToast({
-            message: "Failed to load tables. See console for details.",
-            type: "error",
-        });
-    }
-}
-
-let old_table = 0;
-function selectTable(tableId) {
-    Livewire.dispatch("transferCartToTable", {
-        payload: { table_id: tableId, old_table_id: old_table },
-    });
-    // cleared table ;
-    old_table = 0;
-
-    showTableModal(0, "ALL");
-}
-
-function LoadTable_product(tableId) {
-    // keep old id for clear
-    old_table = tableId;
-    Livewire.dispatch("loadTableToCart", { table_id: tableId });
-}
-function exit_table() {
-    Livewire.dispatch("exit_table");
-
-    document.querySelector("#customerValue").value = "";
-    document.querySelector("#customerSearch").value = "";
-    // Hide modal after loading
-    showToast({
-        message: `Exit Table Editing Mode.`,
-        type: "success",
-    });
-    showTableModal(0, "ALL");
-}
-function table_pay(id) {
-    // close modal
-    const modal = document.getElementById("default-modal-table-select-list");
-    if (modal) modal.classList.add("hidden");
-    // load to cart
-    payOtherInput.value = "";
-    payUSDInput.value = "";
-    returnedInput.value = "";
-    returnedInputOther.value = "";
-    Livewire.dispatch("loadTableToCartPayment", { table_id: id });
-}
-
 const displayUSD = document.getElementById("total_amount"); // total amount USD
 const payUSDInput = document.getElementById("pay_usd");
 const payOtherInput = document.getElementById("pay_other");
@@ -2953,50 +1906,6 @@ document
 // Initialize
 updatePayment();
 
-window.addEventListener("cart-loaded", (e) => {
-    document.querySelector("#count_cart_input").value = 1;
-    initializePayment();
-    updatePayment();
-    print("Receipt");
-});
-
-window.addEventListener("serve-table", (e) => {
-    showToast({
-        message: e.detail[0].message,
-        type: "success",
-    });
-    showTableModal(0, "ALL");
-});
-
-let reciept_no = "NA";
-window.addEventListener("get-reciept-no", (e) => {
-    reciept_no = e.detail[0].invoice_number;
-});
-
-window.addEventListener("clear-customer", (e) => {
-    document.querySelector("#customerValue").value = "";
-    document.querySelector("#customerSearch").value = "";
-});
-
-window.addEventListener("update-customer-input", (e) => {
-    document.querySelector("#customerValue").value = e.detail[0].code;
-    document.querySelector("#customerSearch").value = e.detail[0].display;
-});
-let document_no = "NA";
-window.addEventListener("get-document", (e) => {
-    document_no = e.detail[0].document_no;
-});
-window.addEventListener("cart-cleared", (e) => {
-    current_discount = 0;
-    messsage = e.detail[0].message;
-    showToast({
-        message: messsage,
-        type: "success",
-    });
-    document.querySelector("#customerValue").value = "";
-    document.querySelector("#customerSearch").value = "";
-});
-
 const fileInput = document.getElementById("update_image");
 const previewImg = document.getElementById("preview_img");
 
@@ -3065,33 +1974,6 @@ async function saveTable() {
         alert("Something went wrong.");
     }
 }
-
-window.addEventListener("payment-success", (e) => {
-    const message = e.detail[0].message;
-
-    showToast({
-        message: message,
-        type: "success",
-    });
-
-    // Ask before printing
-
-    print_document("Receipt");
-
-    // Clear after confirmation (whether printed or not)
-    Livewire.dispatch("clearAll_after_payment");
-
-    reloadProducts();
-});
-
-window.addEventListener("error", (e) => {
-    const message = e.detail[0].message;
-
-    showToast({
-        message: message,
-        type: "error",
-    });
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -4000,17 +2882,6 @@ tr {
     subtotalCell.setAttribute("colspan", "10");
 });
 
-window.addEventListener("payment-error", (e) => {
-    const message = e.detail[0].message;
-
-    showToast({
-        message: message,
-        type: "error",
-    });
-
-    // Ask before printing
-});
-
 document.getElementById("btnReciept").addEventListener("click", function () {
     let invoiceNo = prompt("Enter Invoice Number:");
 
@@ -4019,20 +2890,6 @@ document.getElementById("btnReciept").addEventListener("click", function () {
     } else {
         alert("Invoice number is required!");
     }
-});
-window.addEventListener("get-date", (event) => {
-    const input_document_date = document.getElementById("document_dateInput");
-
-    // Livewire sends full ISO string, we need YYYY-MM-DD
-    const documentDate = event.detail[0].invoice_date.split("T")[0]; // "2026-03-19"
-
-    input_document_date.value = documentDate;
-
-    reciept_no = event.detail[0].invoice_no;
-});
-window.addEventListener("trigger-print", (e) => {
-    print_document("Receipt");
-    Livewire.dispatch("clearCart");
 });
 
 document.getElementById("btnPrintProductMenu").addEventListener("click", () => {
@@ -4721,68 +3578,6 @@ function saveLots() {
     showToast({ message: "Lots saved successfully!", type: "success" });
 }
 
-window.addEventListener("view-cart-lots", (event) => {
-    const { lots, product_name, product_id } = event.detail[0]; // <-- remove [0]
-
-    // Grab original product image from main page
-    const img = document.getElementById("product-image" + product_id); // optional, only if you have image IDs
-    const display_img = document.getElementById("display_img2");
-
-    if (img) {
-        display_img.src = img.src; // copy image URL
-    } else {
-        display_img.src = "https://via.placeholder.com/150"; // fallback
-    }
-
-    const modalBody = document.getElementById("viewLotModalBody");
-    const modalTitle = document.getElementById("view-lot-title");
-    modalBody.innerHTML = "";
-
-    modalTitle.textContent = `Tracked Lots for: ${product_name}`;
-
-    if (!lots.length) {
-        modalBody.innerHTML =
-            "<p class='text-gray-500'>No lots tracked yet.</p>";
-    } else {
-        // Header
-        const header = document.createElement("div");
-        header.className =
-            "grid grid-cols-5 gap-2 font-semibold border-b pb-1 text-gray-700";
-        header.innerHTML = `
-
-         <div>Warehouse</div>
-            <div>Lot No</div>
-            <div>Qty</div>
-            <div>Stock</div>
-            <div>Expire</div>
-        `;
-        modalBody.appendChild(header);
-
-        // Rows
-        lots.forEach((lot) => {
-            const row = document.createElement("div");
-            row.className =
-                "grid grid-cols-5 gap-2 items-center p-1 bg-gray-50 rounded";
-
-            let expireClass = "";
-            if (lot.expire && new Date(lot.expire) < new Date()) {
-                expireClass = "text-red-500 font-bold";
-            }
-
-            row.innerHTML = `
-                <span class="text-left px-2">${lot.warehouse}</span>
-                <span class="text-left px-2">${lot.lot}</span>
-                <span class="text-center px-2">${lot.qty}</span>
-                <span class="text-center px-2">${lot.stock}</span>
-                <span class="text-center px-2 text-nowrap ${expireClass}">${lot.expire}</span>
-            `;
-            modalBody.appendChild(row);
-        });
-    }
-
-    // Show modal
-    document.getElementById("viewLotModal").classList.remove("hidden");
-});
 // Close function
 function closeViewLotModal() {
     document.getElementById("viewLotModal").classList.add("hidden");
@@ -5034,24 +3829,23 @@ async function loadItemLedgerEntries() {
                 <td class="border px-3 py-2 text-left">${row.warehouse_name ?? ""}</td>
                 <td class="border px-3 py-2 text-left">${row.lot ?? ""}</td>
                 <td class="border px-3 py-2 text-center">${formatDate(row.expire_date)}</td>
-
-                <td class="border px-3 py-2 text-right">${parseFloat(row.quantity ?? 0).toFixed(4)}</td>
-                <td class="border px-3 py-2 text-right">${parseFloat(row.remaining_quantity ?? 0).toFixed(4)}</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.quantity)}</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.remaining_quantity)}</td>
                 <td class="border px-3 py-2 text-left">${row.entry_type ?? ""}</td>
 
-                <td class="border px-3 py-2 text-right">${parseFloat(row.unit_cost ?? 0).toFixed(4)} $</td>
-                <td class="border px-3 py-2 text-right">${parseFloat(row.unit_price ?? 0).toFixed(4)} $</td>
-                <td class="border px-3 py-2 text-right">${parseFloat(row.sell_price ?? 0).toFixed(4)} $</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.unit_cost)} $</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.unit_price)} $</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.sell_price)} $</td>
 
-                <td class="border px-3 py-2 text-right">${parseFloat(row.discount_percent ?? 0).toFixed(2)} %</td>
-                <td class="border px-3 py-2 text-right">${parseFloat(row.discount_amount ?? 0).toFixed(4)} $</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.discount_percent)} %</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.discount_amount)} $</td>
 
-                <td class="border px-3 py-2 text-right">${parseFloat(row.vat ?? 0).toFixed(2)} %</td>
-                <td class="border px-3 py-2 text-right">${parseFloat(row.vat_amount ?? 0).toFixed(4)} $</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.vat)} %</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.vat_amount)} $</td>
 
-                <td class="border px-3 py-2 text-right">${parseFloat(row.line_amount ?? 0).toFixed(4)} $</td>
-                <td class="border px-3 py-2 text-right">${parseFloat(row.net_amount ?? 0).toFixed(4)} $</td>
-                <td class="border px-3 py-2 text-right">${parseFloat(row.grand_total_amount ?? 0).toFixed(4)} $</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.line_amount)} $</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.net_amount)} $</td>
+                <td class="border px-3 py-2 text-right">${formatNumber(row.grand_total_amount)} $</td>
 
                 <td class="border px-3 py-2 text-left">${row.customer_id ?? ""}</td>
                 <td class="border px-3 py-2 text-left">${row.customer_name ?? ""}</td>
@@ -5076,4 +3870,819 @@ async function loadItemLedgerEntries() {
             </tr>
         `;
     }
+}
+
+function formatNumber(num) {
+    return parseFloat(num ?? 0).toString();
+}
+
+document.getElementById("expense_data").addEventListener("click", function () {
+    fetch("/expenses/latest")
+        .then((response) => response.json())
+        .then((res) => {
+            const tbody = document.getElementById("expense_table_body");
+            tbody.innerHTML = "";
+
+            if (!res.status || res.data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-3">
+                            No expense found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            res.data.forEach((expense, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="border px-3 py-2 text-right">${index + 1}</td>
+                        <td class="border px-3 py-2 text-right">${formatDate(expense.expense_date)}</td>
+                        <td class="border px-3 py-2 text-right">${expense.expense_code ?? ""}</td>
+                        <td class="border px-3 py-2 text-right">${expense.expense_name}</td>
+                        <td class="border px-3 py-2 text-right">${expense.qty}</td>
+
+                         <td class="border px-3 py-2 text-right">${formatNumber(expense.unit_price)} $</td>
+                         <td class="border px-3 py-2 text-right">${formatNumber(expense.amount)} $</td>
+                        <td class="border px-3 py-2 text-right">${expense.payment_method ?? ""}</td>
+                        <td class="border px-3 py-2 text-left">${expense.note ?? ""}</td>
+                    </tr>
+                `;
+            });
+        })
+        .catch((error) => {
+            console.error(error);
+            alert("Failed to load expense data");
+        });
+});
+
+window.addEventListener("payment-success", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "success",
+    });
+
+    // Ask before printing
+
+    print_document("Receipt");
+
+    // Clear after confirmation (whether printed or not)
+    Livewire.dispatch("clearAll_after_payment");
+
+    reloadProducts();
+});
+
+window.addEventListener("error", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "error",
+    });
+});
+window.addEventListener("ordered", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "success",
+    });
+});
+window.addEventListener("view-cart-lots", (event) => {
+    const { lots, product_name, product_id } = event.detail[0]; // <-- remove [0]
+
+    // Grab original product image from main page
+    const img = document.getElementById("product-image" + product_id); // optional, only if you have image IDs
+    const display_img = document.getElementById("display_img2");
+
+    if (img) {
+        display_img.src = img.src; // copy image URL
+    } else {
+        display_img.src = "https://via.placeholder.com/150"; // fallback
+    }
+
+    const modalBody = document.getElementById("viewLotModalBody");
+    const modalTitle = document.getElementById("view-lot-title");
+    modalBody.innerHTML = "";
+
+    modalTitle.textContent = `Tracked Lots for: ${product_name}`;
+
+    if (!lots.length) {
+        modalBody.innerHTML =
+            "<p class='text-gray-500'>No lots tracked yet.</p>";
+    } else {
+        // Header
+        const header = document.createElement("div");
+        header.className =
+            "grid grid-cols-5 gap-2 font-semibold border-b pb-1 text-gray-700";
+        header.innerHTML = `
+
+         <div>Warehouse</div>
+            <div>Lot No</div>
+            <div>Qty</div>
+            <div>Stock</div>
+            <div>Expire</div>
+        `;
+        modalBody.appendChild(header);
+
+        // Rows
+        lots.forEach((lot) => {
+            const row = document.createElement("div");
+            row.className =
+                "grid grid-cols-5 gap-2 items-center p-1 bg-gray-50 rounded";
+
+            let expireClass = "";
+            if (lot.expire && new Date(lot.expire) < new Date()) {
+                expireClass = "text-red-500 font-bold";
+            }
+
+            row.innerHTML = `
+                <span class="text-left px-2">${lot.warehouse}</span>
+                <span class="text-left px-2">${lot.lot}</span>
+                <span class="text-center px-2">${lot.qty}</span>
+                <span class="text-center px-2">${lot.stock}</span>
+                <span class="text-center px-2 text-nowrap ${expireClass}">${lot.expire}</span>
+            `;
+            modalBody.appendChild(row);
+        });
+    }
+
+    // Show modal
+    document.getElementById("viewLotModal").classList.remove("hidden");
+});
+window.addEventListener("get-date", (event) => {
+    const input_document_date = document.getElementById("document_dateInput");
+
+    // Livewire sends full ISO string, we need YYYY-MM-DD
+    const documentDate = event.detail[0].invoice_date.split("T")[0]; // "2026-03-19"
+
+    input_document_date.value = documentDate;
+
+    reciept_no = event.detail[0].invoice_no;
+});
+window.addEventListener("trigger-print", (e) => {
+    print_document("Receipt");
+    Livewire.dispatch("clearCart");
+});
+window.addEventListener("cart-loaded", (e) => {
+    document.querySelector("#count_cart_input").value = 1;
+    initializePayment();
+    updatePayment();
+    print("Receipt");
+});
+
+window.addEventListener("serve-table", (e) => {
+    showToast({
+        message: e.detail[0].message,
+        type: "success",
+    });
+    showTableModal(0, "ALL");
+});
+
+let reciept_no = "NA";
+window.addEventListener("get-reciept-no", (e) => {
+    reciept_no = e.detail[0].invoice_number;
+});
+
+window.addEventListener("clear-customer", (e) => {
+    document.querySelector("#customerValue").value = "";
+    document.querySelector("#customerSearch").value = "";
+});
+
+window.addEventListener("update-customer-input", (e) => {
+    document.querySelector("#customerValue").value = e.detail[0].code;
+    document.querySelector("#customerSearch").value = e.detail[0].display;
+});
+let document_no = "NA";
+window.addEventListener("get-document", (e) => {
+    document_no = e.detail[0].document_no;
+});
+window.addEventListener("cart-cleared", (e) => {
+    current_discount = 0;
+    messsage = e.detail[0].message;
+    showToast({
+        message: messsage,
+        type: "success",
+    });
+    document.querySelector("#customerValue").value = "";
+    document.querySelector("#customerSearch").value = "";
+});
+
+window.addEventListener("payment-error", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "error",
+    });
+
+    // Ask before printing
+});
+document.getElementById("sale-order-data").addEventListener("click", () => {
+    loadSaleOrders(1);
+});
+
+document.getElementById("sale_order_status").addEventListener("change", () => {
+    loadSaleOrders(1);
+});
+
+document
+    .getElementById("sale_order_payment_status")
+    .addEventListener("change", () => {
+        loadSaleOrders(1);
+    });
+
+document.getElementById("sale_order_search").addEventListener("input", () => {
+    loadSaleOrders(1);
+});
+
+function loadSaleOrders(page = 1) {
+    let status = document.getElementById("sale_order_status").value;
+    let paymentStatus = document.getElementById(
+        "sale_order_payment_status",
+    ).value;
+    let search = document.getElementById("sale_order_search").value;
+
+    fetch(
+        `/get-sale-orders?page=${page}&status=${status}&payment_status=${paymentStatus}&search=${search}`,
+    )
+        .then((res) => res.json())
+        .then((res) => {
+            let tbody = document.getElementById("Table-sale-order-list");
+            tbody.innerHTML = "";
+
+            if (!res.data || res.data.length === 0) {
+                tbody.innerHTML = `
+        <tr>
+            <td colspan="17" class="text-center py-6 text-gray-500">
+                No Sale Orders Found 😢
+            </td>
+        </tr>
+    `;
+
+                document.getElementById(
+                    "paginationContainer_sale_order",
+                ).innerHTML = "";
+                document.getElementById("pageInfo_sale_order").textContent = "";
+
+                return;
+            }
+
+            res.data.forEach((row, index) => {
+                tbody.innerHTML += `
+            <tr
+                        onclick="selectSaleOrderRow(this, ${row.id})"
+                        ondblclick="viewSaleOrderLine(${row.id})"
+                        class="cursor-pointer hover:bg-gray-50"
+                    >
+                        <td class="px-4 py-2">
+                            <input type="checkbox" class="sale-order-checkbox pointer-events-none">
+                        </td>
+                    <td class="px-4 py-3">${index + 1}</td>
+                    <td class="px-4 py-3">${row.document_no ?? ""}</td>
+                    <td class="px-4 py-3">${row.order_number ?? ""}</td>
+                    <td class="px-4 py-3">${row.contact_name ?? ""}</td>
+                    <td class="px-4 py-3">${row.phone ?? ""}</td>
+                    <td class="px-4 py-3">${row.address ?? ""}</td>
+                    <td class="px-4 py-3 text-right">$${parseFloat(row.total_amount ?? 0).toFixed(2)}</td>
+                    <td class="px-4 py-3 text-right">$${parseFloat(row.vat_amount ?? 0).toFixed(2)}</td>
+                    <td class="px-4 py-3 text-right">$${parseFloat(row.discount_amount ?? 0).toFixed(2)}</td>
+                    <td class="px-4 py-3 text-right">$${parseFloat(row.paid_amount ?? 0).toFixed(2)}</td>
+                    <td class="px-4 py-3 text-right ">$${parseFloat(row.balance_amount ?? 0).toFixed(2)}</td>
+                <td class="px-4 py-3 text-right ${
+                    parseFloat(row.grand_total ?? 0) -
+                        parseFloat(row.paid_amount ?? 0) <=
+                    0
+                        ? "text-green-500"
+                        : "text-red-500"
+                }">
+    $${(
+        parseFloat(row.grand_total ?? 0) - parseFloat(row.paid_amount ?? 0)
+    ).toFixed(2)}
+</td>
+
+                    <td class="px-4 py-3 text-right">
+        <div class="flex flex-col items-end">
+            ${getStatusBadge(row.status)}
+
+        </div>
+
+    </td>
+      <td class="px-4 py-3 text-right">
+        <div class="flex flex-col items-end">
+
+            <div class="mt-1">${getPaymentBadge(row.payment_status)}</div>
+        </div>
+
+    </td>
+    <td class="px-4 py-3 text-center">${row.order_date ?? ""}</td>
+    <td class="px-4 py-3 text-center">${row.delivery_date ?? ""}</td>
+</tr>                `;
+            });
+            renderSaleOrderPagination(res);
+        })
+        .catch((err) => {
+            let tbody = document.getElementById("Table-sale-order-list");
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-6 text-red-500">
+                        Error loading data ⚠️
+                    </td>
+                </tr>
+            `;
+            console.error(err);
+        });
+}
+function renderSaleOrderPagination(res) {
+    const container = document.getElementById("paginationContainer_sale_order");
+    const pageInfo = document.getElementById("pageInfo_sale_order");
+
+    container.innerHTML = "";
+
+    if (!res.links) return;
+
+    pageInfo.textContent = `Page ${res.current_page} of ${res.last_page} | Total ${res.total}`;
+
+    res.links.forEach((link) => {
+        let label = link.label
+            .replace("&laquo; Previous", "Prev")
+            .replace("Next &raquo;", "Next");
+
+        const btn = document.createElement("button");
+        btn.innerHTML = label;
+        btn.disabled = !link.url;
+
+        btn.className = `
+            px-3 py-1 rounded-lg border text-sm
+            ${
+                link.active
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-gray-700 hover:bg-gray-100"
+            }
+            ${!link.url ? "opacity-50 cursor-not-allowed" : ""}
+        `;
+
+        if (link.url) {
+            const url = new URL(link.url);
+            const page = url.searchParams.get("page");
+
+            btn.onclick = () => loadSaleOrders(page);
+        }
+
+        container.appendChild(btn);
+    });
+}
+function getStatusBadge(status) {
+    switch ((status || "").toLowerCase()) {
+        case "draft":
+            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200 shadow-sm">
+                        📝 Draft
+                    </span>`;
+
+        case "ordered":
+            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
+                        📦 Ordered
+                    </span>`;
+
+        case "deposit":
+            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
+                        💰 Deposit
+                    </span>`;
+
+        case "completed":
+            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
+                        ✅ Completed
+                    </span>`;
+
+        case "cancelled":
+            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-rose-50 text-rose-700 border border-rose-200 shadow-sm">
+                        ❌ Cancelled
+                    </span>`;
+
+        default:
+            return `<span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700">${status}</span>`;
+    }
+}
+
+function getPaymentBadge(status) {
+    switch ((status || "").toLowerCase()) {
+        case "unpaid":
+            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-rose-50 text-rose-700 border border-rose-200 shadow-sm">
+                        💸 Unpaid
+                    </span>`;
+
+        case "partial":
+            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
+                        🌓 Partial
+                    </span>`;
+
+        case "paid":
+            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
+                        💵 Paid
+                    </span>`;
+
+        default:
+            return `<span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700">${status}</span>`;
+    }
+}
+function Save_Sale_Order() {
+    let input_count_cart = document.getElementById("count_cart_input");
+    let count_cart = input_count_cart.value;
+
+    if (count_cart == 0) {
+        showToast({
+            message: "Cart is Empty.",
+            type: "error",
+        });
+        return;
+    }
+    const payUSDInput = document.getElementById("so_pay_usd");
+    const payOtherInput = document.getElementById("so_pay_other");
+
+    // Reset input
+    payUSDInput.value = 0;
+    payOtherInput.value = 0;
+    const total_amount = document.querySelector("#total_amount").value;
+    const converted_total_amount = document.querySelector(
+        "#converted_total_amount",
+    ).value;
+    const currency_display_name = document.querySelector(
+        "#currency_display_name",
+    );
+    const currency_display_name2 = document.querySelector(
+        "#currency_display_name2",
+    );
+    const currency_display_symbol = document.querySelector(
+        "#currency_display_symbol",
+    );
+
+    document.querySelector("#so_display_pay_amount").value =
+        total_amount + " $";
+    document.querySelector("#so_display_pay_amount_converted").value =
+        converted_total_amount + " " + currency_display_symbol.value;
+    // set today date
+    const today = new Date().toISOString().split("T")[0];
+
+    document.getElementById("so_document_dateInput").value = today;
+    document.getElementById("so_order_dateInput").value = today;
+    document.getElementById("so_delivery_dateInput").value = today;
+    // open modal
+    document
+        .getElementById("default-modal-sales-order-save")
+        .classList.remove("hidden");
+}
+function moneyNumber(value) {
+    return (
+        parseFloat(
+            String(value || "0")
+                .replace(/,/g, "")
+                .replace(/[^\d.-]/g, ""),
+        ) || 0
+    );
+}
+
+function validateSaleOrderPayment(e = null) {
+    const totalAmount = moneyNumber(
+        document.querySelector("#total_amount")?.value,
+    );
+
+    const payUSDInput = document.getElementById("so_pay_usd");
+    const payOtherInput = document.getElementById("so_pay_other");
+
+    const payUSD = moneyNumber(payUSDInput.value);
+    const payOther = moneyNumber(payOtherInput.value);
+
+    const factor =
+        moneyNumber(
+            document.querySelector("#currency_display_factor")?.value,
+        ) || 4000;
+
+    const paidAmount = payUSD + payOther / factor;
+    const remainUSD = totalAmount - paidAmount;
+
+    if (remainUSD < -0.0001) {
+        showToast({
+            message: "USD + Riel exceeds total!",
+            type: "error",
+        });
+
+        if (e && e.target.id === "so_pay_usd") {
+            payUSDInput.value = 0;
+        }
+
+        if (e && e.target.id === "so_pay_other") {
+            payOtherInput.value = 0;
+        }
+
+        updateSaleOrderRemaining();
+        return false;
+    }
+
+    updateSaleOrderRemaining();
+    return true;
+}
+
+function updateSaleOrderRemaining() {
+    const totalAmount = moneyNumber(
+        document.querySelector("#total_amount")?.value,
+    );
+
+    const payUSD = moneyNumber(document.getElementById("so_pay_usd")?.value);
+
+    const payOther = moneyNumber(
+        document.getElementById("so_pay_other")?.value,
+    );
+
+    const factor =
+        moneyNumber(
+            document.querySelector("#currency_display_factor")?.value,
+        ) || 4000;
+
+    const paidAmount = payUSD + payOther / factor;
+
+    let remainUSD = totalAmount - paidAmount;
+    let remainRiel = Math.round(remainUSD * factor);
+
+    // ignore tiny rounding issue
+    if (Math.abs(remainRiel) <= 50) {
+        remainUSD = 0;
+        remainRiel = 0;
+    }
+
+    remainUSD = Math.max(remainUSD, 0);
+    remainRiel = Math.max(remainRiel, 0);
+
+    document.getElementById("so_need_more_usd").textContent =
+        remainUSD.toFixed(2) + " $";
+
+    document.getElementById("so_need_more_other").textContent =
+        remainRiel.toLocaleString() + " ៛";
+}
+function Confirm_Save_Sale_Order() {
+    const totalAmount = parseFloat(
+        document.querySelector("#total_amount")?.value || 0,
+    );
+    const payUSD = parseFloat(
+        document.getElementById("so_pay_usd")?.value || 0,
+    );
+    const payOther = parseFloat(
+        document.getElementById("so_pay_other")?.value || 0,
+    );
+    const factor = parseFloat(
+        document.querySelector("#currency_display_factor")?.value || 1,
+    );
+
+    const paidAmount = payUSD + payOther / factor;
+
+    let paymentData = {
+        document_date:
+            document.getElementById("so_document_dateInput")?.value ?? null,
+        order_date:
+            document.getElementById("so_order_dateInput")?.value ?? null,
+        delivery_date:
+            document.getElementById("so_delivery_dateInput")?.value ?? null,
+        paymentMethod:
+            document.getElementById("so_payment_method")?.value ?? null,
+        customer_type:
+            document.getElementById("so_customer_type")?.value ?? null,
+
+        customer_id:
+            document.getElementById("so_customer_id_info")?.value ?? null,
+        customer_name:
+            document.getElementById("so_customer_name_info")?.value ?? null,
+        customer_phone:
+            document.getElementById("so_customer_phone_info")?.value ?? null,
+        customer_address:
+            document.getElementById("so_customer_address_info")?.value ?? null,
+
+        paid_amount: paidAmount,
+        deposit_amount: paidAmount,
+        total_amount: totalAmount,
+
+        remark: document.getElementById("so_remark_invoice")?.value ?? null,
+    };
+    console.log("Payment Data:", paymentData);
+    Livewire.dispatch("confirmSaleOrder", [paymentData]);
+
+    document
+        .getElementById("default-modal-sales-order-save")
+        .classList.add("hidden");
+}
+
+function openDatePromt_Modal(onConfirm) {
+    const payUSDInput = document.getElementById("pay_usd");
+    const payOtherInput = document.getElementById("pay_other");
+
+    // Reset input
+    payUSDInput.value = 0;
+    payOtherInput.value = 0;
+
+    const modal = document.getElementById("DatePromptModal");
+
+    const total_amount = document.querySelector("#total_amount").value;
+    const converted_total_amount = document.querySelector(
+        "#converted_total_amount",
+    ).value;
+
+    const currency_display_name = document.querySelector(
+        "#currency_display_name",
+    );
+    const currency_display_name2 = document.querySelector(
+        "#currency_display_name2",
+    );
+    const currency_display_symbol = document.querySelector(
+        "#currency_display_symbol",
+    );
+    const currency = document.querySelector("#currency_name");
+    const currency_factor = document.querySelector("#currency_display_factor");
+    const currency_factor_input = document.querySelector("#currency_factor");
+
+    document.querySelector("#display_pay_amount").value = total_amount + " $";
+    document.querySelector("#display_pay_amount_converted").value =
+        converted_total_amount + " " + currency_display_symbol.value;
+
+    currency_display_name.textContent = currency.value;
+    currency_display_name2.textContent = currency.value;
+    currency_factor_input.value = currency_factor.value;
+
+    const today = new Date();
+    const validUntil = new Date();
+    validUntil.setMonth(today.getMonth() + 1);
+
+    const format = (d) => d.toISOString().split("T")[0];
+
+    dateInput.value = format(today);
+
+    modal.classList.remove("hidden");
+
+    // Assign the global callback
+    quotationNextAction = onConfirm;
+
+    modal.querySelector("[data-quotation-cancel]").onclick = () => {
+        modal.classList.add("hidden");
+        quotationNextAction = null; // clear
+    };
+
+    modal.querySelector("#confirmPayBtn").onclick = () => {
+        modal.classList.add("hidden");
+
+        // Parse input values
+        document_date = new Date(dateInput.value);
+    };
+}
+let selectedSaleOrderId = null;
+
+function selectSaleOrderRow(rowElement, id) {
+    selectedSaleOrderId = id;
+
+    // uncheck all
+    document.querySelectorAll(".sale-order-checkbox").forEach((cb) => {
+        cb.checked = false;
+    });
+
+    // check current
+    const checkbox = rowElement.querySelector(".sale-order-checkbox");
+    if (checkbox) checkbox.checked = true;
+}
+function viewSelectedSaleOrderLine() {
+    if (!selectedSaleOrderId) {
+        alert("Please select a sale order first");
+        return;
+    }
+
+    // Load data first
+    viewSaleOrderLine(selectedSaleOrderId);
+}
+
+// Close modal
+function closeSaleOrderLineModal() {
+    document.getElementById("saleOrderLineModal").classList.add("hidden");
+}
+let currentSaleOrderId = null;
+async function viewSaleOrderLine(id) {
+    try {
+        currentSaleOrderId = id;
+        // Open modal
+        const modal = document.getElementById("saleOrderLineModal");
+        modal.classList.remove("hidden");
+        modal.setAttribute("aria-hidden", "false");
+        const res = await fetch(`/sale-order-lines/${id}`);
+        const data = await res.json();
+        console.log(data);
+        // Header
+        document.getElementById("sale-order-no").textContent =
+            data.header.no ?? "-";
+        document.getElementById("sale-order-posting-date").textContent =
+            data.header.posting_date ?? "-";
+        document.getElementById("sale-order-delivery-date").textContent =
+            data.header.delivery_date ?? "-";
+        document.getElementById("sale-order-customer").textContent =
+            data.header.contact_name ?? "-";
+        document.getElementById("sale-order-phone").textContent =
+            data.header.phone ?? "-";
+        document.getElementById("sale-order-payment-method").textContent =
+            data.header.payment_method ?? "-";
+        document.getElementById("sale-order-currency").textContent =
+            data.header.currency_name ?? "-";
+        document.getElementById("sale-order-created-by").textContent =
+            data.header.created_by ?? "-";
+        document.getElementById("sale-order-address").textContent =
+            data.header.address ?? "-";
+
+        document.getElementById("sale-order-total").textContent =
+            "$" + parseFloat(data.header.total_amount ?? 0).toFixed(2);
+
+        document.getElementById("sale-order-discount").textContent =
+            "$" + parseFloat(data.header.discount_amount ?? 0).toFixed(2);
+
+        document.getElementById("sale-order-vat").textContent =
+            "$" + parseFloat(data.header.vat_amount ?? 0).toFixed(2);
+
+        document.getElementById("sale-order-grand-total").textContent =
+            "$" + parseFloat(data.header.grand_total ?? 0).toFixed(2);
+
+        // Status
+        const statusEl = document.getElementById("sale-order-status");
+        statusEl.textContent = data.header.status ?? "Pending";
+        setStatusColor("sale-order-status", data.header.status);
+        setStatusColor("sale-payment-status", data.header.payment_status);
+        // Lines
+        let html = "";
+        data.lines.forEach((line, index) => {
+            html += `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-4 py-2">${index + 1}</td>
+                    <td class="px-4 py-2">${line.item_code ?? ""}</td>
+                    <td class="px-4 py-2">${line.name ?? ""}</td>
+                    <td class="px-4 py-2 text-right">${parseFloat(line.quantity ?? 0).toFixed(2)}</td>
+                    <td class="px-4 py-2 text-right">$${parseFloat(line.sell_price ?? 0).toFixed(2)}</td>
+                    <td class="px-4 py-2 text-right">$${parseFloat(line.sub_total ?? 0).toFixed(2)}</td>
+                    <td class="px-4 py-2 text-right">$${parseFloat(line.discount_amount ?? 0).toFixed(2)}</td>
+                    <td class="px-4 py-2 text-right">$${parseFloat(line.vat_amount ?? 0).toFixed(2)}</td>
+                    <td class="px-4 py-2 text-right">$${parseFloat(line.grand_total_amount ?? 0).toFixed(2)}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById("sale-line-data").innerHTML = html;
+    } catch (e) {
+        console.error(e);
+    }
+}
+function setStatusColor(elementId, status) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    status = (status ?? "Pending").toString().trim();
+
+    el.textContent = status;
+
+    // reset class
+    el.className = "px-3 py-1 rounded-full text-sm font-semibold";
+
+    switch (status.toLowerCase()) {
+        case "paid":
+        case "approved":
+        case "completed":
+        case "posted":
+            el.classList.add("bg-green-100", "text-green-700");
+            break;
+
+        case "pending":
+        case "open":
+        case "waiting":
+            el.classList.add("bg-yellow-100", "text-yellow-700");
+            break;
+
+        case "partial":
+        case "processing":
+            el.classList.add("bg-blue-100", "text-blue-700");
+            break;
+
+        case "unpaid":
+        case "cancelled":
+        case "rejected":
+            el.classList.add("bg-red-100", "text-red-700");
+            break;
+
+        default:
+            el.classList.add("bg-gray-100", "text-gray-700");
+    }
+}
+
+
+function Load_order() {
+    if (!currentSaleOrderId) {
+        alert("No sale order selected");
+        return;
+    }
+
+    Livewire.dispatch('load-sale-order-to-cart', {
+        saleOrderId: currentSaleOrderId
+    });
+
+    closeSaleOrderLineModal();
 }

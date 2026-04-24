@@ -7,6 +7,7 @@ use App\Models\Product;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Request;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchasingController;
 use App\Http\Controllers\SaleInvoiceController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\ItemLedgerEntryController;
+use App\Http\Controllers\SaleOrderController;
 
 Route::get('/', [AdminController::class, 'login'])->name('login');
 // Handle login post
@@ -122,4 +124,10 @@ Route::middleware(['auth'])->group(function () {
 
 
 Route::get('/item-ledger-entry', [ItemLedgerEntryController::class, 'latest']);
+
+Route::get('/expenses/latest', [ExpenseController::class, 'latest']);
+
+Route::get('/get-sale-orders', [SaleOrderController::class, 'getSaleOrders']);
+
+Route::get('/sale-order-lines/{id}', [SaleOrderController::class, 'getSaleOrderLines']);
 });

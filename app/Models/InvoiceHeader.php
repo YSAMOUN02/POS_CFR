@@ -14,6 +14,7 @@ class InvoiceHeader extends Model
 
     protected $fillable = [
         'invoice_number',
+                'source_no',
         'customer_id',
         'contact_name',
         'phone',

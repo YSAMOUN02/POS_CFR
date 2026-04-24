@@ -68,7 +68,7 @@
                             <div class="flex flex-col items-center justify-center">
                                 <span style="font-size:20px" wire:click="toggleItem({{ $loop->index }})"
                                     class="text-green-500 text-lg transition-transform duration-300 hover:cursor-pointer
-                                            {{ $openIndex === $loop->index ? 'rotate-180' : '' }}">
+                                                {{ $openIndex === $loop->index ? 'rotate-180' : '' }}">
                                     ▾
                                 </span>
                                 <button wire:click.stop="removeItem({{ $item['id'] }})" title="Remove item"><span
@@ -105,7 +105,7 @@
                                         {{ number_format((float) $item['discount_price'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
                                         {{ $this->currency_name }}
                                     @else
-                                        {{ number_format((float) $item['price'] * $this->factor, $this->factor == 1 ? 2: 0) }}
+                                        {{ number_format((float) $item['price'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
                                         {{ $this->currency_name }}
                                     @endif
                                 </p>
@@ -348,29 +348,24 @@
                         Pay Expense
                     </button>
                 @else
-                    @if (!empty($this->Current_table_id))
-                        <button style="font-size: 10px;"
-                            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
-                            onclick="showTableModal({{ $count_cart }},'{{ $this->Current_table_id }}')">
-                            Table
-                        </button>
-                    @else
-                        <button style="font-size: 10px;"
-                            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
-                            onclick="showTableModal({{ $count_cart }},'ALL')">
-                            Table
-                        </button>
-                    @endif
+                    <button style="font-size: 10px;" id="sale-order-data"
+                        data-modal-target="default-modal-sales-order-list"
+                        data-modal-toggle="default-modal-sales-order-list"
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
+                        Sale Order
+                    </button>
+
+
 
                     <button onclick="print('Receipt')" style="font-size: 10px;"
                         class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
                         Payment
                     </button>
-                    <button onclick="print('Receipt')" style="font-size: 10px;"
+                    <button  onclick="Save_Sale_Order()"
+                      style="font-size:10px;"
                         class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
-                        Discount / Vat
+                        Save Order
                     </button>
-
                 @endif
 
 
@@ -411,36 +406,21 @@
                 <h1> </h1>
             </div>
             @php
-                $shopInfo_CFR = [
-                    'company' => 'Confirel',
-                    'address1' => '#57, Street 178, Songkat Chey Chomneas',
-                    'address2' => 'Khan Doun Penh, Phnom Penh, Cambodia.',
-                    'phone' => '+855 93 981 724',
-                    'email' => 'info@confirel.com',
-                    'seller' => 'Cashier',
-                    'name' => 'Confirel Co., Ltd.',
-                ];
-                $sellerInfo_panha = [
-                    'address1' => 'PHUM SAMRORNG, SANGKAT KRANG THNUNG,',
-                    'address2' => 'KHAN SEN SOK, PHNOM PENH, CAMBODIA',
-                    'phone' => '010 712 324 / 070 426 322',
-                    'email' => 'spsparep@gmail.com',
-                    'name' => 'Mr. Troek Panha',
+                $shopInfo_duck = [
+                    'company' => 'ឈូកមាស ផ្គត់ផ្គង់សាច់គ្រប់ប្រភេទ',
+                    'description' => 'មានលក់ដុំនិងរាយ មាន់ ទា ជើងមាន់ ស្លាបមាន់ សាច់ទ្រូងមាន់ និងគ្រឿងប្រឡាក់សាច់',
+                    'address1' => 'ភ្នំពេញ',
+                    'address2' => '',
+                    'phone' => '011 79 80 87 / 097 779 80 87',
+                    'email' => '',
+                    'telegram' => '016 79 80 87',
+                    'seller' => '016 79 80 87',
+                    'name' => 'អតិថិជនទូទៅ',
                 ];
 
-                $sellerInfo = $shopInfo_CFR;
+                $sellerInfo = $shopInfo_duck;
             @endphp
 
-
-            <div id="shop_info">
-                <div class="text-left">
-                    <div id="seller_address">{{ $sellerInfo['address1'] }}</div>
-                    <div id="seller_address2">{{ $sellerInfo['address2'] }}</div>
-                    <div id="seller_phone">Mobile: {{ $sellerInfo['phone'] }}</div>
-                    <div id="seller_email">Email: {{ $sellerInfo['email'] }}</div>
-                    <div id="seller_name">Seller: {{ $sellerInfo['name'] }}</div>
-                </div>
-            </div>
             <div id="customer_info">
                 <div class="text-left">
                     @if ($customer_name != 'Walk-in Customer')
@@ -496,82 +476,83 @@
             </div>
 
             <div id="invoice-table">
-                <!-- INVOICE TABLE -->
-                <table style="width:100%;">
+                <table style="width:100%; border-collapse:collapse;">
                     <thead>
-                        <tr">
-                            <th>No.</th>
-                            <th class="text-left">Item</th>
-                            <th>Qty</th>
-                            <th>Unit</th>
-                            <th>Price</th>
-                            <th>Discount</th>
-                            <th>Total</th>
-                            </tr>
+                        <tr>
+                            <th>ល.រ</th>
+                            <th>រាយមុខទំនិញ</th>
+                            <th>ឯកតា</th>
+                            <th>ចំនួន</th>
+                            <th>តម្លៃ</th>
+                            <th>តម្លៃសរុប</th>
+                        </tr>
                     </thead>
-
-
-
-
-
 
                     <tbody>
                         @foreach ($cart as $item)
-                            <tr style="background-color: {{ $loop->even ? '#ffffff' : '#f9f9f9' }};">
-                                <td>{{ $item['order_no'] }}</td>
+                            <tr>
+                                <td style="text-align:center;">{{ $item['order_no'] }}</td>
                                 <td>{{ $item['name'] }}</td>
-                                <td>{{ $item['qty'] }}
+                                <td style="text-align:center;">{{ $item['unit'] }}</td>
+                                <td style="text-align:center;">{{ $item['qty'] }}</td>
+                                <td style="text-align:right;">
+                                    {{ number_format($item['price'] * $factor, $factor == 1 ? 2 : 0) }}
                                 </td>
-                                <td>{{ $item['unit'] }}
+                                <td style="text-align:right;">
+                                    {{ number_format($item['net_amount_line'] * $factor, $factor == 1 ? 2 : 0) }}
                                 </td>
-                                <td>
-                                    {{ number_format($item['price'], 2) }}$</td>
-                                <td>
-                                    {{ $item['discount_percent'] }}%</td>
-                                <td>
-                                    {{ number_format($item['net_amount_line'], 2) }}$</td>
                             </tr>
                         @endforeach
-                        <!-- TOTALS -->
+                        {{-- Sub Total --}}
                         <tr class="total_print">
-                            <td colspan="7" style="text-align:end;">
-
-                                Subtotal: {{ number_format(($this->totals['total_original'] * 100) / 100, 2) }}$
+                            <td colspan="5" style="text-align:right; font-weight:bold;">
+                                សរុប/Sub Total ({{ $currency }})
+                            </td>
+                            <td style="text-align:right; font-weight:bold;">
+                                {{ number_format($this->totals['total_original'] * $factor, $factor == 1 ? 2 : 0) }}
                             </td>
                         </tr>
+                        {{-- Discount --}}
                         <tr class="total_print">
-                            <td colspan="7" style="text-align:end;">
-                                Discount: {{ number_format(($this->totals['total_discount'] * 100) / 100, 2) }}$
-
+                            <td colspan="5" style="text-align:right; font-weight:bold;">
+                                បញ្ចុះតម្លៃ/Discount ({{ $currency }})
+                            </td>
+                            <td style="text-align:right; font-weight:bold;">
+                                {{ number_format($this->totals['total_discount'] * $factor, $factor == 1 ? 2 : 0) }}
                             </td>
                         </tr>
-                        <tr class="total_print">
-                            <td colspan="7" style="text-align:end;">
-                                Total Amount: {{ number_format(($this->totals['total_net'] * 100) / 100, 2) }}$
-
-                            </td>
-                        </tr>
-                        @if ($currency != 'USD')
+                        {{-- VAT --}}
+                        @if (($this->totals['vat_status'] ?? 0) > 0)
                             <tr class="total_print">
-                                <td colspan="7" style="text-align:end;">
-                                    Total Amount in {{ $currency }}:
-                                    {{ number_format(floor($this->totals['total_net'] * $factor * 100) / 100, 0, '.', ' ') }}
-                                    {{ $currency }}
+                                <td colspan="5" style="text-align:right; font-weight:bold;">
+                                    អាករ/VAT {{ (int) $this->totals['vat_status'] }}% ({{ $currency }})
+                                </td>
+                                <td style="text-align:right; font-weight:bold;">
+                                    {{ number_format($this->totals['total_vat_amount'] * $factor, $factor == 1 ? 2 : 0) }}
                                 </td>
                             </tr>
                         @endif
-
+                        {{-- Grand Total --}}
+                        <tr class="total_print">
+                            <td colspan="5" style="text-align:right; font-weight:bold;">
+                                សរុបរួម/Grand Total ({{ $currency }})
+                            </td>
+                            <td style="text-align:right; font-weight:bold;">
+                                {{ number_format($this->totals['grand_total'] * $factor, $factor == 1 ? 2 : 0) }}
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
-
             </div>
-
-
-
 
         </div>
 
+
+
+
     </div>
+
+</div>
 
 
 

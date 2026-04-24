@@ -81,8 +81,8 @@
                 </div>
             </button>
 
-            <button id="sale_data" data-modal-target="default-modal-sale-list"
-                data-modal-toggle="default-modal-sale-list">
+            <button id="expense_data" data-modal-target="default-modal-expense-list"
+                data-modal-toggle="default-modal-expense-list">
                 <div
                     class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
                     <div
@@ -264,7 +264,7 @@
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     {{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script> --}}
     <script src="{{ asset('assets/js/script.js') }}"></script>
-
+       <script src="{{ asset('assets/js/print_document_duck.js') }}"></script>
 </body>
 
 </html>
