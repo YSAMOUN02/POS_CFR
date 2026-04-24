@@ -11,32 +11,37 @@ class InvoiceHeader extends Model
 
     protected $table = 'sale_invoice_headers';
 
+
     protected $fillable = [
         'invoice_number',
-        'invoice_date',
-        'due_date',
         'customer_id',
-        'customer_type',
+        'contact_name',
+        'phone',
+        'address',
+        'invoice_date',
         'total_amount',
-        'discount_amount',
-        'payment_method',
         'vat_amount',
-        'return_amount',
-        'created_by',
+        'discount_percent',
+        'discount_amount',
+        'grand_total',
+        'customer_type',
+        'payment_method',
+        'currency_name',
+        'factor',
         'remarks',
-    ];
-    protected $casts = [
-        'invoice_date' => 'date',
-        'due_date' => 'date',
-        'total_amount' => 'decimal:2',
-        'discount_amount' => 'decimal:2',
-        'vat_amount' => 'decimal:2',
-        'return_amount' => 'decimal:2',
+        'created_by',
     ];
 
-    /**
-     * Get all lines for this invoice
-     */
+    protected $casts = [
+        'invoice_date'      => 'date',
+        'total_amount'      => 'decimal:2',
+        'vat_amount'        => 'decimal:2',
+        'discount_percent'  => 'decimal:2',
+        'discount_amount'   => 'decimal:2',
+        'grand_total'       => 'decimal:2',
+        'factor'            => 'decimal:6',
+    ];
+
     public function lines()
     {
         return $this->hasMany(InvoiceLine::class, 'sale_invoice_id');

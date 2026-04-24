@@ -29,8 +29,8 @@ return new class extends Migration
             $table->string('contact_phone')->nullable();
             // POS related
             $table->enum('type', ['walk_in', 'member', 'vip'])->default('walk_in');
-            $table->decimal('credit_limit', 12, 2)->default(0);  //Allow pay later
-            $table->decimal('balance', 12, 2)->default(0); // owe or advance
+            $table->decimal('discount_percent', 12, 2)->default(0);  //Allow pay later
+
             $table->integer('point')->default(0); // loyalty point
 
             // Status

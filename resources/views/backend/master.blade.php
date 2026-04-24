@@ -80,18 +80,32 @@
                     </div>
                 </div>
             </button>
-            {{-- <button id="openWarehouseModel" data-modal-target="default-modal-warehouse" class="hidden"
-                data-modal-toggle="default-modal-warehouse">
+
+            <button id="sale_data" data-modal-target="default-modal-sale-list"
+                data-modal-toggle="default-modal-sale-list">
                 <div
                     class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
                     <div
                         class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
-                        <i class="fa-solid fa-warehouse"></i>
+                        <i class="fa-solid fa-file-invoice"></i>
                     </div>
-                    <div class="font-medium text-center text-body">គ្រប់គ្រង ឃ្លាំង
+                    <div class="font-medium text-center text-body">របាយការណ៍ចំណាយ
                     </div>
                 </div>
-            </button> --}}
+            </button>
+            <button id="item_ledger_entry" data-modal-target="default-modal-ledger-entry-list"  onclick="loadItemLedgerEntries()"
+                data-modal-toggle="default-modal-ledger-entry-list">
+                <div
+                    class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+                    <div
+                        class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
+                        <i class="fa-solid fa-database"></i>
+                    </div>
+                    <div class="font-medium text-center text-body">របាយការណ៍ ទំនិញ ចេញចូល
+                    </div>
+                </div>
+            </button>
+
             <div id="openWarehouseModel" data-modal-target="default-modal-warehouse"
                 data-modal-toggle="default-modal-warehouse"
                 class=" p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
@@ -150,44 +164,50 @@
                     </div>
                 </div>
             </button>
+            @if (Auth::user()->role == 'admin')
+                <div data-modal-target="static-modal-currency-exchange"
+                    data-modal-toggle="static-modal-currency-exchange"
+                    class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+                    <button>
+                        <div
+                            class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
+                            <svg class="w-7 h-7 inline text-body" aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
+                                    d="M8 7V6a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-1M3 18v-7a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Zm8-3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                            </svg>
+                        </div>
+                        <div class="font-medium text-center text-body">អត្រាប្ដូរប្រាក់</div>
+                    </button>
+                </div>
 
-            <div data-modal-target="static-modal-currency-exchange" data-modal-toggle="static-modal-currency-exchange"
-                class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
-                <button>
+
+                <button id="user_data" data-modal-target="default-modal-user-list"
+                    data-modal-toggle="default-modal-user-list">
                     <div
-                        class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
-                        <svg class="w-7 h-7 inline text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                            width="24" height="24" fill="none" viewBox="0 0 24 24">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
-                                d="M8 7V6a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-1M3 18v-7a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Zm8-3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
-                        </svg>
+                        class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+                        <div
+                            class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="font-medium text-center text-body">គ្រប់គ្រងអ្នកប្រើប្រាស់
+                        </div>
                     </div>
-                    <div class="font-medium text-center text-body">អត្រាប្ដូរប្រាក់</div>
                 </button>
-            </div>
-            <button id="user_data" data-modal-target="default-modal-user-list"
-                data-modal-toggle="default-modal-user-list">
-                <div
-                    class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+
+                <button id="purchasing">
                     <div
-                        class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
-                        <i class="fa-solid fa-user"></i>
+                        class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
+                        <div
+                            class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
+                            <i class="fa-solid fa-basket-shopping"></i>
+                        </div>
+                        <div class="font-medium text-center text-body">ទិញចូលស្តក
+                        </div>
                     </div>
-                    <div class="font-medium text-center text-body">គ្រប់គ្រងអ្នកប្រើប្រាស់
-                    </div>
-                </div>
-            </button>
-            <button id="purchasing">
-                <div
-                    class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
-                    <div
-                        class="flex justify-center items-center p-2 mx-auto mb-2 bg-neutral-primary-strong border border-default-strong rounded-full w-12 h-12">
-                        <i class="fa-solid fa-basket-shopping"></i>
-                    </div>
-                    <div class="font-medium text-center text-body">ទិញចូលស្តក
-                    </div>
-                </div>
-            </button>
+                </button>
+            @endif
             <button id="logout">
                 <div
                     class="p-4 rounded-base cursor-pointer bg-neutral-secondary-medium border border-default-medium hover:bg-neutral-tertiary-medium">
@@ -202,10 +222,10 @@
         </div>
     </div>
 
-    <div id="welcomeScreen" class="fixed inset-0 flex items-center justify-center bg-amber-500 z-50">
+    {{-- <div id="welcomeScreen" class="fixed inset-0 flex items-center justify-center bg-amber-500 z-50">
         <h1 class="text-4xl font-bold mb-4 animate-bounce">Welcome {{ Auth::user()->name }}! to POS System 🍕🥤</h1>
         <br>
-    </div>
+    </div> --}}
     <main>
         @yield('content')
 
@@ -222,6 +242,8 @@
 
     <livewire:scripts />
     <script>
+        const user_role = @json(Auth::user()->role);
+        console.log("User Role:", user_role);
         const warehouse_ids = @json(Auth::user()->warehouses->pluck('id'));
         // Add fade-out before reload/navigation
         document.querySelectorAll('a').forEach(link => {

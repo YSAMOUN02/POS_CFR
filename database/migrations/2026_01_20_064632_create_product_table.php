@@ -36,7 +36,7 @@ return new class extends Migration
             $table->string('image')->nullable(); // image
             $table->string('category_id')->nullable(); // category_id (can be string or foreign key)
             $table->string('category_name')->nullable(); // category_id (can be string or foreign key)
-
+            $table->enum('type', ['service', 'product', 'expence'])->default('product');
             $table->string('unit')->nullable(); // unit
             $table->string('Tax')->nullable(); // Tax
             $table->boolean('status')->default(1); // status

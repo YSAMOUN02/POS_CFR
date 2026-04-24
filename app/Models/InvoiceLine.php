@@ -11,50 +11,54 @@ class InvoiceLine extends Model
 
     protected $table = 'sale_invoice_lines';
 
-    protected $fillable = [
-        'sale_invoice_id',
-        'product_id',
 
-        // Snapshot
-        'barcode',
-        'item_code',
-        'name',
-        'variant',
-        'description',
-        'unit',
-        'category_name',
+   protected $fillable = [
+    'sale_invoice_id',
+    'product_id',
 
-        // Pricing
-        'cost',
-        'unit_price',
-        'sell_price',
-        'quantity',
+    'barcode',
+    'item_code',
+    'name',
+    'variant',
+    'description',
 
-        // Discount
-        'discount_percent',
-        'discount_amount',
+    'quantity',
+    'unit',
+    'category_name',
 
-        // Totals
-        'line_amount',
-        'vat',
-        'vat_amount',
-        'total_amount',
-       'created_by',
-        'remarks',
-    ];
+    'cost',
+    'unit_price',
+    'sell_price',
 
-    protected $casts = [
-        'cost' => 'decimal:2',
-        'unit_price' => 'decimal:2',
-        'sell_price' => 'decimal:2',
-        'discount_percent' => 'decimal:2',
-        'discount_amount' => 'decimal:2',
-        'line_amount' => 'decimal:2',
-        'vat' => 'decimal:2',
-        'vat_amount' => 'decimal:2',
-        'total_amount' => 'decimal:2',
-    ];
+    'discount_percent',
+    'discount_amount',
 
+    'line_amount',
+    'vat_percent',
+    'vat_amount',
+    'net_amount',
+    'grand_total_amount',
+
+    'created_by',
+    'remarks',
+];
+
+protected $casts = [
+    'quantity'            => 'decimal:4',
+
+    'cost'                => 'decimal:2',
+    'unit_price'          => 'decimal:2',
+    'sell_price'          => 'decimal:2',
+
+    'discount_percent'    => 'decimal:2',
+    'discount_amount'     => 'decimal:2',
+
+    'line_amount'         => 'decimal:2',
+    'vat_percent'         => 'decimal:2',
+    'vat_amount'          => 'decimal:2',
+    'net_amount'          => 'decimal:2',
+    'grand_total_amount'  => 'decimal:2',
+];
     /*
     |--------------------------------------------------------------------------
     | Relationships

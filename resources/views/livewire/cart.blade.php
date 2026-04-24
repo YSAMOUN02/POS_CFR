@@ -1,31 +1,57 @@
 <div>
     <div class="screen-only">
         <div id="header_invoice"
-            class="border-b bg-white border-default pb-2  p-2 flex items-center justify-between sticky top-0">
-            <h1 id="chasier" class="mb-2 font-bold">
+            class="border-b bg-white border-default pb-2 p-2 flex items-center justify-between sticky top-0">
+
+            <h1 id="chasier" class="mb-2 font-bold flex items-center gap-2">
+
                 @if (!empty($this->Current_table_id))
+
                     <span class="text-transparent bg-clip-text bg-gradient-to-r to-amber-600 from-amber-400">
                         កំពុងតែកែ ទិន្នន័យតាមតុ :
                     </span>
-                    {{ $this->Current_table_name }}
+
+                    <span>{{ $this->Current_table_name }}</span>
                 @else
                     <span id="tittle_span"
                         class="text-transparent bg-clip-text bg-gradient-to-r to-amber-600 from-amber-400">
-                    Sales Order
+
+                        @if ($cart_mode == 'expence')
+                            Expense Order
+                        @else
+                            Sales Order
+                        @endif
+
                     </span>
 
                 @endif
 
+                {{-- MODE BADGE --}}
+                @if ($cart_mode == 'expence')
+                    <span class="text-xs bg-red-500 text-white px-2 py-1 rounded-full">
+                        Expense Mode
+                    </span>
+                @elseif($cart_mode == 'sale')
+                    <span class="text-xs bg-green-500 text-white px-2 py-1 rounded-full">
+                        Sale Mode
+                    </span>
+                @endif
+
             </h1>
-            <div class="px-4" id="refreshBtn" data-popover-target="popover-user-profile">
+
+            <div class="px-4 cursor-pointer" id="refreshBtn" data-popover-target="popover-user-profile">
                 <i id="refresh-icon" class="fa-solid fa-arrows-rotate"></i>
             </div>
 
             <div data-popover id="popover-user-profile" role="tooltip"
                 class="absolute z-10 invisible inline-block w-64 text-sm text-body transition-opacity duration-300 bg-neutral-primary-soft border border-default rounded-base shadow-xs opacity-0">
+
                 <div class="p-3">
-                    <p class="text-sm text-gray-500">Tip: Click on the arrows to refresh the Page.</p>
+                    <p class="text-sm text-gray-500">
+                        Tip: Click on the arrows to refresh the Page.
+                    </p>
                 </div>
+
                 <div data-popper-arrow></div>
             </div>
 
@@ -37,12 +63,10 @@
                 <div
                     class="card bg-white shadow border-b-amber-600 focus-within:bg-yellow-50 transition-colors duration-200 ">
                     <!-- Header (clickable) -->
-                    <div
-                        class="btn_sale_invoice w-full flex items-center justify-between p-2">
+                    <div class="btn_sale_invoice w-full flex items-center justify-between p-2">
                         <div class="flex items-start gap-3">
                             <div class="flex flex-col items-center justify-center">
-                              <span style="font-size:20px"
-                                    wire:click="toggleItem({{ $loop->index }})"
+                                <span style="font-size:20px" wire:click="toggleItem({{ $loop->index }})"
                                     class="text-green-500 text-lg transition-transform duration-300 hover:cursor-pointer
                                             {{ $openIndex === $loop->index ? 'rotate-180' : '' }}">
                                     ▾
@@ -73,10 +97,16 @@
                                 <p class="text-sm text-gray-400 number-change">
                                     តម្លៃ:
                                     @if ($item['discount_percent'] != 0)
-                                        <del>{{ $item['price'] * $this->factor }}</del> {{$this->currency_name}}
-                                        -{{ (float) $item['discount_price'] * $this->factor }}{{ $this->currency_name }}
+                                        <del>
+                                            {{ number_format((float) $item['price'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
+                                        </del>
+                                        {{ $this->currency_name }}
+                                        -
+                                        {{ number_format((float) $item['discount_price'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
+                                        {{ $this->currency_name }}
                                     @else
-                                        {{ (float) $item['price']* $this->factor  }} {{ $this->currency_name }}
+                                        {{ number_format((float) $item['price'] * $this->factor, $this->factor == 1 ? 2: 0) }}
+                                        {{ $this->currency_name }}
                                     @endif
                                 </p>
                             </div>
@@ -84,10 +114,16 @@
                         <div class="text-right">
                             <p class="font-semibold number-change">
                                 @if ($item['discount_percent'] != 0)
-                                    <del>{{ $item['amount_line'] * $this->factor }} {{ $this->currency_name }}</del> -
-                                    {{ (float) $item['net_amount_line'] * $this->factor }}{{ $this->currency_name }}
+                                    <del>
+                                        {{ number_format((float) $item['amount_line'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
+                                        {{ $this->currency_name }}
+                                    </del>
+                                    -
+                                    {{ number_format((float) $item['net_amount_line'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
+                                    {{ $this->currency_name }}
                                 @else
-                                    {{ (float) $item['amount_line'] * $this->factor }} {{ $this->currency_name }}
+                                    {{ number_format((float) $item['amount_line'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
+                                    {{ $this->currency_name }}
                                 @endif
 
 
@@ -98,14 +134,11 @@
                     <!-- Dropdown Content -->
                     <div class="{{ $openIndex === $loop->index ? '' : 'hidden' }} bonus border-b p-2">
                         <div class="grid grid-cols-7 gap-4">
-
-                                                            <div class="col-span-2">
+                            @if ($item['type'] == 'product' || $item['type'] == 'service')
+                                <div class="col-span-2">
                                     <label class="text-sm text-gray-500">ចំនួន</label>
-                                    <input type="number"
-                                        min="1"
-                                        max="{{ $item['stock'] }}"
-                                        id="qty_order_{{ $loop->index }}"
-                                        step="1"
+                                    <input type="number" min="1" max="{{ $item['stock'] }}"
+                                        id="qty_order_{{ $loop->index }}" step="1"
                                         wire:model.lazy="cart.{{ $loop->index }}.qty"
                                         wire:change="recalcLine({{ $loop->index }}, 'qty')"
                                         class="w-full mt-1 border rounded px-3 py-2 focus:outline-none focus:ring" />
@@ -114,11 +147,11 @@
                                 <!-- Unit Price -->
                                 <div class="col-span-2">
                                     <label class="text-sm text-gray-500">តម្លៃ</label>
-                                  <input type="number" min="0" step="0.01"
-                                    wire:key="price-{{ $loop->index }}-{{ $this->cart[$loop->index]['price'] }}-{{ $this->factor }}"
-                                    value="{{ rtrim(rtrim(number_format($item['price'] * $this->factor, 3, '.', ''), '0'), '.') }}"
-                                    wire:change="recalcLine({{ $loop->index }}, 'price', $event.target.value)"
-                                    class="w-full mt-1 border rounded px-3 py-2" />
+                                    <input type="number" min="0" step="0.01"
+                                        wire:key="price-{{ $loop->index }}-{{ $this->cart[$loop->index]['price'] }}-{{ $this->factor }}"
+                                        value="{{ rtrim(rtrim(number_format($item['price'] * $this->factor, 3, '.', ''), '0'), '.') }}"
+                                        wire:change="recalcLine({{ $loop->index }}, 'price', $event.target.value)"
+                                        class="w-full mt-1 border rounded px-3 py-2" />
                                 </div>
 
                                 <!-- Discount -->
@@ -129,27 +162,52 @@
                                         wire:change="recalcLine({{ $loop->index }}, 'discount_percent')"
                                         class="w-full mt-1 border rounded px-3 py-2 focus:outline-none focus:ring" />
                                 </div>
+                            @else
+                                <div class="col-span-3">
+                                    <label class="text-sm text-gray-500">ចំនួន</label>
+                                    <input type="number" min="1" max="{{ $item['stock'] }}"
+                                        id="qty_order_{{ $loop->index }}" step="1"
+                                        wire:model.lazy="cart.{{ $loop->index }}.qty"
+                                        wire:change="recalcLine({{ $loop->index }}, 'qty')"
+                                        class="w-full mt-1 border rounded px-3 py-2 focus:outline-none focus:ring" />
+                                </div>
 
-                               @if ( $item['track_stock'] == 1 )
-                                      <div>
+                                <!-- Unit Price -->
+                                <div class="col-span-4">
+                                    <label class="text-sm text-gray-500">តម្លៃ</label>
+                                    <input type="number" min="0" step="0.01"
+                                        wire:key="price-{{ $loop->index }}-{{ $this->cart[$loop->index]['price'] }}-{{ $this->factor }}"
+                                        value="{{ rtrim(rtrim(number_format($item['price'] * $this->factor, 3, '.', ''), '0'), '.') }}"
+                                        wire:change="recalcLine({{ $loop->index }}, 'price', $event.target.value)"
+                                        class="w-full mt-1 border rounded px-3 py-2" />
+                                </div>
+                            @endif
 
-                            <label class="text-sm text-gray-500">Manage Lot</label>
-                                <div class="flex">
-                                    <button
-                                    onclick="openLotModal({{ $loop->index }}, {{ $item['id'] }}, '{{ $item['name'] }}', {{ $item['qty'] }})"
-                                    class="bg-blue-300 hover:bg-blue-400 text-white font-semibold px-1 py-1 rounded">
-                                    +
-                                     </button>
-                                     &ensp;
-                                    <button
-                                            wire:click="viewLots({{ $loop->index }})"
-                                                class="bg-blue-300 hover:bg-blue-400 text-white font-semibold px-1 py-1 rounded">
-                                    <i class="fa-solid fa-eye"></i>
-                                </button>
-                              </div>
-                            </div>
-                                @endif
+                            @if ($item['track_stock'] == 1)
+                                <div>
 
+                                    <label class="text-sm text-gray-500">Manage Lot</label>
+                                    <div class="flex">
+                                        <button
+                                            onclick="openLotModal({{ $loop->index }}, {{ $item['id'] }}, '{{ $item['name'] }}', {{ $item['qty'] }})"
+                                            class="bg-blue-300 hover:bg-blue-400 text-white font-semibold px-1 py-1 rounded">
+                                            +
+                                        </button>
+                                        &ensp;
+                                        <button wire:click="viewLots({{ $loop->index }})"
+                                            class="bg-blue-300 hover:bg-blue-400 text-white font-semibold px-1 py-1 rounded">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
+                            @if ($item['type'] == 'expence')
+                                <div class="col-span-7">
+                                    <label class="text-sm text-gray-500">សម្រាប់</label>
+                                    <input type="text" wire:model.lazy="cart.{{ $loop->index }}.expence_for"
+                                        class="w-full mt-1 border rounded px-3 py-2 focus:outline-none focus:ring" />
+                                </div>
+                            @endif
 
                         </div>
                     </div>
@@ -166,29 +224,70 @@
 
         <div id="total" class="grid grid-cols-1 gap-1 p-2">
             <div class="flex items-end flex-col justify-between">
-                <p class="text-sm">
-                    សរុបរង: {{$this->totals['total_original']* $this->factor }} {{ $this->currency_name }}
+                @if ($cart_mode == 'expence')
 
-                </p>
+                    <p class="font-semibold">
+                        តម្លៃសរុប : {{ number_format($this->totals['grand_total'] * $this->factor, 0) }}
+                        {{ $this->currency_name }}
+                    </p>
 
-                <p class="text-sm">
-                    បញ្ចុះតម្លៃ : {{ $this->totals['total_discount'] * $this->factor }} {{ $this->currency_name }}
-                </p>
-                <p class="font-semibold">
-                    តម្លៃសរុប : {{ $this->totals['total_net'] *$this->factor, }} {{ $this->currency_name }}
-                </p>
+                    @if ($this->currency_name != '$')
+                        <p class="font-semibold">
+                            តម្លៃសរុប ជា USD : {{ number_format($this->totals['grand_total'], 2) }} $
+                        </p>
+                    @endif
+                @else
+                    @php
+                        $decimal = $this->factor == 1 ? 2 : 0;
+                    @endphp
+
+                    <p class="text-sm">
+                        សរុបរង:
+                        {{ number_format($this->totals['total_original'] * $this->factor, $decimal) }}
+                        {{ $this->currency_name }}
+                    </p>
+
+                    <p class="text-sm">
+                        បញ្ចុះតម្លៃ :
+                        {{ number_format($this->totals['total_discount'] * $this->factor, $decimal) }}
+                        {{ $this->currency_name }}
+                    </p>
+
+                    @if ($this->totals['vat_status'] > 0)
+                        <p class="text-sm">
+                            VAT {{ (int) $this->totals['vat_status'] }} % :
+                            {{ number_format($this->totals['total_vat_amount'] * $this->factor, $decimal) }}
+                            {{ $this->currency_name }}
+                        </p>
+                    @endif
+
+                    <p class="font-semibold">
+                        តម្លៃសរុប :
+                        {{ number_format($this->totals['grand_total'] * $this->factor, $decimal) }}
+                        {{ $this->currency_name }}
+                    </p>
+
+                    @if ($this->factor != 1)
+                        <p class="font-semibold">
+                            តម្លៃសរុប USD :
+                            {{ number_format($this->totals['grand_total'], 2) }} $
+                        </p>
+                    @endif
+                @endif
+
+
                 <input type="hidden" id="total_amount"
-                    value="{{ number_format($this->totals['total_net'], 2, '.', '') }}">
+                    value="{{ number_format($this->totals['grand_total'], 2, '.', '') }}">
                 <input type="hidden" id="currency_name" value="{{ $currency_name }}">
                 <input type="hidden" id="currency_display_symbol" value="{{ $currency }}">
                 <input type="hidden" id="currency_display_factor" value="{{ $factor }}">
 
-                @if ($currency != 'USD')
+                @if ($this->factor != 1)
                     <div class="w-full flex justify-between">
 
                         <div class="flex items-center">
 
-                            {{-- <p class="font-semibold">1$ : {{ (float) $factor }}{{ $currency }}</p> --}}
+
                             <span
                                 class="inline-flex items-center bg-brand-softer border border-brand-subtle text-fg-brand-strong text-xs font-medium px-1.5 py-0.5 rounded-sm">
 
@@ -200,14 +299,14 @@
 
                     </div>
                     <input type="hidden" id="converted_total_amount"
-                        value="{{ floor($this->totals['total_net'] * $factor) == $this->totals['total_net'] * $factor
-                            ? number_format($this->totals['total_net'] * $factor, 0)
-                            : number_format($this->totals['total_net'] * $factor, 2) }}">
+                        value="{{ floor($this->totals['grand_total'] * $factor) == $this->totals['grand_total'] * $factor
+                            ? number_format($this->totals['grand_total'] * $factor, 0)
+                            : number_format($this->totals['grand_total'] * $factor, 2) }}">
                 @else
                     <input type="hidden" id="converted_total_amount"
-                        value="{{ floor($this->totals['total_net'] * $factor) == $this->totals['total_net'] * $factor
-                            ? number_format($this->totals['total_net'] * $factor, 0)
-                            : number_format($this->totals['total_net'] * $factor, 2) }}">
+                        value="{{ floor($this->totals['grand_total'] * $factor) == $this->totals['grand_total'] * $factor
+                            ? number_format($this->totals['grand_total'] * $factor, 0)
+                            : number_format($this->totals['grand_total'] * $factor, 2) }}">
                 @endif
 
             </div>
@@ -220,15 +319,18 @@
                         </option>
                     @endforeach
                 </select>
-                <div id="list_main" class="relative col-span-2" style="width:300px;">
-                    <input type="text" id="customerSearch" placeholder="ភ្ញៀវដើរចូល" autocomplete="off">
+                @if ($cart_mode == 'expence')
+                @else
+                    <div id="list_main" class="relative col-span-2" style="width:300px;">
+                        <input type="text" id="customerSearch" placeholder="ភ្ញៀវដើរចូល" autocomplete="off">
 
-                    <input type="hidden" id="customerValue" wire:model.live="customer_id">
+                        <input type="hidden" id="customerValue" wire:model.live="customer_id">
 
-                    <ul id="customerList"
-                        class="list hidden absolute z-50 bg-white border rounded shadow w-full max-h-60 overflow-auto">
-                    </ul>
-                </div>
+                        <ul id="customerList"
+                            class="list hidden absolute z-50 bg-white border rounded shadow w-full max-h-60 overflow-auto">
+                        </ul>
+                    </div>
+                @endif
             </div>
             <hr>
             <div class="mt-5 grid grid-cols-4 gap-2">
@@ -240,24 +342,39 @@
                     class="bg-red-300 hover:bg-red-400 text-white font-semibold px-4 py-2 rounded">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
-
-                @if (!empty($this->Current_table_id))
-                    <button style="font-size: 10px;"
-                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
-                        onclick="showTableModal({{ $count_cart }},'{{ $this->Current_table_id }}')">
-                        Table
+                @if ($cart_mode == 'expence')
+                    <button onclick="print('Receipt')" style="font-size: 10px;"
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
+                        Pay Expense
                     </button>
                 @else
-                    <button style="font-size: 10px;"
-                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
-                        onclick="showTableModal({{ $count_cart }},'ALL')">
-                        Table
+                    @if (!empty($this->Current_table_id))
+                        <button style="font-size: 10px;"
+                            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
+                            onclick="showTableModal({{ $count_cart }},'{{ $this->Current_table_id }}')">
+                            Table
+                        </button>
+                    @else
+                        <button style="font-size: 10px;"
+                            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
+                            onclick="showTableModal({{ $count_cart }},'ALL')">
+                            Table
+                        </button>
+                    @endif
+
+                    <button onclick="print('Receipt')" style="font-size: 10px;"
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
+                        Payment
                     </button>
+                    <button onclick="print('Receipt')" style="font-size: 10px;"
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
+                        Discount / Vat
+                    </button>
+
                 @endif
-                <button onclick="print('Receipt')" style="font-size: 10px;"
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
-                    Payment
-                </button>
+
+
+
             </div>
         </div>
     </div>
@@ -283,7 +400,7 @@
                 {{-- <img class="logo" style="width: 250px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo"> --}}
             </div>
 
-              <div id="logo_80mm" style="flex: 0 0 auto; margin-right:15px;">
+            <div id="logo_80mm" style="flex: 0 0 auto; margin-right:15px;">
 
                 {{-- CFR  --}}
                 <img class="logo" style="width: 80px;" src="{{ asset('assets/logo/' . $logo) }}" alt="Logo">
@@ -419,7 +536,7 @@
                         <tr class="total_print">
                             <td colspan="7" style="text-align:end;">
 
-                                Subtotal: {{ number_format(($this->totals['total_original'] * 100) / 100 , 2) }}$
+                                Subtotal: {{ number_format(($this->totals['total_original'] * 100) / 100, 2) }}$
                             </td>
                         </tr>
                         <tr class="total_print">

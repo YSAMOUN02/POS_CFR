@@ -20,8 +20,7 @@ protected $fillable = [
     'city',
     'country',
     'type',
-    'credit_limit',
-    'balance',
+    'discount_percent',
     'point',
     'status',
 ];

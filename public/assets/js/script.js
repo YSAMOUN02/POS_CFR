@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 message: data.message || "Customer created successfully",
                 type: "success",
             });
-
+            loadCustomers(1);
             form.reset();
 
             document
@@ -125,7 +125,7 @@ function openUpdateCustModal() {
     if (!customerId) {
         showToast({
             message: "Please select a customer first",
-            type: "warning",
+            type: "error",
         });
         return;
     }
@@ -150,12 +150,10 @@ function openUpdateCustModal() {
     document.getElementById("cust-city").value = row.dataset.city ?? "";
     document.getElementById("cust-country").value = row.dataset.country ?? "";
     document.getElementById("cust-type").value = row.dataset.type ?? "";
-    document.getElementById("cust-credit").value = parseFloat(
-        row.dataset.credit ?? 0,
+    document.getElementById("cust-discount_percent").value = parseFloat(
+        row.dataset.discount_percent ?? 0,
     ).toFixed(2);
-    document.getElementById("cust-balance").value = parseFloat(
-        row.dataset.balance ?? 0,
-    ).toFixed(2);
+
     document.getElementById("cust-point").value = row.dataset.point ?? 0;
     document.getElementById("cust-status").value = row.dataset.status ?? "1";
 
@@ -516,9 +514,8 @@ function renderCustomerTable(data) {
             data-address1="${c.address1 ?? ""}"
             data-city="${c.city ?? ""}"
             data-country="${c.country ?? ""}"
-            data-credit="${c.credit_limit}"
-            data-balance="${c.balance}"
-            data-point="${c.point}"
+            data-discount_percent="${c.discount_percent ?? 0}"
+            data-point="${c.point ?? 0}"
             data-type="${c.type}"
             data-address2="${c.address2}"
             data-contact_name="${c.contact_name ?? ""}"
@@ -534,8 +531,8 @@ function renderCustomerTable(data) {
             <td>${c.phone ?? "-"}</td>
             <td>${c.email ?? "-"}</td>
             <td>${c.type}</td>
-            <td>${parseFloat(c.credit_limit).toFixed(2)}</td>
-            <td>${parseFloat(c.balance).toFixed(2)}</td>
+            <td>${parseFloat(c.discount_percent).toFixed(2)}</td>
+
             <td>${c.point}</td>
             <td>
                 ${
@@ -1288,19 +1285,16 @@ function print(document_type) {
     print_document(document_type);
 }
 
-const input_due_date = document.getElementById("due_date");
 const input_document_date_value = document.getElementById("document_dateInput");
 function print_document(document_type) {
-    const due_date_input_value = input_due_date.value;
-    const due_date = new Date(due_date_input_value);
     const document_date_value = input_document_date_value.value;
     const document_date = new Date(document_date_value);
     const options = { day: "2-digit", month: "short", year: "numeric" };
-    const formattedDueDate = due_date.toLocaleDateString("en-GB", options);
     const formattedDocumentDate = document_date.toLocaleDateString(
         "en-GB",
         options,
     );
+
     // docutment Header
     const document_header = document.getElementById("document-header");
     // Title
@@ -1405,8 +1399,7 @@ function print_document(document_type) {
 
                                 </div>
 
-                                <div><b>Due Date:</b></div>
-                                <div>${formattedDueDate}</div>
+
                             </div>
 
 
@@ -1563,8 +1556,6 @@ function print_document(document_type) {
 
                                 </div>
 
-                                <div><b>Due Date:</b></div>
-                                <div>&ensp; ${formattedDueDate}</div>
                             </div>
                         </div>
                        <div style="font-size:10px; font-weight:bold; margin-bottom:10px;"> <center>${document_title.innerHTML}</center></div>
@@ -1716,8 +1707,6 @@ function print_document(document_type) {
                                     ORDER-${formattedOrderNo}
                                 </div>
 
-                                <div><b>Due Date:</b></div>
-                                <div>${formattedDueDate}</div>
                             </div>
                         </div>
                     <!-- Table -->
@@ -1847,8 +1836,6 @@ function print_document(document_type) {
                                     &ensp;${quotation_no}
                                 </div>
 
-                                <div><b>Due Date:</b></div>
-                                <div>${formattedDueDate}</div>
                             </div>
                         </div>
                     <!-- Table -->
@@ -2026,8 +2013,6 @@ function print_document(document_type) {
                                   ${delivery_note_no}
                                 </div>
 
-                                <div><b>Due Date:</b></div>
-                                <div>${formattedDueDate}</div>
                             </div>
 
 
@@ -2048,7 +2033,6 @@ function print_document(document_type) {
 }
 
 const dateInput = document.getElementById("document_dateInput");
-const validInput = document.getElementById("due_date");
 let quotationNextAction = null;
 let formattedDocDate = null;
 let formattedDueDate = null;
@@ -2095,7 +2079,6 @@ function openDatePromt_Modal(onConfirm) {
     const format = (d) => d.toISOString().split("T")[0];
 
     dateInput.value = format(today);
-    validInput.value = format(today);
 
     modal.classList.remove("hidden");
 
@@ -2112,7 +2095,6 @@ function openDatePromt_Modal(onConfirm) {
 
         // Parse input values
         document_date = new Date(dateInput.value);
-        due_date = new Date(validInput.value);
     };
 }
 
@@ -2843,29 +2825,38 @@ function updatePayment() {
 
     if (isEnough) {
         // Dates from inputs
-        const input_due_date_local = document.getElementById("due_date");
+
         const input_document_date_value_local =
             document.getElementById("document_dateInput");
         const Payment_Method = document.getElementById("payment_method").value;
-        const due_date = new Date(input_due_date_local.value);
+
         const document_date = new Date(input_document_date_value_local.value);
         const customer_type = document.getElementById("customer_type").value;
+
+        const customer_name =
+            document.getElementById("customer_name_info").value;
+        const customer_id = document.getElementById("customer_id_info").value;
+        const customer_phone = document.getElementById(
+            "customer_phone_info",
+        ).value;
+        const customer_address = document.getElementById(
+            "customer_address_info",
+        ).value;
+        const remark = document.getElementById("remark_invoice").value;
+
         // Store everything in global object
         paymentData = {
             paymentMethod: Payment_Method,
-            totalAmountUSD: Number(totalAmountUSD) || 0,
-            payUSD: Number(payUSD) || 0,
-            payOther: Number(payOther) || 0,
-            payOtherInUSD: Number(payOtherInUSD) || 0,
-            returnedUSD: Number(returnedUSD) || 0,
-
-            factor: Number(factor) || 1,
-            currency_other_symbol: currency_other_symbol ?? null,
-            due_date: due_date ?? null,
             document_date: document_date ?? null,
             customer_type: customer_type ?? null,
+            customer_id: customer_id ?? null,
+            customer_name: customer_name ?? null,
+            customer_phone: customer_phone ?? null,
+            customer_address: customer_address ?? null,
+            remark: remark ?? null,
         };
 
+        console.log("Payment Data Prepared:", paymentData);
         // enable button
         confirmPayBtn.disabled = false;
         confirmPayBtn.textContent = "Payment";
@@ -2920,7 +2911,7 @@ function initializePayment() {
     document.getElementById("customer_type").value = "";
 
     // Optional: reset dates
-    document.getElementById("due_date").value = "";
+
     document.getElementById("document_dateInput").value = "";
 
     // Reset currency factor if needed
@@ -2933,9 +2924,31 @@ function Final_Payment() {
     });
 }
 
-// Attach events
-payUSDInput.addEventListener("input", updatePayment);
-payOtherInput.addEventListener("input", updatePayment);
+document.getElementById("pay_usd")?.addEventListener("input", updatePayment);
+document.getElementById("pay_other")?.addEventListener("input", updatePayment);
+
+document
+    .getElementById("payment_method")
+    ?.addEventListener("change", updatePayment);
+document
+    .getElementById("customer_type")
+    ?.addEventListener("change", updatePayment);
+document
+    .getElementById("document_dateInput")
+    ?.addEventListener("change", updatePayment);
+
+document
+    .getElementById("customer_name_info")
+    ?.addEventListener("input", updatePayment);
+document
+    .getElementById("customer_address_info")
+    ?.addEventListener("input", updatePayment);
+document
+    .getElementById("customer_phone_info")
+    ?.addEventListener("input", updatePayment);
+document
+    .getElementById("remark_invoice")
+    ?.addEventListener("input", updatePayment);
 
 // Initialize
 updatePayment();
@@ -2972,6 +2985,16 @@ window.addEventListener("update-customer-input", (e) => {
 let document_no = "NA";
 window.addEventListener("get-document", (e) => {
     document_no = e.detail[0].document_no;
+});
+window.addEventListener("cart-cleared", (e) => {
+    current_discount = 0;
+    messsage = e.detail[0].message;
+    showToast({
+        message: messsage,
+        type: "success",
+    });
+    document.querySelector("#customerValue").value = "";
+    document.querySelector("#customerSearch").value = "";
 });
 
 const fileInput = document.getElementById("update_image");
@@ -3059,6 +3082,15 @@ window.addEventListener("payment-success", (e) => {
     Livewire.dispatch("clearAll_after_payment");
 
     reloadProducts();
+});
+
+window.addEventListener("error", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "error",
+    });
 });
 
 /*
@@ -3240,30 +3272,49 @@ function renderTable(response) {
                 (Number(line.cost) || 0) * (Number(line.quantity) || 0);
 
             rows.push(`
-                <tr class="text-nowrap">
-                    <td>${no++}</td>
-                    <td>${header.invoice_number ?? ""}</td>
-                    <td>${header.created_at ? new Date(header.created_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }) : ""}</td>
-                    <td>${header.customer?.name ?? ""}</td>
-                    <td>${header.invoice_date ? new Date(header.invoice_date).toLocaleDateString("en-GB") : ""}</td>
-                    <td>${header.payment_method ?? ""}</td>
-                    <td>${header.customer_type ?? ""}</td>
-                    <td>${line.name ?? ""}</td>
-                    <td>${line.variant ?? ""}</td>
-                    <td>${line.description ?? ""}</td>
-                    <td class="text-right">${line.quantity ?? 0}</td>
-                    <td>${line.unit ?? ""}</td>
-                    <td class="text-right">${formatMoney(line.unit_price)} $</td>
-                    <td class="text-right">${formatMoney(line.sell_price)} $</td>
-                    <td class="text-right">${formatMoney(line.line_amount)} $</td>
-                    <td class="text-right">${formatPercent(line.discount_percent)} %</td>
-                    <td class="text-right">${formatMoney(line.discount_amount)} $</td>
-                    <td class="text-right">${formatPercent(line.vat)} %</td>
-                    <td class="text-right">${formatMoney(line.vat_amount)} $</td>
-                    <td class="text-right">${formatMoney(line.total_amount)} $</td>
-                </tr>
-            `);
+<tr class="text-nowrap">
+    <td>${no++}</td>
+    <td>${header.invoice_number ?? ""}</td>
+    <td>${
+        header.created_at
+            ? new Date(header.created_at).toLocaleString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+              })
+            : ""
+    }</td>
+      <td>${header.contact_name ?? ""}</td>
+    <td>${header.phone ?? ""}</td>
+    <td>${header.address ?? ""}</td>
+    <td>${header.invoice_date ? new Date(header.invoice_date).toLocaleDateString("en-GB") : ""}</td>
+    <td>${header.payment_method ?? ""}</td>
+    <td>${header.customer_type ?? ""}</td>
 
+    <td>${line.name ?? ""}</td>
+    <td>${line.variant ?? ""}</td>
+    <td>${line.description ?? ""}</td>
+    <td class="text-right">${line.quantity ?? 0}</td>
+    <td>${line.unit ?? ""}</td>
+
+    <td class="text-right">${formatMoney(line.unit_price)} $</td>
+    <td class="text-right">${formatMoney(line.sell_price)} $</td>
+
+    <td class="text-right">${formatMoney(line.line_amount)} $</td>
+
+    <td class="text-right">${formatPercent(line.discount_percent)} %</td>
+    <td class="text-right">${formatMoney(line.discount_amount)} $</td>
+
+    <td class="text-right">${formatPercent(line.vat)} %</td>
+    <td class="text-right">${formatMoney(line.vat_amount)} $</td>
+
+    <td class="text-right">${formatMoney(line.net_amount)} $</td>
+    <td class="text-right">${formatMoney(line.grand_total_amount)} $</td>
+</tr>
+`);
             // accumulate totals
             subtotal.quantity += Number(line.quantity) || 0;
             subtotal.unit_price += Number(line.unit_price) || 0;
@@ -3287,20 +3338,21 @@ function renderTable(response) {
     tbody.innerHTML = rows.join("");
 
     // append subtotal row
-    tbody.innerHTML += `
-        <tr class="bg-blue-200 font-semibold text-nowrap">
-            <td colspan="10" class="text-left">Subtotal</td>
-            <td class="text-right">${subtotal.quantity.toFixed(0)}</td>
-            <td></td>
-            <td class="text-right">AVG ${subtotal.unit_price.toFixed(2)} $</td>
-            <td class="text-right">AVG ${subtotal.sell_price.toFixed(2)} $</td>
-            <td class="text-right">${subtotal.line_amount.toFixed(2)} $</td>
-            <td class="text-right">AVG ${Math.round(subtotal.discount_percent)} %</td>
-            <td class="text-right">${subtotal.discount_amount.toFixed(2)} $</td>
-            <td class="text-right">AVG ${Math.round(subtotal.vat)} %</td>
-            <td class="text-right">${subtotal.vat_amount.toFixed(2)} $</td>
-            <td class="text-right">${subtotal.total_amount.toFixed(2)} $</td>
-        </tr>
+    body.innerHTML += `
+    <tr class="bg-blue-200 font-semibold text-nowrap">
+        <td colspan="10" class="text-left">Subtotal</td>
+        <td class="text-right">${subtotal.quantity.toFixed(0)}</td>
+        <td></td>
+        <td class="text-right">AVG ${subtotal.unit_price.toFixed(2)} $</td>
+        <td class="text-right">AVG ${subtotal.sell_price.toFixed(2)} $</td>
+        <td class="text-right">${subtotal.line_amount.toFixed(2)} $</td>
+        <td class="text-right">AVG ${Math.round(subtotal.discount_percent)} %</td>
+        <td class="text-right">${subtotal.discount_amount.toFixed(2)} $</td>
+        <td class="text-right">AVG ${Math.round(subtotal.vat)} %</td>
+        <td class="text-right">${subtotal.vat_amount.toFixed(2)} $</td>
+        <td class="text-right">${subtotal.net_amount.toFixed(2)} $</td>
+        <td class="text-right">${subtotal.grand_total_amount.toFixed(2)} $</td>
+    </tr>
     `;
 
     // ----------------------
@@ -3969,14 +4021,11 @@ document.getElementById("btnReciept").addEventListener("click", function () {
     }
 });
 window.addEventListener("get-date", (event) => {
-    const input_due_date = document.getElementById("due_date");
     const input_document_date = document.getElementById("document_dateInput");
 
     // Livewire sends full ISO string, we need YYYY-MM-DD
-    const dueDate = event.detail[0].due_date.split("T")[0]; // "2026-03-19"
     const documentDate = event.detail[0].invoice_date.split("T")[0]; // "2026-03-19"
 
-    input_due_date.value = dueDate;
     input_document_date.value = documentDate;
 
     reciept_no = event.detail[0].invoice_no;
@@ -4207,41 +4256,64 @@ function openEditableMenuPreview(content) {
 }
 
 // Filters
-document.getElementById("user_data").addEventListener("click", fetchUsers);
-document
-    .getElementById("userSearchInput")
-    .addEventListener("input", fetchUsers);
-document.getElementById("role_filter").addEventListener("change", fetchUsers);
-document.getElementById("active").addEventListener("change", fetchUsers);
+// Only bind click if admin and button exists
+if (user_role === "admin") {
+    const puchasing_btn = document.getElementById("purchasing");
+    // Confirm purchasing
+    puchasing_btn.addEventListener("click", () => {
+        window.location.href = "/Purchasing";
+    });
 
-async function fetchUsers() {
-    const search = document.getElementById("userSearchInput").value.trim();
-    const role = document.getElementById("role_filter").value;
-    const active = document.getElementById("active").value;
+    let userBtn = document.getElementById("user_data");
+    userBtn.addEventListener("click", fetchUsers);
+    // document.getElementById("user_data").addEventListener("click", fetchUsers);
+    document
+        .getElementById("userSearchInput")
+        .addEventListener("input", fetchUsers);
+    document
+        .getElementById("role_filter")
+        .addEventListener("change", fetchUsers);
+    document.getElementById("active").addEventListener("change", fetchUsers);
+    // Trigger fetch when modal opens
+    document
+        .getElementById("default-modal-user-list")
+        .addEventListener("transitionend", function () {
+            if (!this.classList.contains("hidden")) {
+                fetchUsers();
+            }
+        });
 
-    const params = new URLSearchParams({ search, role, active });
+    document
+        .getElementById("btnUser")
+        .addEventListener("click", loadWarehouses_user);
 
-    try {
-        const res = await fetch(`/users-list-data?${params.toString()}`);
-        const users = await res.json();
-        renderUsers(users);
-    } catch (err) {
-        console.error(err);
+    async function fetchUsers() {
+        const search = document.getElementById("userSearchInput").value.trim();
+        const role = document.getElementById("role_filter").value;
+        const active = document.getElementById("active").value;
+
+        const params = new URLSearchParams({ search, role, active });
+
+        try {
+            const res = await fetch(`/users-list-data?${params.toString()}`);
+            const users = await res.json();
+            renderUsers(users);
+        } catch (err) {
+            console.error(err);
+        }
     }
-}
+    function renderUsers(users) {
+        const tbody = document.getElementById("user-table-body");
+        tbody.innerHTML = "";
 
-function renderUsers(users) {
-    const tbody = document.getElementById("user-table-body");
-    tbody.innerHTML = "";
+        if (!users.length) {
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">No users found</td></tr>`;
+            return;
+        }
 
-    if (!users.length) {
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">No users found</td></tr>`;
-        return;
-    }
-
-    users.forEach((user) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
+        users.forEach((user) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
             <td class="px-4 py-2 text-center">
                 <input type="radio" name="selectUser" value="${user.id}">
             </td>
@@ -4256,46 +4328,104 @@ function renderUsers(users) {
                 </td>
         `;
 
-        tbody.appendChild(tr);
-    });
-}
+            tbody.appendChild(tr);
+        });
+    }
 
-// Trigger fetch when modal opens
-document
-    .getElementById("default-modal-user-list")
-    .addEventListener("transitionend", function () {
-        if (!this.classList.contains("hidden")) {
-            fetchUsers();
+    const displayName = document.getElementById("display_name");
+    const username = document.getElementById("username");
+    const role = document.getElementById("role");
+    const email = document.getElementById("email");
+    const submitBtn = document.getElementById("submitBtn");
+
+    const password = document.getElementById("password");
+    const formError = document.getElementById("formError");
+
+    // warehouse checkbox change (IMPORTANT)
+    displayName.addEventListener("input", validateForm);
+    username.addEventListener("input", validateForm);
+    role.addEventListener("change", validateForm);
+    email.addEventListener("input", validateForm);
+
+    function validateForm() {
+        let errors = [];
+
+        const nameValid = displayName.value.trim() !== "";
+        const userValid = username.value.trim() !== "";
+        const roleValid = role.value !== "";
+
+        const emailValue = email.value.trim();
+        const isEmailFormatValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            emailValue,
+        );
+
+        const passwordValid = password.value.trim() !== "";
+
+        const warehouseChecked =
+            document.querySelectorAll('input[name="warehouses[]"]:checked')
+                .length > 0;
+
+        // 🔴 Collect errors
+        if (!nameValid) errors.push("Display name is required");
+        if (!userValid) errors.push("Username is required");
+        if (!roleValid) errors.push("Role is required");
+        if (!passwordValid) errors.push("Password is required");
+        if (!warehouseChecked) errors.push("Select at least 1 warehouse");
+        if (emailValue !== "" && !isEmailFormatValid) {
+            errors.push("Email format is invalid");
+        }
+
+        // 🔥 Show ALL messages in ONE place
+        if (errors.length > 0) {
+            formError.classList.remove("hidden");
+            formError.innerHTML = errors.join("<br>");
+        } else {
+            formError.classList.add("hidden");
+            formError.innerHTML = "";
+        }
+
+        // ✅ Enable / disable button
+        if (errors.length === 0) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
+            submitBtn.classList.add("bg-green-500", "text-white");
+            submitBtn.textContent = "Create User";
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.classList.add("bg-gray-400", "cursor-not-allowed");
+            submitBtn.textContent = "Required More Info";
+        }
+    }
+
+    document.addEventListener("change", function (e) {
+        if (e.target.name === "warehouses[]") {
+            validateForm();
         }
     });
 
-document
-    .getElementById("btnUser")
-    .addEventListener("click", loadWarehouses_user);
+    async function loadWarehouses_user() {
+        try {
+            const res = await fetch("/warehouse-list-data");
+            const data = await res.json();
 
-async function loadWarehouses_user() {
-    try {
-        const res = await fetch("/warehouse-list-data");
-        const data = await res.json();
+            const container = document.getElementById("warehouseList");
+            container.innerHTML = "";
 
-        const container = document.getElementById("warehouseList");
-        container.innerHTML = "";
+            if (!data.length) {
+                container.innerHTML =
+                    "<p class='text-gray-500'>No warehouse found</p>";
+                return;
+            }
 
-        if (!data.length) {
-            container.innerHTML =
-                "<p class='text-gray-500'>No warehouse found</p>";
-            return;
-        }
-
-        data.forEach((w) => {
-            const div = document.createElement("label");
-            div.className = `
+            data.forEach((w) => {
+                const div = document.createElement("label");
+                div.className = `
         flex items-center gap-3 p-3 rounded-lg border border-gray-300
         cursor-pointer transition-all duration-150
         hover:border-amber-500 hover:bg-amber-50
     `;
 
-            div.innerHTML = `
+                div.innerHTML = `
         <input type="checkbox" name="warehouses[]" value="${w.id}"
             class="w-4 h-4 accent-amber-500">
 
@@ -4304,151 +4434,88 @@ async function loadWarehouses_user() {
         </span>
     `;
 
-            // active style when checked
-            const checkbox = div.querySelector("input");
-            checkbox.addEventListener("change", () => {
-                if (checkbox.checked) {
-                    div.classList.add("border-amber-500", "bg-amber-100");
-                } else {
-                    div.classList.remove("border-amber-500", "bg-amber-100");
-                }
-            });
-
-            container.appendChild(div);
-        });
-    } catch (err) {
-        console.error("Error loading warehouses:", err);
-    }
-}
-const displayName = document.getElementById("display_name");
-const username = document.getElementById("username");
-const role = document.getElementById("role");
-const email = document.getElementById("email");
-const submitBtn = document.getElementById("submitBtn");
-
-const password = document.getElementById("password");
-const formError = document.getElementById("formError");
-
-function validateForm() {
-    let errors = [];
-
-    const nameValid = displayName.value.trim() !== "";
-    const userValid = username.value.trim() !== "";
-    const roleValid = role.value !== "";
-
-    const emailValue = email.value.trim();
-    const isEmailFormatValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
-
-    const passwordValid = password.value.trim() !== "";
-
-    const warehouseChecked =
-        document.querySelectorAll('input[name="warehouses[]"]:checked').length >
-        0;
-
-    // 🔴 Collect errors
-    if (!nameValid) errors.push("Display name is required");
-    if (!userValid) errors.push("Username is required");
-    if (!roleValid) errors.push("Role is required");
-    if (!passwordValid) errors.push("Password is required");
-    if (!warehouseChecked) errors.push("Select at least 1 warehouse");
-    if (emailValue !== "" && !isEmailFormatValid) {
-        errors.push("Email format is invalid");
-    }
-
-    // 🔥 Show ALL messages in ONE place
-    if (errors.length > 0) {
-        formError.classList.remove("hidden");
-        formError.innerHTML = errors.join("<br>");
-    } else {
-        formError.classList.add("hidden");
-        formError.innerHTML = "";
-    }
-
-    // ✅ Enable / disable button
-    if (errors.length === 0) {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
-        submitBtn.classList.add("bg-green-500", "text-white");
-        submitBtn.textContent = "Create User";
-    } else {
-        submitBtn.disabled = true;
-        submitBtn.classList.add("bg-gray-400", "cursor-not-allowed");
-        submitBtn.textContent = "Required More Info";
-    }
-}
-// warehouse checkbox change (IMPORTANT)
-displayName.addEventListener("input", validateForm);
-username.addEventListener("input", validateForm);
-role.addEventListener("change", validateForm);
-email.addEventListener("input", validateForm);
-
-document.addEventListener("change", function (e) {
-    if (e.target.name === "warehouses[]") {
-        validateForm();
-    }
-});
-
-document
-    .getElementById("AddUserForm")
-    .addEventListener("submit", async function (e) {
-        e.preventDefault();
-
-        const form = e.target;
-        const formData = new FormData(form);
-
-        try {
-            const res = await fetch("/users/store", {
-                method: "POST",
-                body: formData,
-                headers: {
-                    "X-CSRF-TOKEN": document.querySelector(
-                        'input[name="_token"]',
-                    ).value,
-                },
-            });
-
-            const data = await res.json();
-
-            if (data.success) {
-                showToast({
-                    message: data.message || "User created successfully ✅",
-                    type: "success",
+                // active style when checked
+                const checkbox = div.querySelector("input");
+                checkbox.addEventListener("change", () => {
+                    if (checkbox.checked) {
+                        div.classList.add("border-amber-500", "bg-amber-100");
+                    } else {
+                        div.classList.remove(
+                            "border-amber-500",
+                            "bg-amber-100",
+                        );
+                    }
                 });
-                form.reset();
-            } else {
+
+                container.appendChild(div);
+            });
+        } catch (err) {
+            console.error("Error loading warehouses:", err);
+        }
+    }
+
+    document
+        .getElementById("AddUserForm")
+        .addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const formData = new FormData(form);
+
+            try {
+                const res = await fetch("/users/store", {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-CSRF-TOKEN": document.querySelector(
+                            'input[name="_token"]',
+                        ).value,
+                    },
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast({
+                        message: data.message || "User created successfully ✅",
+                        type: "success",
+                    });
+                    form.reset();
+                } else {
+                    showToast({
+                        message: data.message || "Failed to create user ❌",
+                        type: "error",
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+
                 showToast({
-                    message: data.message || "Failed to create user ❌",
+                    message: "Error",
                     type: "error",
                 });
             }
-        } catch (err) {
-            console.error(err);
+        });
+}
 
-            showToast({
-                message: "Error",
-                type: "error",
-            });
-        }
-    });
+// document.addEventListener("DOMContentLoaded", function () {
+//     const welcome = document.getElementById("welcomeScreen");
+//     const main = document.getElementById("mainContent");
 
-document.addEventListener("DOMContentLoaded", function () {
-    const welcome = document.getElementById("welcomeScreen");
-    const main = document.getElementById("mainContent");
+//     // Only show first time
+//     if (!sessionStorage.getItem("welcomeShown")) {
+//         sessionStorage.setItem("welcomeShown", "true");
 
-    // Only show first time
-    if (!sessionStorage.getItem("welcomeShown")) {
-        sessionStorage.setItem("welcomeShown", "true");
-
-        setTimeout(() => {
-            welcome.style.display = "none";
-            main.style.opacity = 1; // show main content
-        }, 5000); // 5 seconds animation
-    } else {
-        // skip welcome if already shown
-        welcome.style.display = "none";
-        main.style.opacity = 1;
-    }
-});
+//         setTimeout(() => {
+//             welcome.style.display = "none";
+//             main.style.opacity = 1; // show main content
+//         }, 5000); // 5 seconds animation
+//     } else {
+//         // skip welcome if already shown
+//         welcome.style.display = "none";
+//         main.style.opacity = 1;
+//     }
+// });
 const logoutBtn = document.getElementById("logout");
 const modal_logout = document.getElementById("logoutModal");
 const confirmBtn_logout = document.getElementById("confirmLogout");
@@ -4465,11 +4532,6 @@ confirmBtn_logout.addEventListener("click", () => {
     window.location.href = "/logout";
 });
 
-const puchasing_btn = document.getElementById("purchasing");
-// Confirm purchasing
-puchasing_btn.addEventListener("click", () => {
-    window.location.href = "/Purchasing";
-});
 // Cancel logout
 cancelBtn_logout.addEventListener("click", () => {
     modal_logout.classList.add("hidden");
@@ -4917,5 +4979,101 @@ async function submitTransfer() {
             message: data.message || "Transfer failed",
             type: "error",
         });
+    }
+}
+function formatDate(dateStr) {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleDateString("en-GB");
+}
+
+function formatDateTime(dateStr) {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleString("en-GB");
+}
+async function loadItemLedgerEntries() {
+    const tbody = document.getElementById("item_ledger_entry_table_body");
+
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="34" class="border px-3 py-4 text-center text-gray-500">Loading...</td>
+        </tr>
+    `;
+
+    try {
+        const response = await fetch("/item-ledger-entry");
+        const data = await response.json();
+
+        if (!data.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="34" class="border px-3 py-4 text-center text-gray-500">
+                        No item ledger entry found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = data
+            .map(
+                (row) => `
+            <tr class="hover:bg-gray-50 text-nowrap">
+                <td class="border px-3 py-2 text-left">${row.entry_no ?? ""}</td>
+                <td class="border px-3 py-2 text-center">${formatDate(row.posting_date)}</td>
+                <td class="border px-3 py-2 text-left">${row.document_type ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.document_no ?? ""}</td>
+
+                <td class="border px-3 py-2 text-left">${row.barcode ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.item_code ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.name ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.variant ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.description ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.unit ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.category_name ?? ""}</td>
+
+                <td class="border px-3 py-2 text-left">${row.warehouse_name ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.lot ?? ""}</td>
+                <td class="border px-3 py-2 text-center">${formatDate(row.expire_date)}</td>
+
+                <td class="border px-3 py-2 text-right">${parseFloat(row.quantity ?? 0).toFixed(4)}</td>
+                <td class="border px-3 py-2 text-right">${parseFloat(row.remaining_quantity ?? 0).toFixed(4)}</td>
+                <td class="border px-3 py-2 text-left">${row.entry_type ?? ""}</td>
+
+                <td class="border px-3 py-2 text-right">${parseFloat(row.unit_cost ?? 0).toFixed(4)} $</td>
+                <td class="border px-3 py-2 text-right">${parseFloat(row.unit_price ?? 0).toFixed(4)} $</td>
+                <td class="border px-3 py-2 text-right">${parseFloat(row.sell_price ?? 0).toFixed(4)} $</td>
+
+                <td class="border px-3 py-2 text-right">${parseFloat(row.discount_percent ?? 0).toFixed(2)} %</td>
+                <td class="border px-3 py-2 text-right">${parseFloat(row.discount_amount ?? 0).toFixed(4)} $</td>
+
+                <td class="border px-3 py-2 text-right">${parseFloat(row.vat ?? 0).toFixed(2)} %</td>
+                <td class="border px-3 py-2 text-right">${parseFloat(row.vat_amount ?? 0).toFixed(4)} $</td>
+
+                <td class="border px-3 py-2 text-right">${parseFloat(row.line_amount ?? 0).toFixed(4)} $</td>
+                <td class="border px-3 py-2 text-right">${parseFloat(row.net_amount ?? 0).toFixed(4)} $</td>
+                <td class="border px-3 py-2 text-right">${parseFloat(row.grand_total_amount ?? 0).toFixed(4)} $</td>
+
+                <td class="border px-3 py-2 text-left">${row.customer_id ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.customer_name ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.customer_phone ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.customer_address ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.vendor_id ?? ""}</td>
+                <td class="border px-3 py-2 text-left">${row.payment_method ?? ""}</td>
+
+                <td class="border px-3 py-2 text-left">${row.created_by ?? ""}</td>
+                <td class="border px-3 py-2 text-center">${formatDateTime(row.created_at)}</td>
+            </tr>
+        `,
+            )
+            .join("");
+    } catch (error) {
+        console.error(error);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="34" class="border px-3 py-4 text-center text-red-500">
+                    Failed to load item ledger entry
+                </td>
+            </tr>
+        `;
     }
 }

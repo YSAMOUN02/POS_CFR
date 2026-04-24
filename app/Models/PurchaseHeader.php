@@ -21,4 +21,9 @@ class PurchaseHeader extends Model
     {
         return $this->hasMany(PurchaseLine::class, 'document_no', 'no');
     }
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class, 'vendor_id', 'id');
+    }
 }

@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('purchase_headers', function (Blueprint $table) {
             $table->id();
             $table->string('no')->unique();
-            $table->unsignedBigInteger('vendor_id');
+            $table->unsignedBigInteger('vendor_id')->nullable();
 
             // ✅ changed here
             $table->date('posting_date');
-            
+
 
             $table->string('payment_method')->nullable();
             $table->text('remark')->nullable();

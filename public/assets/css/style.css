@@ -667,7 +667,150 @@ table td ,table th{
 
 
 
+/* ------------------------------------------------------------------------------ */
 
+
+
+
+
+/* Report Table Base */
+#vendor-list {
+    width: 100%;
+           /* Table container min-height */
+    border-collapse: collapse;
+    font-size: 13px;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Table header */
+#vendor-list thead th {
+    position: sticky !important;
+    top: 0;
+    z-index: 10;
+    background-color: rgb(0, 0, 129); /* header bg */
+    color: white;
+    font-weight: bold;
+    text-align: left;
+    padding: 8px 10px;       /* consistent padding */
+    white-space: nowrap;
+}
+
+/* Table body cells */
+#vendor-list tbody td {
+    padding: 8px 10px;       /* consistent padding */
+    border-bottom: 1px solid #ccc;
+    vertical-align: middle;  /* center content vertically */
+        white-space: nowrap;
+}
+
+/* Table rows */
+#vendor-list tbody tr {
+
+    height: auto;            /* allow growth for bigger content */
+}
+
+/* Right-align numeric columns */
+#vendor-list tbody td.numeric {
+    text-align: right;
+}
+
+/* Hover effect */
+#vendor-list tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+/* Optional: alternate row colors */
+#vendor-list tbody tr:nth-child(even) {
+    background-color: #fefefe;
+}
+
+/* Scrollable container (if needed) */
+#vendor-list-container {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Optional: fix table width for horizontal scroll */
+#vendor-list {
+    table-layout: auto; /* auto or fixed depending on your preference */
+}
+/* ------------------------------------------------------------------------------ */
+
+
+
+
+
+
+/* ------------------------------------------------------------------------------ */
+
+
+
+
+
+/* Report Table Base */
+#Table-Purchase-list {
+    width: 100%;
+           /* Table container min-height */
+    border-collapse: collapse;
+    font-size: 13px;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Table header */
+#Table-Purchase-list thead th {
+    position: sticky !important;
+    top: 0;
+    z-index: 10;
+    background-color: rgb(0, 0, 129); /* header bg */
+    color: white;
+    font-weight: bold;
+    text-align: left;
+    padding: 8px 10px;       /* consistent padding */
+    white-space: nowrap;
+}
+
+/* Table body cells */
+#Table-Purchase-list tbody td {
+    padding: 8px 10px;       /* consistent padding */
+    border-bottom: 1px solid #ccc;
+    vertical-align: middle;  /* center content vertically */
+        white-space: nowrap;
+}
+
+/* Table rows */
+#Table-Purchase-list tbody tr {
+
+    height: auto;            /* allow growth for bigger content */
+}
+
+/* Right-align numeric columns */
+#Table-Purchase-list tbody td.numeric {
+    text-align: right;
+}
+
+/* Hover effect */
+#Table-Purchase-list tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+/* Optional: alternate row colors */
+#Table-Purchase-list tbody tr:nth-child(even) {
+    background-color: #fefefe;
+}
+
+/* Scrollable container (if needed) */
+#Table-Purchase-list-container {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Optional: fix table width for horizontal scroll */
+#Table-Purchase-list {
+    table-layout: auto; /* auto or fixed depending on your preference */
+}
+/* ------------------------------------------------------------------------------ */
 
 
 

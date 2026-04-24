@@ -3,10 +3,13 @@
 namespace App\Livewire;
 
 use App\Models\Currency;
+use App\Models\ItemLedgerEntry;
 use App\Models\Product;
 use App\Models\PurchaseHeader;
 use App\Models\PurchaseLine;
 use App\Models\UserWarehouse;
+use App\Models\Vendor;
+use App\Models\Warehouse;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -40,14 +43,14 @@ class PurchaseCart extends Component
     public $remark = '';
 
 
-      public $openIndex = null;
+    public $openIndex = null;
 
     public function toggleItem($index)
     {
         $this->openIndex = $this->openIndex === $index ? null : $index;
     }
 
-    
+
     public function mount_wh()
     {
         $warehouse_user = UserWarehouse::with('warehouse')
@@ -104,33 +107,43 @@ class PurchaseCart extends Component
     }
     public function recalcLine($index, $field, $inputValue = null)
     {
-        $qty = floatval($this->cart[$index]['qty'] ?? 1);
+        $factor = (float) ($this->factor ?: 1);
 
-        $cost = $this->factor != 1 ? $inputValue / $this->factor : $inputValue;
-        $amount = $this->factor != 1 ? $inputValue / $this->factor : $inputValue;
-        if ($field === 'cost_price') {
-            $costRounded = round($cost, 5);
-            $amountRounded = round($qty * $costRounded, 5);
-
-            $this->cart[$index]['cost_price'] = $costRounded;
-            $this->cart[$index]['amount_line'] = $amountRounded;
-        } elseif ($field === 'amount_line') {
-            $amountRounded = round($amount, 5);
-            $this->cart[$index]['amount_line'] = $amountRounded;
-            $this->cart[$index]['cost_price'] = $qty != 0 ? round($amountRounded / $qty, 5) : 0;
-        } elseif ($field === 'qty') {
-            $this->cart[$index]['qty'] = $qty;
-            $amount = round($this->cart[$index]['amount_line'], 5);
-            $this->cart[$index]['cost_price'] = $qty != 0 ? round($amount / $qty, 5) : 0;
+        // precision for backend storage
+        if ($factor >= 100) {
+            $storeDecimal = 5; // large-rate currencies like KHR
+        } elseif ($factor >= 1) {
+            $storeDecimal = 3; // USD / EUR / normal currencies
+        } else {
+            $storeDecimal = 5; // very small rates, keep more precision
         }
-        // Refresh
+
+        $qty = (float) ($this->cart[$index]['qty'] ?? 1);
+        $cost = (float) ($this->cart[$index]['cost_price'] ?? 0);
+        $amount = (float) ($this->cart[$index]['amount_line'] ?? 0);
+
+        if ($field === 'cost_price') {
+            $displayCost = (float) $inputValue;
+            $cost = round($displayCost / $factor, $storeDecimal);
+
+            $this->cart[$index]['cost_price'] = $cost;
+            $this->cart[$index]['amount_line'] = round($qty * $cost, $storeDecimal);
+        } elseif ($field === 'amount_line') {
+            $displayAmount = (float) $inputValue;
+            $amount = round($displayAmount / $factor, $storeDecimal);
+
+            $this->cart[$index]['amount_line'] = $amount;
+            $this->cart[$index]['cost_price'] = $qty > 0
+                ? round($amount / $qty, $storeDecimal)
+                : 0;
+        } elseif ($field === 'qty') {
+            $qty = max(1, (float) $qty);
+            $this->cart[$index]['qty'] = $qty;
+            $this->cart[$index]['amount_line'] = round($qty * $cost, $storeDecimal);
+        }
+
         $this->cart = array_values($this->cart);
     }
-
-
-
-
-
 
 
     public $warehouses = [];
@@ -148,12 +161,12 @@ class PurchaseCart extends Component
             return;
         }
 
-        $this->vendor_id = 0;
+
 
         DB::beginTransaction();
 
         try {
-            $documentNo = 'GRN-' . now()->format('YmdHis');
+            $documentNo = $this->generateGrnNo();
 
             // ✅ Create Header
             $header = PurchaseHeader::create([
@@ -173,38 +186,41 @@ class PurchaseCart extends Component
                 ->whereIn('id', $productIds)
                 ->get()
                 ->keyBy('id');
-
+            $warehouse = Warehouse::find($this->warehouse_id);
+            $vendor = $this->vendor_id ? Vendor::find($this->vendor_id) : null;
             foreach ($this->cart as $item) {
 
-                if ($item['qty'] <= 0) continue;
+                if (($item['qty'] ?? 0) <= 0) {
+                    continue;
+                }
 
                 $product = $products[$item['id']] ?? null;
 
                 if (!$product) {
                     throw new \Exception("Product not found ID: " . $item['id']);
                 }
-
-                $unitCost = $item['cost_price'];
-                $lineAmount = $item['qty'] * $item['cost_price'];
+                $unitCost   = (float) ($item['cost_price'] ?? 0);
+                $qty        = (float) ($item['qty'] ?? 0);
+                $lineAmount = $qty * $unitCost;
 
                 // ✅ Create Purchase Line
-                PurchaseLine::create([
-                    'document_no' => $documentNo,
-                    'product_id' => $product->id,
-                    'barcode' => $product->barcode,
-                    'item_code' => $product->code,
-                    'name' => $product->name,
-                    'variant' => $item['varaint'] ?? null,
-                    'lot' => $item['lot'] ?? null,
-                    'expire_date' => $item['expire'] ?? null,
-                    'description' => $product->description,
-                    'quantity' => $item['qty'],
-                    'unit' => $product->unit ?? $item['unit'],
+                $purchaseLine = PurchaseLine::create([
+                    'document_no'   => $documentNo,
+                    'product_id'    => $product->id,
+                    'barcode'       => $product->barcode,
+                    'item_code'     => $product->code,
+                    'name'          => $product->name,
+                    'variant'       => $item['variant'] ?? null, // fixed from varaint
+                    'lot'           => $item['lot'] ?? null,
+                    'expire_date'   => $item['expire'] ?? null,
+                    'description'   => $product->description,
+                    'quantity'      => $qty,
+                    'unit'          => $product->unit ?? ($item['unit'] ?? null),
                     'category_name' => optional($product->category)->name,
-                    'unit_cost' => $unitCost,
-                    'line_amount' => $lineAmount,
-                    'remark' => $item['remark'] ?? null,
-                    'created_by' => Auth::user()->name ?? 'NA',
+                    'unit_cost'     => $unitCost,
+                    'line_amount'   => $lineAmount,
+                    'remark'        => $item['remark'] ?? null,
+                    'created_by'    => Auth::user()->name ?? 'NA',
                 ]);
 
                 // =========================
@@ -213,21 +229,75 @@ class PurchaseCart extends Component
 
                 // ✅ Insert new stock
                 DB::table('warehouse_product')->insert([
-                    'product_id' => $product->id,
+                    'product_id'   => $product->id,
                     'warehouse_id' => $this->warehouse_id,
-                    'qty' => $item['qty'],
-                    'track_lot' => !empty($item['lot']) ? 1 : 0,
-                    'lot' => $item['lot'],
-                    'expire' => $item['expire'] ?? null,
-                    'control_exp' => !empty($item['expire']) ? 1 : 0,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'qty'          => $qty,
+                    'track_lot'    => !empty($item['lot']) ? 1 : 0,
+                    'lot'          => $item['lot'] ?? null,
+                    'expire'       => $item['expire'] ?? null,
+                    'control_exp'  => !empty($item['expire']) ? 1 : 0,
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
                 ]);
 
 
                 // =========================
                 // ✅ STOCK UPDATE END
                 // =========================
+                // ✅ ITEM LEDGER ENTRY FOR PURCHASE
+                $ledger =  ItemLedgerEntry::create([
+                    'entry_no'            => 'ILE-' . now()->format('YmdHis') . '-' . $product->id,
+                    'posting_date'        => now()->toDateString(),
+
+                    'document_type'       => 'Purchase',
+                    'document_no'         => $documentNo,
+
+                    'source_id'           => $purchaseLine->id,
+                    'source_table'        => 'Purchase Lines',
+
+                    'product_id'          => $product->id,
+                    'barcode'             => $product->barcode,
+                    'item_code'           => $product->code,
+                    'name'                => $product->name,
+                    'variant'             => $product->varian ?? '',
+                    'description'         => $product->description,
+                    'unit'                => $product->unit ?? ($item['unit'] ?? ''),
+                    'category_name'       => optional($product->category)->name,
+                    'type'                => $product->type ?? 'product',
+
+                    'warehouse_id'        => $this->warehouse_id,
+                    'warehouse_name'      => $warehouse->name ?? '',
+                    'lot'                 => $item['lot'] ?? '',
+                    'expire_date'         => $item['expire'] ?? null,
+
+                    'quantity'            => $qty,
+                    'remaining_quantity'  => $qty, // purchase stock comes in fully available
+                    'entry_type'          => 'positive',
+
+                    'unit_cost'           => $unitCost,
+                    'sell_price' => $product->sell_price ?? 0,
+                    'unit_price' => (($product->sell_price ?? 0) - ($item['discount_amount'] ?? 0)) + ($item['vat_amount'] ?? 0),
+                    'discount_percent'    => 0,
+                    'discount_amount'     => 0,
+                    'vat'         => $product->vat ?? 0,
+                    'vat_amount'          => 0,
+                    'line_amount'         => ((-1) * $lineAmount),
+                    'net_amount'         => ((-1) * $lineAmount),
+                    'grand_total_amount'         => ((-1) * $lineAmount),
+
+                    'vendor_id'           => $this->vendor_id,
+                    'customer_id'         => null,
+                    'customer_name'       =>  '',
+                    'customer_phone'      => '',
+                    'customer_address'    =>  '',
+
+                    'payment_method'      => '',
+                    'remark'              => $item['remark'] ?? $this->remark,
+                    'created_by'          => Auth::user()->name ?? 'system',
+                ]);
+                $ledger->update([
+                    'entry_no' => $ledger->id
+                ]);
             }
 
             DB::commit();
@@ -242,7 +312,25 @@ class PurchaseCart extends Component
             $this->dispatch('error', ['message' => 'Error posting GRN: ' . $e->getMessage()]);
         }
     }
+    private function generateGrnNo()
+    {
+        $year = now()->format('y'); // 24, 25, 26
+        $prefix = 'GRN' . $year . '-';
 
+        $lastGrn = PurchaseHeader::where('no', 'like', $prefix . '%')
+            ->orderByDesc('no')
+            ->lockForUpdate()
+            ->first();
+
+        if ($lastGrn) {
+            $lastNumber = (int) substr($lastGrn->no, -4);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    }
 
     public function generateLotNumber()
     {

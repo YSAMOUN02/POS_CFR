@@ -24,15 +24,17 @@
             </div>
 
         </div>
-
+        @php
+            $decimal = $this->factor >= 100 ? 0 : 2;
+            $step = $this->factor >= 100 ? 1 : 0.001;
+        @endphp
         @forelse ($cart as $item)
-                    <div class="w-full mx-auto animate-add">
+            <div class="w-full mx-auto animate-add">
                 <!-- Item Card -->
                 <div
                     class="card bg-white shadow border-b-amber-600 focus-within:bg-yellow-50 transition-colors duration-200 ">
                     <!-- Header (clickable) -->
-                    <div
-                        class="btn_sale_invoice w-full flex items-center justify-between p-2">
+                    <div class="btn_sale_invoice w-full flex items-center justify-between p-2">
                         <div class="flex items-start gap-3">
                             <div class="flex flex-col items-center justify-center">
                                 <span wire:click.self="toggleItem({{ $loop->index }})"
@@ -50,25 +52,17 @@
 
                                 <p class="text-sm text-gray-400">
                                     តម្លៃ:
-                                    {{-- Display cost --}}
                                     <span>
-
-                                        {{ rtrim(rtrim(number_format((float) $item['cost_price'] * $this->factor, 3, '.', ''), '0'), '.') }}
+                                        {{ number_format((float) $item['cost_price'] * $this->factor, $decimal, '.', '') }}
                                         {{ $this->currency_name }}
                                     </span>
-
-
                                 </p>
                             </div>
                         </div>
                         <div class="text-right">
                             <p class="font-semibold">
-                                {{ rtrim(rtrim(number_format((float) $item['amount_line'] * $this->factor, 3, '.', ''), '0'), '.') }}
-
+                                {{ number_format((float) $item['amount_line'] * $this->factor, $decimal, '.', '') }}
                                 {{ $this->currency_name }}
-
-
-
                             </p>
                         </div>
                     </div>
@@ -88,9 +82,11 @@
                             {{-- COST --}}
                             <div>
                                 <label class="text-sm text-gray-500">ថ្លៃដើម</label>
-                                <input type="number" min="0" step="0.01"
+
+
+                                <input type="number" min="0" step="{{ $step }}"
                                     wire:key="cost-{{ $loop->index }}-{{ $this->cart[$loop->index]['cost_price'] }}-{{ $this->factor }}"
-                                    value="{{ rtrim(rtrim(number_format($item['cost_price'] * $this->factor, 3, '.', ''), '0'), '.') }}"
+                                    value="{{ number_format($item['cost_price'] * $this->factor, $decimal, '.', '') }}"
                                     wire:change="recalcLine({{ $loop->index }}, 'cost_price', $event.target.value)"
                                     class="w-full mt-1 border rounded px-3 py-2" />
                             </div>
@@ -98,9 +94,9 @@
                             {{-- AMOUNT --}}
                             <div>
                                 <label class="text-sm text-gray-500">សរុប</label>
-                                <input type="number" min="0" step="0.01"
+                                <input type="number" min="0" step="{{ $step }}"
                                     wire:key="amount-{{ $loop->index }}-{{ $this->cart[$loop->index]['amount_line'] }}-{{ $this->factor }}"
-                                    value="{{ rtrim(rtrim(number_format($item['amount_line'] * $this->factor, 3, '.', ''), '0'), '.') }}"
+                                    value="{{ number_format($item['amount_line'] * $this->factor, $decimal, '.', '') }}"
                                     wire:change="recalcLine({{ $loop->index }}, 'amount_line', $event.target.value)"
                                     class="w-full mt-1 border rounded px-3 py-2" />
                             </div>
@@ -143,10 +139,9 @@
         <div id="total" class="grid grid-cols-1 gap-1 p-2 ">
             <div class="flex items-end flex-col justify-between">
 
-
                 <p class="font-semibold">
                     តម្លៃសរុប :
-                    {{ rtrim(rtrim(number_format((float) $this->totals['total_amount'] * $this->factor, 3, '.', ''), '0'), '.') }}
+                    {{ number_format((float) $this->totals['total_amount'] * $this->factor, $decimal, '.', '') }}
                     {{ $currency_name }}
                 </p>
                 <input type="hidden" id="total_amount"
@@ -155,7 +150,7 @@
                 <input type="hidden" id="currency_display_symbol" value="{{ $currency }}">
                 <input type="hidden" id="currency_display_factor" value="{{ $factor }}">
 
-                @if ($currency != 'USD')
+                @if ($this->factor != 1)
                     <div class="w-full flex justify-between">
 
                         <div class="flex items-center">
@@ -168,7 +163,7 @@
                             </span>
                         </div>
                         <p class="font-semibold">
-                            Total USD:{{ $this->totals['total_amount'] }} $
+                            Total USD:{{ number_format($this->totals['total_amount'], 2, '.', '') }} $
 
                         </p>
 
@@ -197,11 +192,11 @@
                     @endforeach
                 </select>
                 <div id="list_main" class="relative col-span-2" style="width:300px;">
-                    <input type="text" id="customerSearch" placeholder="General vendor" autocomplete="off">
+                    <input type="text" id="vendorSearch" placeholder="General vendor" autocomplete="off">
 
-                    <input type="hidden" id="customerValue" wire:model.live="customer_id">
+                    <input type="hidden" id="vendorValue" wire:model.live="vendor_id">
 
-                    <ul id="customerList"
+                    <ul id="vendorList"
                         class="list hidden absolute z-50 bg-white border rounded shadow w-full max-h-60 overflow-auto">
                     </ul>
                 </div>

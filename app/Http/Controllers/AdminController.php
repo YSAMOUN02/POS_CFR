@@ -19,11 +19,16 @@ class AdminController extends Controller
 
 
         // 1️⃣ Load products with only the selected warehouse
-        $products = Product::with(['warehouses' => function ($q) use ($warehouse_ids) {
+        $sql = Product::with(['warehouses' => function ($q) use ($warehouse_ids) {
             $q->whereIn('warehouse_id', $warehouse_ids);
-        }])
-            ->where('status', 1)
-            ->get();
+        }]);
+          if(Auth::user()->role == 'admin') {
+
+        } else {
+            $sql->where('type', 'Product');
+        }
+            $sql->where('status', 1);
+          $products =  $sql->get();
 
         // 2️⃣ Sum stock per product (only from this warehouse)
         $products->each(function ($product) {
@@ -65,11 +70,18 @@ class AdminController extends Controller
     {
         $warehouse_ids = Auth::user()->warehouses->pluck('id');
 
-        $products = Product::with(['warehouses' => function ($q) use ($warehouse_ids) {
+           // 1️⃣ Load products with only the selected warehouse
+        $sql = Product::with(['warehouses' => function ($q) use ($warehouse_ids) {
             $q->whereIn('warehouse_id', $warehouse_ids);
-        }])
-            ->where('status', 1)
-            ->get();
+        }]);
+          if(Auth::user()->role == 'admin') {
+
+        } else {
+            $sql->where('type', 'Product');
+        }
+            $sql->where('status', 1);
+          $products =  $sql->get();
+
 
         $products->each(function ($product) {
             $product->total_stock = $product->warehouses->sum(function ($wh) {

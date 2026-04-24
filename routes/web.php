@@ -14,6 +14,7 @@ use App\Http\Controllers\TableController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\WarehouseController;
+use App\Http\Controllers\ItemLedgerEntryController;
 
 Route::get('/', [AdminController::class, 'login'])->name('login');
 // Handle login post
@@ -107,7 +108,18 @@ Route::middleware(['auth'])->group(function () {
 
 
     Route::get('/Purchasing', [PurchasingController::class, 'Purchasing']);
+    Route::get('/purchases/fetch', [PurchasingController::class, 'fetchPurchase'])
+        ->name('purchases.fetch');
 
     Route::post('/vendors', [VendorController::class, 'store']);
+    Route::get('/vendors/list', [VendorController::class, 'list'])->name('vendors.list');
+    Route::get('/vendors/{id}', [VendorController::class, 'show'])->name('vendors.show');
+    Route::put('/vendors/{id}', [VendorController::class, 'update'])->name('vendors.update');
+    Route::post('/vendor-search', [VendorController::class, 'search'])
+        ->name('vendor.search');
 
+
+
+
+Route::get('/item-ledger-entry', [ItemLedgerEntryController::class, 'latest']);
 });

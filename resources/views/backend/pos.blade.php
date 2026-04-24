@@ -279,7 +279,7 @@
 
                     const price = Number(product.sell_price || 0);
                     const vatRate = Number(product.vat || 0);
-                    const finalPrice = round2(price + (price * vatRate / 100));
+                    const finalPrice = price;
 
                     // Discounted price
                     const discountPercent = Number(product.discount_percent || 0);
@@ -315,25 +315,25 @@
 
                                       ${imageSrc
                                         ? `<img class="object-cover w-full" id="product-image${product.id}"
-                                                                                                                                                                                                                                                            loading="lazy"
-                                                                                                                                                                                                                                                            style="max-height:150px; min-height:150px;"
-                                                                                                                                                                                                                                                            src="${imageSrc}"
-                                                                                                                                                                                                                                                            onerror="this.outerHTML=\`
+                                                                                                                                                                                                                                                                                                                                                    loading="lazy"
+                                                                                                                                                                                                                                                                                                                                                    style="max-height:150px; min-height:150px;"
+                                                                                                                                                                                                                                                                                                                                                    src="${imageSrc}"
+                                                                                                                                                                                                                                                                                                                                                    onerror="this.outerHTML=\`
                                                     <div class='flex items-center justify-center w-full h-[150px] bg-gray-100'>
                                                         <span class='text-gray-400'>No Image</span>
                                                     </div>\`"
-                                                                                                                                                                                                                                                        />`
+                                                                                                                                                                                                                                                                                                                                                />`
                                         : `<div class="flex items-center justify-center w-full h-[150px] bg-gray-100">
-                                                                                                                                                                                                                                                            <span class="text-gray-400">No Image</span>
-                                                                                                                                                                                                                                                    </div>`
+                                                                                                                                                                                                                                                                                                                                                    <span class="text-gray-400">No Image</span>
+                                                                                                                                                                                                                                                                                                                                            </div>`
                                     }
 
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
 
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -350,22 +350,37 @@
                                         <div  class="text-center mt-1">
                                             <p class="text-xs">
                                             ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="${stockColor}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="${stockColor}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                &ensp;` : ''}
 
-                                            ${product.discount_percent != 0
-                                                ? `<br><del data-base-price="${finalPrice.toFixed(2)}"  class="pricing text-gray-400 text-sm">${finalPrice.toFixed(2) * factor}  ${currency_name}</del> → <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">${discountedPrice.toFixed(2) *factor} ${currency_name}</span>`
-                                                : `<span data-base-price="${finalPrice.toFixed(2)}"  class="pricing font-semibold text-sm">${finalPrice.toFixed(2) * factor} ${currency_name}</span>`
+                                          ${product.discount_percent != 0
+                                                ? `<br>
+                                                                                                                                            <del data-base-price="${finalPrice.toFixed(2)}" class="pricing text-gray-400 text-sm">
+                                                                                                                                                ${Number(finalPrice * factor) == 0
+                                                                                                                                                    ? 'មិនទាន់កំណត់តម្លៃ'
+                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                            </del>
+                                                                                                                                            →
+                                                                                                                                            <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">
+                                                                                                                                                ${Number(discountedPrice * factor) == 0
+                                                                                                                                                    ? 'មិនមានតម្លៃ'
+                                                                                                                                                    : Number(discountedPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                            </span>`
+                                                : `<span data-base-price="${finalPrice.toFixed(2)}" class="pricing font-semibold text-sm">
+                                                                                                                                                ${Number(finalPrice * factor) == 0
+                                                                                                                                                    ? 'មិនមានតម្លៃ'
+                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                        </span>`
                                             }
-                                        </p>
-            </div>
-        </div>
+                                                                                    </p>
+                                                        </div>
+                                                    </div>
 
-    </button>
-</div>
+                                                </button>
+                                            </div>
 
             `;
                 });
@@ -395,7 +410,6 @@
             lastClick = now;
 
             const productJson = btn.dataset.product;
-
 
             Livewire.dispatch('add-product', productJson); // ONLY this
         });
@@ -466,7 +480,7 @@
 
             const price = Number(product.sell_price || 0);
             const vatRate = Number(product.vat || 0);
-            const finalPrice = round2(price + (price * vatRate / 100));
+            const finalPrice = price;
 
             // Discounted price
             const discountPercent = Number(product.discount_percent || 0);
@@ -488,9 +502,11 @@
             }
             let style_click = `card_style_fail`;
 
-            if (product.total_stock > 0) {
+            if (product.total_stock > 0 || product.track_stock == 0) {
                 style_click = `card_style_success`;
             }
+
+
             return `
                             <div class="card_style ${style_click} bg-neutral-primary-soft block max-w-sm border border-default shadow-xs relative">
                                 <button class="add-to-cart-btn w-full flex flex-col h-full" data-product='${JSON.stringify(product)}'>
@@ -501,9 +517,9 @@
                                             src="${imageSrc}" onerror="this.src='assets/defult/placeholder.jpg'" alt="${product.name}" />
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -516,13 +532,28 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                                 ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        &ensp;` : ''}
 
-                                       ${product.discount_percent != 0
-                                                ? `<del data-base-price="${finalPrice.toFixed(2)}"  class="pricing text-gray-400 text-[10px]">${finalPrice.toFixed(2) * factor}  ${currency_name}</del> → <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">${discountedPrice.toFixed(2) *factor} ${currency_name}</span>`
-                                                : `<span data-base-price="${finalPrice.toFixed(2)}"  class="pricing font-semibold text-sm">${finalPrice.toFixed(2) * factor} ${currency_name}</span>`
+                                        ${product.discount_percent != 0
+                                                ? `<br>
+                                                                                                                                            <del data-base-price="${finalPrice.toFixed(2)}" class="pricing text-gray-400 text-sm">
+                                                                                                                                                ${Number(finalPrice * factor) == 0
+                                                                                                                                                    ? 'មិនទាន់កំណត់តម្លៃ'
+                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                            </del>
+                                                                                                                                            →
+                                                                                                                                            <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">
+                                                                                                                                                ${Number(discountedPrice * factor) == 0
+                                                                                                                                                    ? 'មិនមានតម្លៃ'
+                                                                                                                                                    : Number(discountedPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                            </span>`
+                                                : `<span data-base-price="${finalPrice.toFixed(2)}" class="pricing font-semibold text-sm">
+                                                                                                                                                ${Number(finalPrice * factor) == 0
+                                                                                                                                                    ? 'មិនមានតម្លៃ'
+                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                        </span>`
                                             }
 
                                             </p>
@@ -579,7 +610,7 @@
         const input = document.getElementById("customerSearch");
         const list = document.getElementById("customerList");
         const hiddenInput = document.getElementById("customerValue");
-
+        let current_discount = 0;
         input.addEventListener("input", async () => {
             const value = input.value.trim();
 
@@ -601,19 +632,77 @@
                     data.forEach(customer => {
 
                         const li = document.createElement('li');
-                        li.textContent = `${customer.customer_code} - ${customer.name}`;
+                        li.textContent = parseFloat(customer.discount_percent || 0) > 0 ?
+                            `${customer.customer_code} - ${customer.name} (${parseFloat(customer.discount_percent)}%)` :
+                            `${customer.customer_code} - ${customer.name}`;
                         li.dataset.value = customer.customer_code;
                         li.className = 'px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm';
                         li.addEventListener('click', () => {
+
                             input.value = li.textContent;
 
+                            const customerDiscount = parseFloat(customer.discount_percent || 0);
+
                             hiddenInput.value = customer.customer_code;
-
-
-
                             list.classList.add('hidden');
-                            hiddenInput.dispatchEvent(new Event('input'));
 
+                            hiddenInput.dispatchEvent(new Event('input', {
+                                bubbles: true
+                            }));
+                            document.getElementById('customer_info_title').textContent =
+                                `Customer Info`;
+                            // ✅ Fill Customer Info
+                            document.getElementById('customer_name_info').value =
+                                customer.name ?? '';
+                            document.getElementById('customer_id_info').value =
+                                customer.id ?? '';
+                            document.getElementById('customer_address_info').value =
+                                customer.address1 ?? '';
+
+                            document.getElementById('customer_phone_info').value =
+                                customer.phone ?? '';
+
+                            // ✅ Lock 3 fields
+                            document.getElementById('customer_name_info').readOnly = true;
+                            document.getElementById('customer_address_info').readOnly = true;
+                            document.getElementById('customer_phone_info').readOnly = true;
+
+                            // ✅ UI style
+                            document.getElementById('customer_name_info').classList.add(
+                                'bg-gray-100', 'cursor-not-allowed');
+                            document.getElementById('customer_address_info').classList.add(
+                                'bg-gray-100', 'cursor-not-allowed');
+                            document.getElementById('customer_phone_info').classList.add(
+                                'bg-gray-100', 'cursor-not-allowed');
+                            // Discount Logic
+                            if (current_discount !== customerDiscount) {
+
+                                let title = '';
+                                let message = '';
+
+                                if (customerDiscount > 0) {
+                                    title = 'Apply customer discount?';
+                                    message =
+                                        `Customer has ${customerDiscount}% discount. Do you want to overwrite current cart discount?`;
+                                } else {
+                                    title = 'Remove customer discount?';
+                                    message =
+                                        `This customer has no discount. Do you want to remove current discount (${current_discount}%) and keep normal price?`;
+                                }
+
+                                openCustomerDiscountModal({
+                                    title,
+                                    message,
+                                    onConfirm: () => {
+                                        current_discount = customerDiscount;
+
+                                        Livewire.dispatch(
+                                            'applyCustomerDiscountEvent', {
+                                                discount: customerDiscount
+                                            });
+                                    }
+                                });
+                            }
                         });
                         list.appendChild(li);
                     });
@@ -624,7 +713,47 @@
                 console.error(err);
             }
         });
+        document.getElementById('customerDiscountModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+                document.getElementById('customerDiscountModalConfirm').onclick = null;
+                document.getElementById('customerDiscountModalCancel').onclick = null;
+            }
+        });
 
+        function openCustomerDiscountModal({
+            title,
+            message,
+            onConfirm
+        }) {
+            const modal = document.getElementById('customerDiscountModal');
+            const titleEl = document.getElementById('customerDiscountModalTitle');
+            const messageEl = document.getElementById('customerDiscountModalMessage');
+            const confirmBtn = document.getElementById('customerDiscountModalConfirm');
+            const cancelBtn = document.getElementById('customerDiscountModalCancel');
+
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+
+            modal.classList.remove('hidden');
+
+            const closeModal = () => {
+                modal.classList.add('hidden');
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            confirmBtn.onclick = () => {
+                if (typeof onConfirm === 'function') {
+                    onConfirm();
+                }
+                closeModal();
+            };
+
+            cancelBtn.onclick = () => {
+                closeModal();
+            };
+        }
 
 
         // Hide list when clicking outside
@@ -664,162 +793,165 @@
 
 
 @push('modals')
-
-    {{-- <ADD CURRENCY> --}}
-    <div id="static-modal-currency-exchange" data-modal-backdrop="static" tabindex="-1" aria-hidden="true"
-        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-        <div class="relative p-4 w-full max-w-2xl max-h-full">
-            <!-- Modal content -->
-            <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
-                <!-- Modal header -->
-                <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
-                    <h3 class="text-lg font-medium text-heading">
-                        Currency Exchange
-                    </h3>
-                    <button type="button"
-                        class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
-                        data-modal-hide="static-modal-currency-exchange">
-                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-                            height="24" fill="none" viewBox="0 0 24 24">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18 17.94 6M18 18 6.06 6" />
-                        </svg>
-                        <span class="sr-only">Close modal</span>
-                    </button>
-                </div>
-                <!-- Modal body -->
-                <form id="currencyForm">
-                    @csrf
-                    <div id="main_currency_box" class="grid grid-cols-1 gap-2 space-y-4 md:space-y-6 py-4 md:py-6">
-
-
-                        @foreach ($currency as $item)
-                            <div
-                                class=" space-x-0 space-y-4 sm:space-y-0 sm:space-x-4 rtl:space-x-reverse flex items-center flex-col sm:flex-row mb-4">
-                                <input type="hidden" name="currency[{{ $item->id }}][id]" value="{{ $item->id }}">
-
-                                <div class="flex -space-x-px">
-
-                                    <div class="relative w-full">
-                                        <input type="number" value="1" disabled
-                                            class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-s-base focus:ring-brand focus:border-brand px-3 py-2.5 placeholder:text-body"
-                                            placeholder="1 USD" required />
-                                    </div>
-                                    <button
-                                        class="inline-flex items-center shrink-0 z-10 text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-fg-brand focus:ring-4 focus:ring-neutral-tertiary font-medium leading-5 rounded-e-base text-sm px-4 py-2.5 focus:outline-none"
-                                        type="button">
-                                        USD &ensp;
-                                    </button>
-                                </div>
-                                <svg class="mx-2 w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                    width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                        stroke-width="2" d="m16 10 3-3m0 0-3-3m3 3H5v3m3 4-3 3m0 0 3 3m-3-3h14v-3" />
-                                </svg>
-                                <div class="flex -space-x-px">
-
-                                    <div class="relative w-full">
-
-
-                                        <input type="number" name="currency[{{ $item->id }}][factor]"
-                                            value="{{ (float) $item->factor }}"
-                                            class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-l-sm focus:ring-brand focus:border-brand px-3 py-2.5 placeholder:text-body">
-                                    </div>
-                                    <div>
-                                        <input type="text" name="currency[{{ $item->id }}][name]"
-                                            class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm  focus:ring-brand focus:border-brand px-3 py-2.5 placeholder:text-body"
-                                            value="{{ $item->name }}">
-                                    </div>
-                                    <div>
-
-
-
-                                        <input type="text" name="currency[{{ $item->id }}][code]"
-                                            value="{{ $item->code }}"
-                                            class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-e-sm focus:ring-brand focus:border-brand px-3 py-2.5 placeholder:text-body">
-                                    </div>
-                                    <div>
-
-
-                                        <input type="radio" name="default_currency" value="{{ $item->id }}"
-                                            {{ $item->is_default ? 'checked' : '' }}
-                                            class="w-4 h-4 text-brand focus:ring-brand">
-
-                                    </div>
-                                </div>
-
-                            </div>
-                            <br>
-                        @endforeach
-
-
+    @if (Auth::user()->role == 'admin')
+        {{-- <ADD CURRENCY> --}}
+        <div id="static-modal-currency-exchange" data-modal-backdrop="static" tabindex="-1" aria-hidden="true"
+            class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+            <div class="relative p-4 w-full max-w-2xl max-h-full">
+                <!-- Modal content -->
+                <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
+                    <!-- Modal header -->
+                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                        <h3 class="text-lg font-medium text-heading">
+                            Currency Exchange
+                        </h3>
+                        <button type="button"
+                            class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                            data-modal-hide="static-modal-currency-exchange">
+                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                                height="24" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18 17.94 6M18 18 6.06 6" />
+                            </svg>
+                            <span class="sr-only">Close modal</span>
+                        </button>
                     </div>
-                    <!-- New Currency Input -->
-                    <div
-                        class=" space-x-0 space-y-4 sm:space-y-0 sm:space-x-4 rtl:space-x-reverse flex items-center flex-col sm:flex-row mb-4">
-                        <div
-                            class="space-x-0 space-y-4 sm:space-y-0 sm:space-x-4 rtl:space-x-reverse flex items-center flex-col sm:flex-row mb-4">
-                            <div class="flex -space-x-px">
+                    <!-- Modal body -->
+                    <form id="currencyForm">
+                        @csrf
+                        <div id="main_currency_box" class="grid grid-cols-1 gap-2 space-y-4 md:space-y-6 py-4 md:py-6">
 
-                                <div class="flex -space-x-px">
 
-                                    <div class="relative w-full">
-                                        <input type="number" value="1" disabled
-                                            class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-s-base focus:ring-brand focus:border-brand px-2 py-2 placeholder:text-body"
-                                            required />
+                            @foreach ($currency as $item)
+                                <div
+                                    class=" space-x-0 space-y-4 sm:space-y-0 sm:space-x-4 rtl:space-x-reverse flex items-center flex-col sm:flex-row mb-4">
+                                    <input type="hidden" name="currency[{{ $item->id }}][id]"
+                                        value="{{ $item->id }}">
+
+                                    <div class="flex -space-x-px">
+
+                                        <div class="relative w-full">
+                                            <input type="number" value="1" disabled
+                                                class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-s-base focus:ring-brand focus:border-brand px-3 py-2.5 placeholder:text-body"
+                                                placeholder="1 USD" required />
+                                        </div>
+                                        <button
+                                            class="inline-flex items-center shrink-0 z-10 text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-fg-brand focus:ring-4 focus:ring-neutral-tertiary font-medium leading-5 rounded-e-base text-sm px-4 py-2.5 focus:outline-none"
+                                            type="button">
+                                            USD &ensp;
+                                        </button>
                                     </div>
-                                    <button
-                                        class="inline-flex items-center shrink-0 z-10 text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-fg-brand focus:ring-4 focus:ring-neutral-tertiary font-medium leading-5 rounded-e-base text-sm px-2 py-2 focus:outline-none"
-                                        type="button">
-                                        USD &ensp;
-                                    </button>
-                                </div>
-                                <div class="p-2">
                                     <svg class="mx-2 w-4 h-4 text-body" aria-hidden="true"
                                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                                         viewBox="0 0 24 24">
                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                                             stroke-width="2" d="m16 10 3-3m0 0-3-3m3 3H5v3m3 4-3 3m0 0 3 3m-3-3h14v-3" />
                                     </svg>
-                                </div>
+                                    <div class="flex -space-x-px">
 
-                                <div class="relative w-full">
-                                    <input type="number" name="new_currency[factor]" value=""
-                                        class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-l-sm focus:ring-brand focus:border-brand px-2 py-2 placeholder:text-body"
-                                        placeholder="Factor">
-                                </div>
-                                <div class="relative w-full">
-                                    <input type="text" name="new_currency[name]" value=""
-                                        class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm  focus:ring-brand focus:border-brand px-3 py-2 placeholder:text-body"
-                                        placeholder="Name">
-                                </div>
-                                <div>
-                                    <input type="text" name="new_currency[code]" value=""
-                                        class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-e-sm focus:ring-brand focus:border-brand px-3 py-2 placeholder:text-body"
-                                        placeholder="Code">
-                                </div>
-                                <div>
-                                    <input type="radio" name="default_currency" value="new"
-                                        class="w-4 h-4 text-brand focus:ring-brand">
+                                        <div class="relative w-full">
 
+
+                                            <input type="number" name="currency[{{ $item->id }}][factor]"
+                                                value="{{ (float) $item->factor }}"
+                                                class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-l-sm focus:ring-brand focus:border-brand px-3 py-2.5 placeholder:text-body">
+                                        </div>
+                                        <div>
+                                            <input type="text" name="currency[{{ $item->id }}][name]"
+                                                class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm  focus:ring-brand focus:border-brand px-3 py-2.5 placeholder:text-body"
+                                                value="{{ $item->name }}">
+                                        </div>
+                                        <div>
+
+
+
+                                            <input type="text" name="currency[{{ $item->id }}][code]"
+                                                value="{{ $item->code }}"
+                                                class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-e-sm focus:ring-brand focus:border-brand px-3 py-2.5 placeholder:text-body">
+                                        </div>
+                                        <div>
+
+
+                                            <input type="radio" name="default_currency" value="{{ $item->id }}"
+                                                {{ $item->is_default ? 'checked' : '' }}
+                                                class="w-4 h-4 text-brand focus:ring-brand">
+
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <br>
+                            @endforeach
+
+
+                        </div>
+                        <!-- New Currency Input -->
+                        <div
+                            class=" space-x-0 space-y-4 sm:space-y-0 sm:space-x-4 rtl:space-x-reverse flex items-center flex-col sm:flex-row mb-4">
+                            <div
+                                class="space-x-0 space-y-4 sm:space-y-0 sm:space-x-4 rtl:space-x-reverse flex items-center flex-col sm:flex-row mb-4">
+                                <div class="flex -space-x-px">
+
+                                    <div class="flex -space-x-px">
+
+                                        <div class="relative w-full">
+                                            <input type="number" value="1" disabled
+                                                class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-s-base focus:ring-brand focus:border-brand px-2 py-2 placeholder:text-body"
+                                                required />
+                                        </div>
+                                        <button
+                                            class="inline-flex items-center shrink-0 z-10 text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-fg-brand focus:ring-4 focus:ring-neutral-tertiary font-medium leading-5 rounded-e-base text-sm px-2 py-2 focus:outline-none"
+                                            type="button">
+                                            USD &ensp;
+                                        </button>
+                                    </div>
+                                    <div class="p-2">
+                                        <svg class="mx-2 w-4 h-4 text-body" aria-hidden="true"
+                                            xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="m16 10 3-3m0 0-3-3m3 3H5v3m3 4-3 3m0 0 3 3m-3-3h14v-3" />
+                                        </svg>
+                                    </div>
+
+                                    <div class="relative w-full">
+                                        <input type="number" name="new_currency[factor]" value=""
+                                            class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-l-sm focus:ring-brand focus:border-brand px-2 py-2 placeholder:text-body"
+                                            placeholder="Factor">
+                                    </div>
+                                    <div class="relative w-full">
+                                        <input type="text" name="new_currency[name]" value=""
+                                            class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm  focus:ring-brand focus:border-brand px-3 py-2 placeholder:text-body"
+                                            placeholder="Name">
+                                    </div>
+                                    <div>
+                                        <input type="text" name="new_currency[code]" value=""
+                                            class="block w-full bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-e-sm focus:ring-brand focus:border-brand px-3 py-2 placeholder:text-body"
+                                            placeholder="Code">
+                                    </div>
+                                    <div>
+                                        <input type="radio" name="default_currency" value="new"
+                                            class="w-4 h-4 text-brand focus:ring-brand">
+
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    </form>
+                    <!-- Modal footer -->
+                    <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
+                        <button onclick="saveCurrencies()" {{-- data-modal-hide="static-modal-currency-exchange" --}} type="button"
+                            class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
+                            Save</button>
+                        &ensp;
+                        <button data-modal-hide="static-modal-currency-exchange" type="button"
+                            class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none mx-2">Close</button>
                     </div>
-                </form>
-                <!-- Modal footer -->
-                <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
-                    <button onclick="saveCurrencies()" {{-- data-modal-hide="static-modal-currency-exchange" --}} type="button"
-                        class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
-                        Save</button>
-                    &ensp;
-                    <button data-modal-hide="static-modal-currency-exchange" type="button"
-                        class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none mx-2">Close</button>
                 </div>
             </div>
         </div>
-    </div>
-
+    @endif
     {{-- <DELETE CUSTOMER> --}}
     <div id="confirm-delete-cust"
         class=" hight_index fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
@@ -903,13 +1035,10 @@
 
                 <div>
                     <label>Discount (%)</label>
-                    <input id="cust-credit" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
+                    <input id="cust-discount_percent" type="number" step="0.01"
+                        class="w-full border rounded px-3 py-2" />
                 </div>
 
-                <div>
-                    <label>Balance</label>
-                    <input id="cust-balance" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
-                </div>
 
                 <div>
                     <label>Points</label>
@@ -960,7 +1089,28 @@
             </div>
         </div>
     </div>
-
+    {{-- <CUSTOMER DISCOUNT CONFIRM> --}}
+    <div id="customerDiscountModal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
+        <div class="bg-white rounded-2xl shadow-2xl w-96 max-w-sm p-6 text-center animate-scaleUp">
+            <h2 id="customerDiscountModalTitle" class="text-2xl font-bold mb-3 text-gray-800">
+                Apply customer discount?
+            </h2>
+            <p id="customerDiscountModalMessage" class="text-gray-600 mb-6">
+                Customer discount will overwrite current cart discount.
+            </p>
+            <div class="flex justify-center space-x-4">
+                <button id="customerDiscountModalCancel"
+                    class="px-5 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition">
+                    Cancel
+                </button>
+                <button id="customerDiscountModalConfirm"
+                    class="px-5 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
 
     {{-- <REFRESH> --}}
 
@@ -1056,10 +1206,9 @@
                                             class="sort-icon">↕</span></th>
                                     <th class="px-4 py-3 cursor-pointer" data-column="type">Type <span
                                             class="sort-icon">↕</span></th>
-                                    <th class="px-4 py-3 cursor-pointer" data-column="credit_limit">Credit Limit <span
+                                    <th class="px-4 py-3 cursor-pointer" data-column="credit_limit">Discount % <span
                                             class="sort-icon">↕</span></th>
-                                    <th class="px-4 py-3 cursor-pointer" data-column="balance">Balance <span
-                                            class="sort-icon">↕</span></th>
+
                                     <th class="px-4 py-3 cursor-pointer" data-column="point">Point <span
                                             class="sort-icon">↕</span></th>
                                     <th class="px-4 py-3 cursor-pointer" data-column="status">Status <span
@@ -1193,12 +1342,12 @@
                                 </select>
                             </div>
 
-                            <!-- Credit Limit -->
                             <div>
                                 <label class="block mb-2.5 text-sm font-medium text-heading">
                                     Discount (%)
                                 </label>
-                                <input type="number" name="credit_limit" step="0.01" value="0"
+                                <input type="number" name="discount_percent" id="discount_percent" step="0.01"
+                                    value="0"
                                     class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs">
                             </div>
 
@@ -1491,7 +1640,7 @@
     <div id="DatePromptModal"
         class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm">
 
-        <div class="bg-white rounded-5xl shadow-2xl  w-1/2 max-w-sm p-6 space-y-5 animate-scaleUp">
+        <div class="bg-white rounded-5xl shadow-2xl  max-w-xl max-w-sm p-6 space-y-5 animate-scaleUp">
 
             <!-- Header -->
             <div class="flex flex-col items-center text-center">
@@ -1500,27 +1649,32 @@
             </div>
 
 
-            <div class="space-y-6">
-
-                <!-- Display Total Amounts -->
-                <div class="bg-gray-50 p-4 rounded-xl space-y-3">
-                    <div>
-                        <label for="display_pay_amount" class="block text-gray-600 font-medium mb-1">Total
-                            Amount</label>
-                        <input type="text" id="display_pay_amount" disabled
-                            class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
-                    </div>
-                    <div>
-                        <label for="display_pay_amount_converted" class="block text-gray-600 font-medium mb-1">Total
-                            in
-                            Other</label>
-                        <input type="text" id="display_pay_amount_converted" disabled
-                            class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
-                    </div>
+            <div class="grid grid-cols-2 space-y-6 gap-2">
+                <div class="col-span-2">
+                    <label for="document_dateInput" class="block text-gray-700 font-medium mb-1">
+                        Posting Date
+                    </label>
+                    <input type="date" id="document_dateInput"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
                 </div>
 
+                <div>
+                    <label for="display_pay_amount" class="block text-gray-600 font-medium mb-1">Total
+                        Amount</label>
+                    <input type="text" id="display_pay_amount" disabled
+                        class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
+                </div>
+                <div>
+                    <label for="display_pay_amount_converted" class="block text-gray-600 font-medium mb-1">Total
+                        in
+                        Other</label>
+                    <input type="text" id="display_pay_amount_converted" disabled
+                        class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
+                </div>
+
+
                 <!-- Payment Method Selection -->
-                <div class="space-y-3 px-5">
+                <div>
                     <label for="payment_method" class="block text-gray-700 font-medium mb-1">Payment Method</label>
                     <select id="payment_method"
                         class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
@@ -1534,7 +1688,7 @@
                         <option value="CHEQ">CHEQ</option>
                     </select>
                 </div>
-                <div class="space-y-3 px-5">
+                <div>
                     <label for="customer_type" class="block text-gray-700 font-medium mb-1">Customer Type</label>
                     <select id="customer_type"
                         class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
@@ -1543,67 +1697,75 @@
                         <option value="Take-Away">Take Away</option>
                     </select>
                 </div>
-                <!-- Payment Inputs -->
-                <div class="bg-gray-50 p-4 rounded-xl space-y-3">
-                    <div class="grid grid-cols-2 gap-3">
-                        <!-- Pay USD -->
-                        <div>
-                            <label for="pay_usd" class="block text-gray-700 font-medium mb-1">Pay as Dollar</label>
-                            <input type="text" id="pay_usd" placeholder="$0.00"
-                                class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                        </div>
 
-                        <!-- Hidden currency factor -->
-                        <input type="hidden" id="currency_factor" value="4000"> <!-- example: 1 USD = 4000 KHR -->
 
-                        <!-- Pay other currency -->
-                        <div>
-                            <label for="pay_other" class="block text-gray-700 font-medium mb-1">
-                                Pay as <span id="currency_display_name">៛</span>
-                            </label>
-                            <input type="text" id="pay_other" placeholder="0 ៛"
-                                class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                        </div>
-
-                        <!-- Returned USD -->
-                        <div>
-                            <label for="returned_amount" class="block text-gray-700 font-medium mb-1">លុយអាប់</label>
-                            <input type="text" id="returned_amount" readonly
-                                class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
-                        </div>
-
-                        <!-- Returned other currency -->
-                        <div>
-                            <label for="returned_amount_other" class="block text-gray-700 font-medium mb-1">
-                                លុយអាប់ជា <span id="currency_display_name2">៛</span>
-                            </label>
-                            <input type="text" id="returned_amount_other" readonly
-                                class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
-                        </div>
-                    </div>
+                <!-- Pay USD -->
+                <div>
+                    <label for="pay_usd" class="block text-gray-700 font-medium mb-1">Pay as Dollar</label>
+                    <input type="text" id="pay_usd" placeholder="$0.00"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
                 </div>
 
-            </div>
-            <!-- Date Inputs -->
-            <div class="space-y-4 px-5">
+                <!-- Hidden currency factor -->
+                <input type="hidden" id="currency_factor" value="4000"> <!-- example: 1 USD = 4000 KHR -->
+
+                <!-- Pay other currency -->
                 <div>
-                    <label for="document_dateInput" class="block text-gray-700 font-medium mb-1">
-                        Document Date
+                    <label for="pay_other" class="block text-gray-700 font-medium mb-1">
+                        Pay as <span id="currency_display_name">៛</span>
                     </label>
-                    <input type="date" id="document_dateInput"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+                    <input type="text" id="pay_other" placeholder="0 ៛"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
                 </div>
 
+                <!-- Returned USD -->
                 <div>
-                    <label for="due_date" class="block text-gray-700 font-medium mb-1">
-                        Due Date
+                    <label for="returned_amount" class="block text-gray-700 font-medium mb-1">លុយអាប់</label>
+                    <input type="text" id="returned_amount" readonly
+                        class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
+                </div>
+
+                <!-- Returned other currency -->
+                <div>
+                    <label for="returned_amount_other" class="block text-gray-700 font-medium mb-1">
+                        លុយអាប់ជា <span id="currency_display_name2">៛</span>
                     </label>
-                    <input type="date" id="due_date"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                    <p class="text-xs text-gray-500 mt-1">Default is <b>+1 month</b>, you can adjust if needed.</p>
+                    <input type="text" id="returned_amount_other" readonly
+                        class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
                 </div>
             </div>
+            <br>
+            <div id="customer_info" class="grid grid-cols-2 gap-2">
 
+                <div class="col-span-2">
+                    <h2 id="customer_info_title">General Customer</h2>
+                    <hr>
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-gray-700 font-medium mb-1">Name</label>
+                    <input type="hidden" value="" id="customer_id_info">
+                    <input type="text" id="customer_name_info"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1">Address</label>
+                    <input type="text" id="customer_address_info"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1">Phone</label>
+                    <input type="text" id="customer_phone_info"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-gray-700 font-medium mb-1">Remark</label>
+                    <input type="text" id="remark_invoice"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+                </div>
+            </div>
             <br>
             <!-- Buttons -->
             <div class="w-full grid grid-cols-3 gap-2 px-5 ">
@@ -2264,8 +2426,9 @@
         <div class="  relative p-4 w-full max-w-10xl max-h-full ">
 
             <!-- Modal content -->
+            <!-- Modal content -->
             <div
-                class="respond_laptop relative  bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 ">
+                class="min-h-[70vh] max-h-[90vh] respond_laptop relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 flex flex-col">
                 <!-- Modal header -->
                 <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
                     <div class="w-full mb-6">
@@ -2332,105 +2495,91 @@
 
 
                 <!-- Modal body -->
-                <div class="scroll_content_70 ">
-                    <table id="Table-sale-list" class=" text-sm text-left border border-default rounded-base">
-                        <thead class="text-xs uppercase bg-neutral-secondary">
-                            <tr class="text-nowrap">
-                                <!-- ===== Invoice Header ===== -->
-                                <th class="px-4 py-3 cursor-pointer" data-column="id">
-                                    No<span class="sort-icon">↕</span>
-                                </th>
-                                <th class="px-4 py-3 cursor-pointer" data-column="invoice_number">
-                                    Invoice No <span class="sort-icon">↕</span>
-                                </th>
-                                <th class="px-4 py-3 cursor-pointer" data-column="created_at">Transaction
-                                    Date<span class="sort-icon">↕</span></th>
-                                <th class="px-4 py-3 cursor-pointer" data-column="customer_name">
-                                    Customer <span class="sort-icon">↕</span>
-                                </th>
+                <div class="flex-1 overflow-y-auto mt-4">
+                    <div class="scroll_content_70 overflow-x-auto">
+                        <table id="Table-sale-list" class=" text-sm text-left border border-default rounded-base">
+                            <thead class="text-xs uppercase bg-neutral-secondary">
+                                <tr class="text-nowrap">
+                                    <!-- ===== Invoice Header ===== -->
+                                    <th class="px-4 py-3 cursor-pointer" data-column="id">
+                                        No <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="invoice_number">
+                                        Invoice No <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="created_at">
+                                        Transaction Date <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="contact_name">
+                                        Customer <span class="sort-icon">↕</span>
+                                    </th>
+                                       <th class="px-4 py-3 cursor-pointer" data-column="contact_name">
+                                        Phone<span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="contact_name">
+                                        Address<span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="invoice_date">
+                                        Invoice Date <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="payment_method">
+                                        Payment Method <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="customer_type">
+                                        Customer Type <span class="sort-icon">↕</span>
+                                    </th>
 
-                                <th class="px-4 py-3 cursor-pointer" data-column="invoice_date">
-                                    Invoice Date <span class="sort-icon">↕</span>
-                                </th>
+                                    <!-- ===== Line Item Fields ===== -->
+                                    <th class="px-4 py-3 cursor-pointer" data-column="name">
+                                        Name <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="variant">
+                                        Variant <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="description">
+                                        Description <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="quantity">
+                                        Qty <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="unit">
+                                        UOM <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="unit_price">
+                                        Unit Price <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="sell_price">
+                                        Price <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="line_amount">
+                                        Line Amount <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="discount_percent">
+                                        Discount % <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="discount_amount">
+                                        Discount Amount <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="vat">
+                                        VAT % <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="vat_amount">
+                                        VAT Amount <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="net_amount">
+                                        Net Amount <span class="sort-icon">↕</span>
+                                    </th>
+                                    <th class="px-4 py-3 cursor-pointer" data-column="grand_total_amount">
+                                        Grand Total <span class="sort-icon">↕</span>
+                                    </th>
+                                </tr>
 
-                                {{-- <th class="px-4 py-3 cursor-pointer" data-column="due_date">
-                                    Due Date <span class="sort-icon">↕</span>
-                                </th> --}}
-                                <th class="px-4 py-3 cursor-pointer" data-column="payment_method">
-                                    Payment Method <span class="sort-icon">↕</span>
-                                </th>
-                                <th class="px-4 py-3 cursor-pointer" data-column="customer_type">
-                                    Customer Type <span class="sort-icon">↕</span>
-                                </th>
-
-
-                                <!-- ===== Line Item Fields ===== -->
-                                {{-- <th class="px-4 py-3 cursor-pointer" data-column="item_code">
-                                    Item Code <span class="sort-icon">↕</span>
-                                </th> --}}
-
-                                <th class="px-4 py-3 cursor-pointer" data-column="product_name">
-                                    Name <span class="sort-icon">↕</span>
-                                </th>
-
-                                <th class="px-4 py-3 cursor-pointer" data-column="variant">
-                                    Variant <span class="sort-icon">↕</span>
-                                </th>
-
-                                <th class="px-4 py-3 cursor-pointer" data-column="description">
-                                    Description <span class="sort-icon">↕</span>
-                                </th>
-
-                                <th class="px-4 py-3 cursor-pointer" data-column="quantity">
-                                    Qty <span class="sort-icon">↕</span>
-                                </th>
-                                <th class="px-4 py-3 cursor-pointer" data-column="unit">
-                                    UOM <span class="sort-icon">↕</span>
-                                </th>
-
-                                <th class="px-4 py-3 cursor-pointer" data-column="unit_price">
-                                    Unit Price <span class="sort-icon">↕</span>
-                                </th>
-                                {{-- <th class="px-4 py-3 cursor-pointer" data-column="cost">
-                                    Cost <span class="sort-icon">↕</span>
-                                </th> --}}
-
-                                <th class="px-4 py-3 cursor-pointer" data-column="sell_price">
-                                    Price <span class="sort-icon">↕</span>
-                                </th>
-
-                                <th class="px-4 py-3 cursor-pointer" data-column="line_amount">
-                                    Gross Amount <span class="sort-icon">↕</span>
-                                </th>
-
-                                <th class="px-4 py-3 cursor-pointer" data-column="discount_percent">
-                                    Discount % <span class="sort-icon">↕</span>
-                                </th>
-
-                                <th class="px-4 py-3 cursor-pointer" data-column="discount_percent">
-                                    Discount Amount <span class="sort-icon">↕</span>
-                                </th>
-
-                                <th class="px-4 py-3 cursor-pointer" data-column="vat_percent">
-                                    VAT <span class="sort-icon">↕</span>
-                                </th>
-                                <th class="px-4 py-3 cursor-pointer" data-column="total_vat_amount">
-                                    Total Vat Amount<span class="sort-icon">↕</span>
-                                </th>
-                                {{-- <th class="px-4 py-3 cursor-pointer" data-column="total_cost_amount">
-                                    Total Cost Amount<span class="sort-icon">↕</span>
-                                </th> --}}
-                                <th class="px-4 py-3 cursor-pointer" data-column="total_line_amount">
-                                    Total Amount<span class="sort-icon">↕</span>
-                                </th>
-
-                            </tr>
-
-                        </thead>
-                        <tbody id="salesTableBody">
-                            <!-- async rows -->
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody id="salesTableBody">
+                                <!-- async rows -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
 
@@ -2549,238 +2698,240 @@
 
 
 
+    @if (Auth::user()->role == 'admin')
+        {{-- <LIST User > --}}
+        <div id="default-modal-user-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
+            class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
 
-    {{-- <LIST User > --}}
-    <div id="default-modal-user-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
-        class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
-
-        {{-- width Custom  --}}
-        <div class="  relative p-4 w-full max-w-10xl max-h-full ">
-            <!-- Modal content -->
-            <div
-                class="min-h-[70vh] max-h-[90vh] respond_laptop relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 flex flex-col">
-
-
-                <!-- Modal header -->
-                <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
-                    <div class="w-full flex flex-col items-center justify-between mb-4">
-                        <div class="flex w-full items-center justify-between mb-4">
-                            <div>
-
-                                <h3 id="wh_name" class="text-lg font-medium text-heading">
-                                    User List
-                                </h3>
-                            </div>
-                            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                                <!-- Active checkbox -->
-                                <select id="active"
-                                    class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                    <option value="All">All Status</option>
-                                    <option value="1">Active</option>
-                                    <option value="0">Inactive</option>
-
-                                </select>
-                                <select id="role_filter"
-                                    class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                    <option value="All">All Roles</option>
-                                    <option value="Cashier">Cashier</option>
-                                    <option value="Supervisor">Supervisor</option>
-
-                                    <option value="Admin">Admin</option>
-                                </select>
+            {{-- width Custom  --}}
+            <div class="  relative p-4 w-full max-w-10xl max-h-full ">
+                <!-- Modal content -->
+                <div
+                    class="min-h-[70vh] max-h-[90vh] respond_laptop relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 flex flex-col">
 
 
-                                <!-- Type select -->
-                                <div class="flex items-center gap-2">
-                                    <input type="text" id="userSearchInput" placeholder="Search by name ,email..."
-                                        class="px-3 py-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <!-- Modal header -->
+                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                        <div class="w-full flex flex-col items-center justify-between mb-4">
+                            <div class="flex w-full items-center justify-between mb-4">
+                                <div>
 
+                                    <h3 id="wh_name" class="text-lg font-medium text-heading">
+                                        User List
+                                    </h3>
                                 </div>
-                                <button type="button"
-                                    class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
-                                    data-modal-hide="default-modal-user-list">
-                                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                        width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
-                                    </svg>
+                                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                    <!-- Active checkbox -->
+                                    <select id="active"
+                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                        <option value="All">All Status</option>
+                                        <option value="1">Active</option>
+                                        <option value="0">Inactive</option>
 
-                                    <span class="sr-only">Close modal</span>
-                                </button>
+                                    </select>
+                                    <select id="role_filter"
+                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                        <option value="All">All Roles</option>
+                                        <option value="Cashier">Cashier</option>
+                                        <option value="Supervisor">Supervisor</option>
+
+                                        <option value="Admin">Admin</option>
+                                    </select>
+
+
+                                    <!-- Type select -->
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" id="userSearchInput"
+                                            placeholder="Search by name ,email..."
+                                            class="px-3 py-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
+
+                                    </div>
+                                    <button type="button"
+                                        class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                                        data-modal-hide="default-modal-user-list">
+                                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                            width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                                stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                                        </svg>
+
+                                        <span class="sr-only">Close modal</span>
+                                    </button>
+                                </div>
                             </div>
+
+
+
+
+                        </div>
+                    </div>
+                    <!-- Modal body -->
+                    <div class="flex-1 overflow-y-auto mt-4">
+                        <div class="scroll_content_70 overflow-x-auto">
+                            <table id="user-table" class=" w-full text-sm text-left border border-default rounded-base">
+                                <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
+
+                                    <tr class="text-nowrap">
+                                        <th class="px-4 py-3 text-center">Select</th>
+                                        <th class="px-4 py-3">ID</th>
+                                        <th class="px-4 py-3">Name</th>
+                                        <th class="px-4 py-3">Email</th>
+                                        <th class="px-4 py-3">Phone</th>
+                                        <th class="px-4 py-3">Role</th>
+                                        <th class="px-4 py-3 text-center">Active</th>
+                                    </tr>
+                                    </tr>
+
+                                </thead>
+                                <tbody id="user-table-body">
+                                    <!-- async rows -->
+                                </tbody>
+                            </table>
                         </div>
 
-
-
-
                     </div>
-                </div>
-                <!-- Modal body -->
-                <div class="flex-1 overflow-y-auto mt-4">
-                    <div class="scroll_content_70 overflow-x-auto">
-                        <table id="user-table" class=" w-full text-sm text-left border border-default rounded-base">
-                            <thead class="sticky_top text-xs uppercase bg-neutral-secondary">
+                    <!-- Modal footer -->
 
-                                <tr class="text-nowrap">
-                                    <th class="px-4 py-3 text-center">Select</th>
-                                    <th class="px-4 py-3">ID</th>
-                                    <th class="px-4 py-3">Name</th>
-                                    <th class="px-4 py-3">Email</th>
-                                    <th class="px-4 py-3">Phone</th>
-                                    <th class="px-4 py-3">Role</th>
-                                    <th class="px-4 py-3 text-center">Active</th>
-                                </tr>
-                                </tr>
-
-                            </thead>
-                            <tbody id="user-table-body">
-                                <!-- async rows -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                </div>
-                <!-- Modal footer -->
-
-                <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5 mt-4">
-                    <div>
-                        {{-- <button type="button" data-modal-target="default-modal-customer"
+                    <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5 mt-4">
+                        <div>
+                            {{-- <button type="button" data-modal-target="default-modal-customer"
                                 data-modal-toggle="default-modal-customer"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Product Category
                             </button> --}}
-                        <button type="button" {{-- id="btnEditCustomer" --}} id="btnEditProduct"
-                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                            Edit
-                        </button>
-                        &ensp;
-                        {{-- <button type="button"
+                            <button type="button" {{-- id="btnEditCustomer" --}} id="btnEditProduct"
+                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                                Edit
+                            </button>
+                            &ensp;
+                            {{-- <button type="button"
                              id="btnDeleteCustomer"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Delete
                             </button> --}}
 
 
-                        <button type="button" id="btnUser" data-modal-target="default-modal-add-user"
-                            data-modal-toggle="default-modal-add-user"
-                            class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
-                            New User
-                        </button>
-                    </div>
+                            <button type="button" id="btnUser" data-modal-target="default-modal-add-user"
+                                data-modal-toggle="default-modal-add-user"
+                                class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
+                                New User
+                            </button>
+                        </div>
 
+
+                    </div>
 
                 </div>
-
             </div>
         </div>
-    </div>
-    {{-- <ADD User > --}}
-    <div id="default-modal-add-user" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
-        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-        <div class="  relative p-4 w-full max-w-5xl max-h-full ">
-            <!-- Modal content -->
 
-            <div class="relative bg-white border border-slate-600 shadow-md rounded-base p-4 md:p-6">
+        {{-- <ADD User > --}}
+        <div id="default-modal-add-user" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
+            class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+            <div class="  relative p-4 w-full max-w-5xl max-h-full ">
+                <!-- Modal content -->
 
-
-                <form id="AddUserForm" enctype="multipart/form-data">
-                    @csrf
-                    <!-- Modal header -->
-                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
-                        <h3 class="text-lg font-medium text-heading">
-                            Add New User <div id="formError" class="text-red-500 text-sm mb-3 hidden"></div>
-                        </h3>
-
-                        <button type="button"
-                            class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
-                            data-modal-hide="default-modal-add-user">
-                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
-                            </svg>
-                            <span class="sr-only">Close modal</span>
-                        </button>
+                <div class="relative bg-white border border-slate-600 shadow-md rounded-base p-4 md:p-6">
 
 
-                    </div>
-                    <!-- Modal body -->
-                    <div class="space-y-4 md:space-y-6 py-4 md:py-6">
+                    <form id="AddUserForm" enctype="multipart/form-data">
+                        @csrf
+                        <!-- Modal header -->
+                        <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                            <h3 class="text-lg font-medium text-heading">
+                                Add New User <div id="formError" class="text-red-500 text-sm mb-3 hidden"></div>
+                            </h3>
+
+                            <button type="button"
+                                class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                                data-modal-hide="default-modal-add-user">
+                                <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                    width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                                </svg>
+                                <span class="sr-only">Close modal</span>
+                            </button>
+
+
+                        </div>
+                        <!-- Modal body -->
+                        <div class="space-y-4 md:space-y-6 py-4 md:py-6">
 
 
 
-                        <!-- Name & Variant -->
-                        <div class="grid gap-6 md:grid-cols-1">
-                            <div>
-                                <label class="block mb-2.5 text-sm font-medium text-heading">
-                                    Display Name <span class="text-rose-600">*</span>
-                                </label>
-                                <input type="text" name="display_name" id="display_name" required
-                                    placeholder="Candy"
-                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                            <!-- Name & Variant -->
+                            <div class="grid gap-6 md:grid-cols-1">
+                                <div>
+                                    <label class="block mb-2.5 text-sm font-medium text-heading">
+                                        Display Name <span class="text-rose-600">*</span>
+                                    </label>
+                                    <input type="text" name="display_name" id="display_name" required
+                                        placeholder="Candy"
+                                        class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                                </div>
+                                <div>
+                                    <label class="block mb-2.5 text-sm font-medium text-heading">
+                                        User login <span class="text-rose-600">*</span>
+                                    </label>
+                                    <input type="text" name="username" id="username" required
+                                        placeholder="candy"
+                                        class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                                </div>
+                                <div>
+                                    <label class="block mb-2.5 text-sm font-medium text-heading">
+                                        User Role<span class="text-rose-600">*</span>
+                                    </label>
+                                    <select id="role" name="role" id="role" required
+                                        class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+
+                                        <option selected value="Cashier">Cashier</option>
+                                        <option value="Supervisor">Supervisor</option>
+
+                                        <option value="Admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block mb-2.5 text-sm font-medium text-heading">
+                                        Email
+                                    </label>
+                                    <input type="email" name="email" id="email"
+                                        placeholder="jonhdoe@example.com"
+                                        class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                                </div>
+                                <div>
+                                    <label class="block mb-2.5 text-sm font-medium text-heading">
+                                        Password
+                                    </label>
+                                    <input type="password" name="password" id="password" placeholder="••••••••"
+                                        required
+                                        class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                                </div>
                             </div>
-                            <div>
+                            &ensp;
+                            <div class="mt-4">
                                 <label class="block mb-2.5 text-sm font-medium text-heading">
-                                    User login <span class="text-rose-600">*</span>
+                                    User Can Use Warehouses
                                 </label>
-                                <input type="text" name="username" id="username" required placeholder="candy"
-                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
-                            </div>
-                            <div>
-                                <label class="block mb-2.5 text-sm font-medium text-heading">
-                                    User Role<span class="text-rose-600">*</span>
-                                </label>
-                                <select id="role" name="role" id="role" required
-                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
 
-                                    <option selected value="Cashier">Cashier</option>
-                                    <option value="Supervisor">Supervisor</option>
-
-                                    <option value="Admin">Admin</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block mb-2.5 text-sm font-medium text-heading">
-                                    Email
-                                </label>
-                                <input type="email" name="email" id="email"
-                                    placeholder="jonhdoe@example.com"
-                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
-                            </div>
-                            <div>
-                                <label class="block mb-2.5 text-sm font-medium text-heading">
-                                    Password
-                                </label>
-                                <input type="password" name="password" id="password" placeholder="••••••••"
-                                    required
-                                    class="bg-neutral-secondary-medium border border-default-medium rounded-base w-full px-3 py-2.5">
+                                <div id="warehouseList" class="grid grid-cols-2 gap-2">
+                                    <!-- JS render here -->
+                                </div>
                             </div>
                         </div>
-                        &ensp;
-                        <div class="mt-4">
-                            <label class="block mb-2.5 text-sm font-medium text-heading">
-                                User Can Use Warehouses
-                            </label>
+                        <!-- Modal footer -->
+                        <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
+                            <button type="submit" id="submitBtn" disabled
+                                class="bg-gray-400 text-gray-200 cursor-not-allowed font-medium rounded-base text-sm px-4 py-2.5 transition">
+                                Required More Info
+                            </button>
 
-                            <div id="warehouseList" class="grid grid-cols-2 gap-2">
-                                <!-- JS render here -->
-                            </div>
                         </div>
-                    </div>
-                    <!-- Modal footer -->
-                    <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
-                        <button type="submit" id="submitBtn" disabled
-                            class="bg-gray-400 text-gray-200 cursor-not-allowed font-medium rounded-base text-sm px-4 py-2.5 transition">
-                            Required More Info
-                        </button>
-
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
-
-
+    @endif
 
 
     <div id="lotModal" class="fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
@@ -2869,7 +3020,7 @@
         <div class="bg-white w-3/4 max-w-4xl p-6 rounded-xl shadow-lg">
             <div class="flex justify-between items-center mb-4">
 
-                    @csrf
+                @csrf
 
                 <center>
                     <h2 class="text-xl font-semibold">Transfer Item</h2>
@@ -2924,4 +3075,190 @@
             </div>
         </div>
     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    {{-- <LIST Item Ledger Entry DATA> --}}
+    <div id="default-modal-ledger-entry-list" tabindex="-1" aria-hidden="true" data-modal-backdrop="static"
+        class="hidden fixed inset-0 z-50 flex justify-center items-start md:items-center bg-black/50 p-4">
+
+        {{-- width Custom  --}}
+        <div class="  relative p-4 w-full max-w-10xl max-h-full ">
+
+            <!-- Modal content -->
+            <!-- Modal content -->
+            <div
+                class="min-h-[70vh] max-h-[90vh] respond_laptop relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 flex flex-col">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                    <div class="w-full mb-6">
+                        <!-- Title -->
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-medium text-heading">
+                                របាយការណ៍ ទំនិញ ចេញចូល
+                            </h3>
+                        </div>
+
+                        <!-- Filters Row 1: Date, Status, Customer -->
+                        <!-- Filters -->
+                        <div class="flex flex-wrap items-center gap-3 mb-4">
+                            <input type="date" id="from_date" class="px-3 py-2 border rounded-md text-sm">
+                            <input type="date" id="to_date" class="px-3 py-2 border rounded-md text-sm">
+                            <select id="invoice_paymentMethod" class="px-6 py-2 border rounded-md text-sm">
+                                <option value="">All Payment</option>
+                            </select>
+                            <div class="relative w-52">
+                                <input type="text" id="customer_search" placeholder="Customer Name"
+                                    autocomplete="off" class="px-3 py-2 border rounded-md text-sm w-full">
+
+                                <input type="hidden" id="customer_filter">
+
+                                <ul id="customer_list"
+                                    class="absolute z-50 bg-white border rounded-md w-full mt-1 max-h-60 overflow-y-auto hidden">
+                                </ul>
+                            </div>
+
+                            <input type="text" id="product_search" list="product_datalist"
+                                placeholder="Search product" autocomplete="off"
+                                class="px-3 py-2 border rounded-md text-sm w-64">
+
+                            <input type="hidden" id="ProductSearchInput_sale_invoice">
+
+                            <datalist id="product_datalist"></datalist>
+                            <select id="category_filter" class="px-3 py-2 border rounded-md text-sm w-44">
+                                <option value="">All Categories</option>
+                            </select>
+                            <select id="sale_view_limit" class="px-5 py-2 border rounded-md text-sm w-36">
+                                <option value="10">10 Invoice</option>
+                                <option value="20">20 Invoice</option>
+                                <option value="30">30 Invoice</option>
+                                <option value="50">50 Invoice</option>
+                                <option selected value="75">75 Invoice</option>
+                                <option value="100">100 Invoice</option>
+                                <option value="200">200 Invoice</option>
+                                <option value="All">All Invoices</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button"
+                        class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                        data-modal-hide="default-modal-ledger-entry-list">
+                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                        </svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+
+
+
+                <!-- Modal body -->
+                <div class="flex-1 overflow-y-auto mt-4">
+                    <div class="scroll_content_70 overflow-x-auto">
+                        <table id="Table-sale-list" class=" text-sm text-left border border-default rounded-base">
+                            <thead class="text-xs uppercase bg-neutral-secondary">
+                                <tr class="text-nowrap">
+
+                                    <th class="border px-3 py-2">Entry No</th>
+                                    <th class="border px-3 py-2">Posting Date</th>
+                                    <th class="border px-3 py-2">Document Type</th>
+                                    <th class="border px-3 py-2">Document No</th>
+
+                                    <th class="border px-3 py-2">Barcode</th>
+                                    <th class="border px-3 py-2">Item Code</th>
+                                    <th class="border px-3 py-2">Name</th>
+                                    <th class="border px-3 py-2">Variant</th>
+                                    <th class="border px-3 py-2">Description</th>
+                                    <th class="border px-3 py-2">Unit</th>
+                                    <th class="border px-3 py-2">Category</th>
+
+                                    <th class="border px-3 py-2">Warehouse Name</th>
+                                    <th class="border px-3 py-2">Lot</th>
+                                    <th class="border px-3 py-2">Expire Date</th>
+
+                                    <th class="border px-3 py-2 text-right">Quantity</th>
+                                    <th class="border px-3 py-2 text-right">Remaining Qty</th>
+                                    <th class="border px-3 py-2">Entry Type</th>
+
+                                    <th class="border px-3 py-2 text-right">Unit Cost</th>
+                                    <th class="border px-3 py-2 text-right">Unit Price</th>
+                                    <th class="border px-3 py-2 text-right">Sell Price</th>
+
+                                    <th class="border px-3 py-2 text-right">Discount %</th>
+                                    <th class="border px-3 py-2 text-right">Discount Amount</th>
+
+                                    <th class="border px-3 py-2 text-right">VAT %</th>
+                                    <th class="border px-3 py-2 text-right">VAT Amount</th>
+
+                                    <th class="border px-3 py-2 text-right">Line Amount</th>
+                                    <th class="border px-3 py-2 text-right">Net Amount</th>
+                                    <th class="border px-3 py-2 text-right">Grand Total</th>
+
+                                    <th class="border px-3 py-2">Customer ID</th>
+                                    <th class="border px-3 py-2">Customer Name</th>
+                                    <th class="border px-3 py-2">Customer Phone</th>
+                                    <th class="border px-3 py-2">Customer Address</th>
+
+                                    <th class="border px-3 py-2">Vendor ID</th>
+                                    <th class="border px-3 py-2">Payment Method</th>
+
+                                    <th class="border px-3 py-2">Created By</th>
+                                    <th class="border px-3 py-2">Created At</th>
+
+                                </tr>
+                            </thead>
+                            <tbody id="item_ledger_entry_table_body">
+                                <!-- async rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+                <!-- Modal footer -->
+
+                <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5">
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="flex items-center justify-center gap-1 mt-4 mx-2"
+                            id="paginationContainer_sale_invoice">
+                            <!-- JS will render buttons here -->
+                        </div>
+                        &ensp;
+                        <span id="pageInfo_sale_invoice" class="text-sm text-gray-600"></span>
+                    </div>
+                    <div class="flex">
+                        <button type="button" id="downloadSales" class="px-4 py-2 bg-green-600 text-white rounded">
+                            <i class="fa-regular fa-file-excel"></i>
+                        </button>
+
+
+
+                        &ensp;
+                        <button type="button" id="btnPrintSale" class="px-4 py-2 bg-blue-600 text-white rounded">
+                            <i class="fa-solid fa-print"></i>
+                        </button>
+                        &ensp;
+                        <button type="button" id="btnReciept" class="px-4 py-2 bg-blue-600 text-white rounded">
+                            Print Reciept
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 @endpush

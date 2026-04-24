@@ -26,7 +26,7 @@ class CustomerController extends Controller
                 'city' => 'nullable|string|max:100',
                 'country' => 'nullable|string|max:100',
                 'type' => 'required|in:walk_in,member,vip',
-                'credit_limit' => 'nullable|numeric|min:0',
+                'discount_percent' => 'nullable|numeric|min:0',
             ],
             [
                 'customer_code.required' => 'Customer code is required.',
@@ -35,7 +35,7 @@ class CustomerController extends Controller
                 'address.required'       => 'Please enter address.',
                 'type.required'          => 'Please select customer type.',
                 'email.email'            => 'Please enter a valid email address.',
-                'credit_limit.numeric'   => 'Credit limit must be a number.',
+                'discount_percent.numeric'   => 'Discount must be a number.',
             ]
         );
 
@@ -60,7 +60,7 @@ class CustomerController extends Controller
         $customers = Customer::where('customer_code', 'like', "%{$query}%")
             ->orWhere('name', 'like', "%{$query}%")
             ->limit(10) // limit results
-            ->get(['customer_code', 'name']);
+            ->get(['id', 'customer_code', 'name', 'discount_percent', 'address1', 'phone']);
 
         // Return JSON
         return response()->json($customers);
@@ -103,7 +103,7 @@ class CustomerController extends Controller
             'contact',
             'contact_phone',
             'type',
-            'credit_limit',
+            'discount_percent',
             'balance',
             'point',
             'status'
@@ -128,7 +128,7 @@ class CustomerController extends Controller
                 'city',
                 'country',
                 'type',
-                'credit_limit',
+                'discount_percent',
                 'balance',
                 'point',
                 'status'

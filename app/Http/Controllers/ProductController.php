@@ -276,18 +276,25 @@ class ProductController extends Controller
             $field = 'name';
         }
 
-        $products = Product::with(['warehouses' => function ($q) use ($warehouse_ids) {
+        $sql = Product::with(['warehouses' => function ($q) use ($warehouse_ids) {
             $q->whereIn('warehouse_id', $warehouse_ids);
-        }])
-            ->where('status', 1)
-            ->where('track_stock', 1)
-            // ✅ Dynamic search based on field selected
-            ->when($query !== '', function ($q) use ($field, $query) {
-                $q->where($field, 'LIKE', "%{$query}%");
-            })
+        }]);
+              if(Auth::user()->role == 'admin') {
 
-            ->limit(41)
-            ->get();
+        } else {
+            $sql->whereIn('type', ['product', 'service']);
+        }
+
+           $sql->where('status', 1);
+
+            // ✅ Dynamic search based on field selected
+          $sql->when($query !== '', function ($q) use ($field, $query) {
+                $q->where($field, 'LIKE', "%{$query}%");
+            });
+
+            $sql->limit(41);
+         $products =   $sql->get();
+
         // 2️⃣ Sum stock per product (only from this warehouse)
         $products->each(function ($product) {
             $product->total_stock = $product->warehouses->sum(function ($wh) {
