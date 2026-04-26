@@ -517,15 +517,7 @@ async function FetchPurchase(page = 1) {
                 <td class="px-4 py-3 border text-center">
                     <div class="flex gap-2 justify-center">
 
-                        <button onclick="ViewPurchase('${purchase.no}')"
-                            class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-xs">
-                            View
-                        </button>
-
-                        <button onclick="PrintPurchase('${purchase.no}')"
-                            class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-xs">
-                            Print
-                        </button>
+                  
                     </div>
                 </td>
                 `;
@@ -564,13 +556,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     // example row selector
     const row = document.querySelector("[data-category_id]");
 
-    const currentCategoryId =
-        row?.getAttribute("data-category_id") || "";
+    const currentCategoryId = row?.getAttribute("data-category_id") || "";
 
     const currentCategoryExists = categories.some(
-        (cat) => String(cat.id) === currentCategoryId
+        (cat) => String(cat.id) === currentCategoryId,
     );
 
     console.log(currentCategoryExists);
 });
-

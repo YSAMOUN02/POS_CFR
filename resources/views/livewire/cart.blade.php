@@ -5,26 +5,19 @@
 
             <h1 id="chasier" class="mb-2 font-bold flex items-center gap-2">
 
-                @if (!empty($this->Current_table_id))
 
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r to-amber-600 from-amber-400">
-                        កំពុងតែកែ ទិន្នន័យតាមតុ :
-                    </span>
+                <span id="tittle_span" class="text-transparent bg-clip-text bg-gradient-to-r to-amber-600 from-amber-400">
 
-                    <span>{{ $this->Current_table_name }}</span>
-                @else
-                    <span id="tittle_span"
-                        class="text-transparent bg-clip-text bg-gradient-to-r to-amber-600 from-amber-400">
-
-                        @if ($cart_mode == 'expence')
-                            Expense Order
-                        @else
-                            Sales Order
+                    @if ($cart_mode == 'expence')
+                        Expense Order
+                    @else
+                        Sales Order
+                        @if ($this->document_no != 'NA')
+                            {{ $this->document_no }}
                         @endif
+                    @endif
 
-                    </span>
-
-                @endif
+                </span>
 
                 {{-- MODE BADGE --}}
                 @if ($cart_mode == 'expence')
@@ -87,7 +80,7 @@
                                         ចុះ {{ (float) $item['discount_percent'] }}% Off
                                     </span>
                                 @endif
-                                @if ($item['stock'] == $item['qty'])
+                                @if ($item['stock'] <= $item['qty'])
                                     <span
                                         class="inline-flex items-center bg-rose-400 border border-brand-subtle text-white text-xs font-medium px-1.5 py-0.5 rounded-sm">
                                         <i class="fa-solid fa-boxes-stacked"></i>
@@ -267,20 +260,20 @@
                         {{ $this->currency_name }}
                     </p>
 
-                    @if ($this->factor != 1)
-                        <p class="font-semibold">
-                            តម្លៃសរុប USD :
-                            {{ number_format($this->totals['grand_total'], 2) }} $
-                        </p>
-                    @endif
+                        @if ($this->factor != 1)
+                            <p class="font-semibold">
+                                តម្លៃសរុប USD :
+                                {{ number_format($this->totals['grand_total'], 2) }} $
+                            </p>
+                        @endif
                 @endif
 
 
                 <input type="hidden" id="total_amount"
                     value="{{ number_format($this->totals['grand_total'], 2, '.', '') }}">
                 <input type="hidden" id="currency_name" value="{{ $currency_name }}">
-                <input type="hidden" id="currency_display_symbol" value="{{ $currency }}">
-                <input type="hidden" id="currency_display_factor" value="{{ $factor }}">
+                <input type="hidden" id="currency_display_symbol" value="{{ $this->currency}}">
+                <input type="hidden" id="currency_display_factor" value="{{ $this->factor }}">
 
                 @if ($this->factor != 1)
                     <div class="w-full flex justify-between">
@@ -311,24 +304,48 @@
 
             </div>
             <div class="w-full flex  items-end justify-between gap-2">
-                <select wire:change="setCurrency($event.target.value)"
-                    class="col-span-2 border rounded  px-6 py-2 focus:ring focus:ring-green-300">
-                    @foreach ($all_currency as $currency_symbol)
-                        <option value="{{ $currency_symbol->code }}" @selected($currency === $currency_symbol->code)>
-                            {{ $currency_symbol->name }}
-                        </option>
-                    @endforeach
-                </select>
+                <div class="relative col-span-2">
+
+                    <!-- Icon -->
+                    <i class="fa-solid fa-dollar-sign absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+                    <!-- Select -->
+                    <select wire:change="setCurrency($event.target.value)"
+                        class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2
+               shadow-sm focus:ring-2 focus:ring-green-300
+               focus:outline-none bg-white text-gray-700 min-w-[180px]">
+
+                        @foreach ($all_currency as $currency_symbol)
+                            <option value="{{ $currency_symbol->code }}" @selected($currency === $currency_symbol->code)>
+                                {{ $currency_symbol->name }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                </div>
                 @if ($cart_mode == 'expence')
                 @else
-                    <div id="list_main" class="relative col-span-2" style="width:300px;">
-                        <input type="text" id="customerSearch" placeholder="ភ្ញៀវដើរចូល" autocomplete="off">
+                    <div id="list_main" class="relative col-span-2 w-[300px]">
 
+                        <!-- Icon -->
+                        <i class="fa-solid fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+                        <!-- Search Input -->
+                        <input type="text" id="customerSearch" placeholder="ភ្ញៀវដើរចូល / Search Customer..."
+                            autocomplete="off"
+                            class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2
+                                shadow-sm focus:ring-2 focus:ring-blue-300
+                                focus:outline-none text-gray-700">
+
+                        <!-- Hidden Value -->
                         <input type="hidden" id="customerValue" wire:model.live="customer_id">
 
+                        <!-- Dropdown List -->
                         <ul id="customerList"
-                            class="list hidden absolute z-50 bg-white border rounded shadow w-full max-h-60 overflow-auto">
+                            class="hidden absolute z-50 mt-1 bg-white border border-gray-200
+               rounded-xl shadow-lg w-full max-h-60 overflow-auto">
                         </ul>
+
                     </div>
                 @endif
             </div>
@@ -338,36 +355,45 @@
 
 
 
+                <!-- Clear -->
                 <button wire:click="clearCart"
-                    class="bg-red-300 hover:bg-red-400 text-white font-semibold px-4 py-2 rounded">
-                    <i class="fa-solid fa-trash-can"></i>
+                    class="bg-red-500 hover:bg-red-600 text-white font-small px-4 py-2 rounded-xl shadow-md transition">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Clear
                 </button>
+
                 @if ($cart_mode == 'expence')
-                    <button onclick="print('Receipt')" style="font-size: 10px;"
-                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
-                        Pay Expense
+                    <!-- Expense -->
+                    <button onclick="openExpenseModal()"
+                        class="bg-orange-500 hover:bg-orange-600 text-white font-small px-4 py-2 rounded-xl shadow-md transition">
+                        <i class="fa-solid fa-wallet mr-1"></i> Pay Expense
                     </button>
                 @else
-                    <button style="font-size: 10px;" id="sale-order-data"
-                        data-modal-target="default-modal-sales-order-list"
-                        data-modal-toggle="default-modal-sales-order-list"
-                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
-                        Sale Order
+                    <!-- Saved Order -->
+                    <button onclick="openSaleOrderModal()"
+                        class="bg-indigo-500 hover:bg-indigo-600 text-white font-small px-4 py-2 rounded-xl shadow-md transition">
+                        <i class="fa-solid fa-folder-open mr-1"></i> Saved
                     </button>
-
-
-
-                    <button onclick="print('Receipt')" style="font-size: 10px;"
-                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
-                        Payment
+                    @if ($this->document_no != 'NA')
+                        <!-- Update Sale Order -->
+                        <button onclick="update_sale_order()"
+                            class="bg-blue-500 hover:bg-blue-600 text-white font-small px-2 py-2 rounded-xl shadow-md transition">
+                            <i class="fa-solid fa-floppy-disk mr-1"></i> Update
+                        </button>
+                    @else
+                        <!-- Save Order -->
+                        <button onclick="Save_Sale_Order()"
+                            class="bg-blue-500 hover:bg-blue-600 text-white font-small px-4 py-2 rounded-xl shadow-md transition">
+                            <i class="fa-solid fa-hand-holding-dollar"></i> Pay
+                        </button>
+                    @endif
+                    @if($this->document_id != 0)
+                    <button onclick="openSaleLine()"
+                        class="bg-gray-500 hover:bg-gray-600 text-white font-small px-4 py-2 rounded-xl shadow-md transition">
+                        <i class="fa-solid fa-circle-info"></i> Info
                     </button>
-                    <button  onclick="Save_Sale_Order()"
-                      style="font-size:10px;"
-                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded">
-                        Save Order
-                    </button>
+                    @endif
+
                 @endif
-
 
 
             </div>

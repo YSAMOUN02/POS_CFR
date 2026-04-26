@@ -139,24 +139,8 @@
             const card = e.target.closest('.card_style');
             if (!card) return;
 
-            const isSuccess = card.classList.contains('card_style_success');
+            // ✅ Sale order: allow every item, no "No Stock" block
 
-            // ❌ FAIL → FLOAT TEXT ONLY
-            if (!isSuccess) {
-                const float = document.createElement('div');
-                float.className = 'no-stock-float';
-                float.textContent = '🚫 No Stock';
-
-                float.style.left = e.pageX + 'px';
-                float.style.top = e.pageY + 'px';
-
-                document.body.appendChild(float);
-                setTimeout(() => float.remove(), 1000);
-
-                return; // ⛔ STOP here (no icons)
-            }
-
-            // ✅ SUCCESS → BURST ICONS
             const count = 8;
             const burst = document.createElement('div');
 
@@ -184,7 +168,6 @@
             document.body.appendChild(burst);
             setTimeout(() => burst.remove(), 1000);
         });
-
         // function closeAllItems() {
         //     document.querySelectorAll('.bonus').forEach(b => {
         //         b.classList.add('hidden');
@@ -299,11 +282,8 @@
                             stockColor = 'text-green-600'; // enough stock
                         }
                     }
-                    let style_click = `card_style_fail`;
+                    let style_click = `card_style_success`;
 
-                    if (product.total_stock > 0 || product.track_stock == 0) {
-                        style_click = `card_style_success`;
-                    }
 
 
                     html += `
@@ -315,25 +295,25 @@
 
                                       ${imageSrc
                                         ? `<img class="object-cover w-full" id="product-image${product.id}"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    loading="lazy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    style="max-height:150px; min-height:150px;"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    src="${imageSrc}"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    onerror="this.outerHTML=\`
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    loading="lazy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    style="max-height:150px; min-height:150px;"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    src="${imageSrc}"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    onerror="this.outerHTML=\`
                                                     <div class='flex items-center justify-center w-full h-[150px] bg-gray-100'>
                                                         <span class='text-gray-400'>No Image</span>
                                                     </div>\`"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                />`
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                />`
                                         : `<div class="flex items-center justify-center w-full h-[150px] bg-gray-100">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="text-gray-400">No Image</span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>`
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="text-gray-400">No Image</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>`
                                     }
 
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
 
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -350,30 +330,30 @@
                                         <div  class="text-center mt-1">
                                             <p class="text-xs">
                                             ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="${stockColor}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="${stockColor}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                &ensp;` : ''}
 
                                           ${product.discount_percent != 0
                                                 ? `<br>
-                                                                                                                                                                                                                                                                                            <del data-base-price="${finalPrice.toFixed(2)}" class="pricing text-gray-400 text-sm">
-                                                                                                                                                                                                                                                                                                ${Number(finalPrice * factor) == 0
-                                                                                                                                                                                                                                                                                                    ? 'មិនទាន់កំណត់តម្លៃ'
-                                                                                                                                                                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
-                                                                                                                                                                                                                                                                                            </del>
-                                                                                                                                                                                                                                                                                            →
-                                                                                                                                                                                                                                                                                            <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">
-                                                                                                                                                                                                                                                                                                ${Number(discountedPrice * factor) == 0
-                                                                                                                                                                                                                                                                                                    ? 'មិនមានតម្លៃ'
-                                                                                                                                                                                                                                                                                                    : Number(discountedPrice * factor).toLocaleString() + ' ' + currency_name}
-                                                                                                                                                                                                                                                                                            </span>`
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <del data-base-price="${finalPrice.toFixed(2)}" class="pricing text-gray-400 text-sm">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ${Number(finalPrice * factor) == 0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ? 'មិនទាន់កំណត់តម្លៃ'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </del>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            →
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ${Number(discountedPrice * factor) == 0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ? 'មិនមានតម្លៃ'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    : Number(discountedPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </span>`
                                                 : `<span data-base-price="${finalPrice.toFixed(2)}" class="pricing font-semibold text-sm">
-                                                                                                                                                                                                                                                                                                ${Number(finalPrice * factor) == 0
-                                                                                                                                                                                                                                                                                                    ? 'មិនមានតម្លៃ'
-                                                                                                                                                                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
-                                                                                                                                                                                                                                                                                        </span>`
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ${Number(finalPrice * factor) == 0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ? 'មិនមានតម្លៃ'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </span>`
                                             }
                                                                                     </p>
                                                         </div>
@@ -500,11 +480,8 @@
                     stockColor = 'text-green-600'; // enough stock
                 }
             }
-            let style_click = `card_style_fail`;
+            let style_click = `card_style_success`;
 
-            if (product.total_stock > 0 || product.track_stock == 0) {
-                style_click = `card_style_success`;
-            }
 
 
             return `
@@ -517,9 +494,9 @@
                                             src="${imageSrc}" onerror="this.src='assets/defult/placeholder.jpg'" alt="${product.name}" />
                                         <i class="info fa-solid fa-circle-info absolute top-1 right-1 text-blue-500 text-sm"></i>
                                         ${product.discount_percent != 0 ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </span>` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span class="absolute top-1 left-1 inline-flex items-center bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <i class="fa-solid fa-tag mr-0.5"></i>${product.discount_percent}% Off
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </span>` : ''}
                                     </div>
 
                                     <!-- TEXT CONTENT -->
@@ -532,28 +509,28 @@
                                         <div class="text-center mt-1">
                                             <p class="text-xs">
                                                 ${product.track_stock ? `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        &ensp;` : ''}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="${stockColor} fa-solid fa-boxes-stacked"></i>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <span class="${stockColor}">${product.total_stock > 0 ? product.total_stock + ' ' + product.unit : 'No stock'}</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        &ensp;` : ''}
 
                                         ${product.discount_percent != 0
                                                 ? `<br>
-                                                                                                                                                                                                                                                                                            <del data-base-price="${finalPrice.toFixed(2)}" class="pricing text-gray-400 text-sm">
-                                                                                                                                                                                                                                                                                                ${Number(finalPrice * factor) == 0
-                                                                                                                                                                                                                                                                                                    ? 'មិនទាន់កំណត់តម្លៃ'
-                                                                                                                                                                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
-                                                                                                                                                                                                                                                                                            </del>
-                                                                                                                                                                                                                                                                                            →
-                                                                                                                                                                                                                                                                                            <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">
-                                                                                                                                                                                                                                                                                                ${Number(discountedPrice * factor) == 0
-                                                                                                                                                                                                                                                                                                    ? 'មិនមានតម្លៃ'
-                                                                                                                                                                                                                                                                                                    : Number(discountedPrice * factor).toLocaleString() + ' ' + currency_name}
-                                                                                                                                                                                                                                                                                            </span>`
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <del data-base-price="${finalPrice.toFixed(2)}" class="pricing text-gray-400 text-sm">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ${Number(finalPrice * factor) == 0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ? 'មិនទាន់កំណត់តម្លៃ'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </del>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            →
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <span data-base-price="${discountedPrice.toFixed(2)}" class="${stockColor} pricing font-semibold text-sm">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ${Number(discountedPrice * factor) == 0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ? 'មិនមានតម្លៃ'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    : Number(discountedPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </span>`
                                                 : `<span data-base-price="${finalPrice.toFixed(2)}" class="pricing font-semibold text-sm">
-                                                                                                                                                                                                                                                                                                ${Number(finalPrice * factor) == 0
-                                                                                                                                                                                                                                                                                                    ? 'មិនមានតម្លៃ'
-                                                                                                                                                                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
-                                                                                                                                                                                                                                                                                        </span>`
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ${Number(finalPrice * factor) == 0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ? 'មិនមានតម្លៃ'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    : Number(finalPrice * factor).toLocaleString() + ' ' + currency_name}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </span>`
                                             }
 
                                             </p>
@@ -649,24 +626,6 @@
                             hiddenInput.dispatchEvent(new Event('input', {
                                 bubbles: true
                             }));
-                            document.getElementById('customer_info_title').textContent =
-                                `Customer Info`;
-                            // ✅ Fill Customer Info
-                            document.getElementById('customer_name_info').value =
-                                customer.name ?? '';
-                            document.getElementById('customer_id_info').value =
-                                customer.id ?? '';
-                            document.getElementById('customer_address_info').value =
-                                customer.address1 ?? '';
-
-                            document.getElementById('customer_phone_info').value =
-                                customer.phone ?? '';
-
-                            // ✅ Lock 3 fields
-                            document.getElementById('customer_name_info').readOnly = true;
-                            document.getElementById('customer_address_info').readOnly = true;
-                            document.getElementById('customer_phone_info').readOnly = true;
-
 
                             // ✅ Fill Customer Info
                             document.getElementById('so_customer_name_info').value =
@@ -729,13 +688,18 @@
                 console.error(err);
             }
         });
-        document.getElementById('customerDiscountModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.add('hidden');
-                document.getElementById('customerDiscountModalConfirm').onclick = null;
-                document.getElementById('customerDiscountModalCancel').onclick = null;
-            }
-        });
+        const customerDiscountModal = document.getElementById('customerDiscountModal');
+
+        if (customerDiscountModal) {
+            customerDiscountModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+
+                    document.getElementById('customerDiscountModalConfirm').onclick = null;
+                    document.getElementById('customerDiscountModalCancel').onclick = null;
+                }
+            });
+        }
 
         function openCustomerDiscountModal({
             title,
@@ -968,28 +932,7 @@
             </div>
         </div>
     @endif
-    {{-- <DELETE CUSTOMER> --}}
-    <div id="confirm-delete-cust"
-        class=" hight_index fixed inset-0 z-50 hidden flex items-center justify-center backdrop-blur-sm bg-black/50">
-        <div class="bg-white rounded-2xl shadow-2xl w-96 max-w-sm p-6 text-center">
-            <h2 class="text-2xl font-bold mb-3 text-gray-800">Delete Customer</h2>
-            <p class="text-gray-600 mb-6">
-                ⚠️ This action cannot be undone. Continue?
-            </p>
-            <br>
-            <div class="flex justify-center space-x-4 mt-2">
 
-
-                <button onclick="confirmDeleteCustomer()" class="px-5 py-2 bg-red-500 text-white rounded-xl">
-                    Delete
-                </button>
-                &ensp;
-                <button onclick="closeDeleteCustModal()" class="px-5 py-2 bg-gray-200 rounded-xl">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
 
     {{-- <UPDATE CUSTOMER> --}}
     <div id="confirm-update-cust"
@@ -1247,10 +1190,10 @@
                             Edit
                         </button>
                         &ensp;
-                        <button type="button" id="btnDeleteCustomer"
+                        {{-- <button type="button" id="btnDeleteCustomer"
                             class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                             Delete
-                        </button>
+                        </button> --}}
 
 
                         <button type="button" data-modal-target="default-modal-customer"
@@ -1440,7 +1383,8 @@
         {{-- width Custom  --}}
         <div class="  relative p-4 w-full max-w-10xl max-h-full ">
             <!-- Modal content -->
-            <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
+            <div
+                class="min-h-[70vh] max-h-[90vh] respond_laptop relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6 flex flex-col">
                 <!-- Modal header -->
                 <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
                     <div class="w-full flex flex-col items-center justify-between mb-4">
@@ -1448,7 +1392,7 @@
                             <div>
 
                                 <h3 id="wh_name" class="text-lg font-medium text-heading">
-                                    All Warehouse Information
+                                    គ្រប់គ្រង ស្តុក
                                 </h3>
                             </div>
                             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -1477,74 +1421,74 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="w-full flex justify-between mb-2 gap-2">
+                        <div class="w-full flex justify-start mb-2 gap-2">
 
-
-
-
-                            <!-- Type select -->
-
-                            <div class="flex">
-                                <div class="flex flex-col mr-2">
-                                    <label for="Ssearch-stock">Search Name</label>
+                            <!-- Search -->
+                            <div class="flex flex-col">
+                                <label for="search-stock" class="text-sm font-medium text-gray-600 mb-1">Search
+                                    Name</label>
+                                <div class="relative">
+                                    <i
+                                        class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                                     <input type="text" id="search-stock" placeholder="Search product"
-                                        class="px-3 py-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                        class="pl-10 pr-3 py-2 border border-gray-300 rounded-xl text-sm w-64
+                       focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-sm">
                                 </div>
-                                &ensp;
-                                <div class="flex flex-col  mr-2">
-                                    <label for="category-filter2">Category</label>
-                                    <select id="category-filter2"
-                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
 
-                                    </select>
-                                </div>
+                            <!-- Category -->
+                            <div class="flex flex-col">
+                                <label for="category-filter2"
+                                    class="text-sm font-medium text-gray-600 mb-1">Category</label>
+                                <select id="category-filter2"
+                                    class="px-4 py-2 border border-gray-300 rounded-xl text-sm w-44
+                   focus:outline-none focus:ring-2 focus:ring-purple-300 shadow-sm">
+                                </select>
+                            </div>
+
+                            <!-- Limit -->
+                            <div class="flex flex-col">
+                                <label for="limit-filter" class="text-sm font-medium text-gray-600 mb-1">Limit</label>
+                                <select id="limit-filter"
+                                    class="px-4 py-2 border border-gray-300 rounded-xl text-sm w-36
+                   focus:outline-none focus:ring-2 focus:ring-indigo-300 shadow-sm">
+                                    <option value="All">All</option>
+                                    <option value="10">10</option>
+                                    <option value="15">15</option>
+                                    <option value="25">25</option>
+                                    <option value="30">30</option>
+                                    <option selected value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="flex flex-col">
+                                <label for="status-filter" class="text-sm font-medium text-gray-600 mb-1">Status</label>
+                                <select id="status-filter"
+                                    class="px-4 py-2 border border-gray-300 rounded-xl text-sm w-40
+                   focus:outline-none focus:ring-2 focus:ring-green-300 shadow-sm">
+                                    <option value="All">All</option>
+                                    <option value="0">Inactive</option>
+                                    <option selected value="1">Active</option>
+                                </select>
+                            </div>
+
+                            <!-- Stock Filter -->
+                            <div class="flex flex-col">
+                                <label for="stock-filter" class="text-sm font-medium text-gray-600 mb-1">Quantity
+                                    Filter</label>
+                                <select id="stock-filter"
+                                    class="px-4 py-2 border border-gray-300 rounded-xl text-sm w-44
+                   focus:outline-none focus:ring-2 focus:ring-orange-300 shadow-sm">
+                                    <option value="All">All</option>
+                                    <option selected value="has">Has Stock</option>
+                                    <option value="no">Out of Stock</option>
+                                </select>
                             </div>
 
 
 
-
-
-
-                            <div class="flex ">
-                                <div class="flex flex-col ">
-                                    <label for="limit-filter">Limit</label>
-                                    <select id="limit-filter"
-                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                        <option value="All">All</option>
-                                        <option value="10">10</option>
-                                        <option value="15">15</option>
-                                        <option value="25">25</option>
-                                        <option value="30">30</option>
-                                        <option selected value="50">50</option>
-
-                                        <option value="100">100</option>
-                                    </select>
-
-                                </div>
-                                &ensp;
-                                <div class="flex flex-col  mx-2">
-                                    <label for="status-filter">Status</label>
-                                    <select id="status-filter"
-                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                        <option value="All">All</option>
-                                        <option value="0">Inactive</option>
-                                        <option selected value="1">Active</option>
-
-                                    </select>
-                                </div>
-                                &ensp;
-                                <div class="flex flex-col  mx-2">
-                                    <label for="stock-filter">Quantity Filter</label>
-                                    <select id="stock-filter"
-                                        class="px-3 py-2 border rounded-md text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                        <option value="All">All</option>
-                                        <option selected value="has">Has Stock</option>
-                                        <option value="no">Out of Stock</option>
-
-                                    </select>
-                                </div>
-
-                            </div>
 
                         </div>
 
@@ -1554,9 +1498,8 @@
                     </div>
                 </div>
                 <!-- Modal body -->
-
-                <div class="max-h-[70vh] overflow-y-auto">
-                    <div class=" scroll_content_70  overflow-x-auto">
+                <div class="flex-1 overflow-y-auto mt-4">
+                    <div class="scroll_content_70 overflow-x-auto">
                         <table id="wh-product" class=" w-full text-left text-sm table-auto">
                             <thead class="bg-green-50 sticky top-0">
                                 <tr class="text-nowrap">
@@ -1588,13 +1531,15 @@
                     </div>
                 </div>
                 <!-- Modal footer -->
-                <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
-                    <div class="flex items-center justify-end border-t border-default space-x-4 pt-4 md:pt-5">
+                <div class="flex flex-wrap items-center justify-between border-t border-gray-200 pt-4 md:pt-5">
 
-                        <div class="flex items-center justify-center gap-1 mt-4 mx-2" id="paginationContainer_stock">
-                            <!-- JS will render buttons here -->
-                        </div>
+                    <!-- Pagination -->
+                    <div class="flex items-center gap-2" id="paginationContainer_stock">
+                        <!-- JS will render buttons here -->
                     </div>
+
+                    <!-- Page Info -->
+                    <span id="pageInfo_stock" class="text-sm text-gray-500"></span>
 
                 </div>
             </div>
@@ -1652,173 +1597,6 @@
 
 
 
-    {{-- <MODAL PRINT > --}}
-    <div id="DatePromptModal"
-        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm">
-
-        <div class="bg-white rounded-5xl shadow-2xl  max-w-xl max-w-sm p-6 space-y-5 animate-scaleUp">
-
-            <!-- Header -->
-            <div class="flex flex-col items-center text-center">
-                <h2 class="text-2xl font-extrabold text-gray-800">Print Dates & Payment</h2>
-                <p class="text-sm text-gray-500 mt-1">Set dates and choose your payment method</p>
-            </div>
-
-
-            <div class="grid grid-cols-2 space-y-6 gap-2">
-                <div class="col-span-2">
-                    <label for="document_dateInput" class="block text-gray-700 font-medium mb-1">
-                        Posting Date
-                    </label>
-                    <input type="date" id="document_dateInput"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                </div>
-                <!-- Payment Method Selection -->
-                <div>
-                    <label for="payment_method" class="block text-gray-700 font-medium mb-1">Payment Method</label>
-                    <select id="payment_method"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                        <option value="ABA">ABA</option>
-                        <option value="CASH">Cash</option>
-                        <option value="CREDIT CARD">Credit Card</option>
-                        <option value="BANK TRANSFER">Bank Transfer</option>
-                        <option value="Chip Mong">Chip Mong</option>
-                        <option value="PAYPAL">PayPal</option>
-                        <option value="WISE BANK">WISE BANK</option>
-                        <option value="CHEQ">CHEQ</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="customer_type" class="block text-gray-700 font-medium mb-1">Customer Type</label>
-                    <select id="customer_type"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                        <option value="Dine-In">Dine-In</option>
-                        <option value="At-Delivery">At-Delivery</option>
-                        <option value="Take-Away">Take Away</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="display_pay_amount" class="block text-gray-600 font-medium mb-1">Total
-                        Amount</label>
-                    <input type="text" id="display_pay_amount" disabled
-                        class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
-                </div>
-                <div>
-                    <label for="display_pay_amount_converted" class="block text-gray-600 font-medium mb-1">Total
-                        in
-                        Other</label>
-                    <input type="text" id="display_pay_amount_converted" disabled
-                        class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
-                </div>
-
-
-
-
-
-                <!-- Pay USD -->
-                <div>
-                    <label for="pay_usd" class="block text-gray-700 font-medium mb-1">Pay as Dollar</label>
-                    <input type="text" id="pay_usd" placeholder="$0.00"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                </div>
-
-                <!-- Hidden currency factor -->
-                <input type="hidden" id="currency_factor" value="4000"> <!-- example: 1 USD = 4000 KHR -->
-
-                <!-- Pay other currency -->
-                <div>
-                    <label for="pay_other" class="block text-gray-700 font-medium mb-1">
-                        Pay as <span id="currency_display_name">៛</span>
-                    </label>
-                    <input type="text" id="pay_other" placeholder="0 ៛"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                </div>
-
-                <!-- Returned USD -->
-                <div>
-                    <label for="returned_amount" class="block text-gray-700 font-medium mb-1">លុយអាប់</label>
-                    <input type="text" id="returned_amount" readonly
-                        class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
-                </div>
-
-                <!-- Returned other currency -->
-                <div>
-                    <label for="returned_amount_other" class="block text-gray-700 font-medium mb-1">
-                        លុយអាប់ជា <span id="currency_display_name2">៛</span>
-                    </label>
-                    <input type="text" id="returned_amount_other" readonly
-                        class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
-                </div>
-            </div>
-            <br>
-            <div id="customer_info" class="grid grid-cols-2 gap-2">
-
-                <div class="col-span-2">
-                    <h2 id="customer_info_title">General Customer</h2>
-                    <hr>
-                </div>
-
-                <div class="col-span-2">
-                    <label class="block text-gray-700 font-medium mb-1">Name</label>
-                    <input type="hidden" value="" id="customer_id_info">
-                    <input type="text" id="customer_name_info"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                </div>
-
-                <div>
-                    <label class="block text-gray-700 font-medium mb-1">Address</label>
-                    <input type="text" id="customer_address_info"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                </div>
-
-                <div>
-                    <label class="block text-gray-700 font-medium mb-1">Phone</label>
-                    <input type="text" id="customer_phone_info"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                </div>
-                <div class="col-span-2">
-                    <label class="block text-gray-700 font-medium mb-1">Remark</label>
-                    <input type="text" id="remark_invoice"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
-                </div>
-            </div>
-            <br>
-            <!-- Buttons -->
-            <div class="w-full grid grid-cols-5 gap-2 px-5 ">
-                <button data-quotation-cancel class=" bg-rose-200 text-gray-700 rounded-xl hover:bg-rose-300 transition">
-                    Cancel
-                </button>
-
-                <button id="btn-print-quote" onclick="print_document('Quotation')"
-                    class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
-                    Quote
-                </button>
-
-                <button onclick="print_document('Order')"
-                    class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
-                    Order
-                </button>
-
-
-                <button id="btn-print-delivery" onclick="print_document('Delivery Note')"
-                    class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
-                    Delivery
-                </button>
-
-                <button id="btn-print-invoice" onclick="print_document('Invoice')"
-                    class=" bg-amber-400 text-black rounded-xl hover:bg-amber-400 transition shadow-md">
-                    Invoice
-                </button>
-
-                <button id="confirmPayBtn" onclick="Final_Payment()"
-                    class=" text-nowrap w-24 bg-gray-400 text-black rounded-xl hover:bg-gray-400 transition shadow-md">
-                    Enter Amount
-
-                </button>
-
-            </div>
-        </div>
-    </div>
 
 
 
@@ -2319,8 +2097,7 @@
                 </div>
                 <div>
                     <label>Unit Price</label>
-                    <input id="prod-sell-price" type="number" step="0.01"
-                        class="w-full border rounded px-3 py-2" />
+                    <input id="prod-sell-price" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
                 </div>
                 <div>
                     <label>Vat</label>
@@ -2328,8 +2105,7 @@
                 </div>
                 <div>
                     <label>Discount (%)</label>
-                    <input id="prod-discount" type="number" step="0.01"
-                        class="w-full border rounded px-3 py-2" />
+                    <input id="prod-discount" type="number" step="0.01" class="w-full border rounded px-3 py-2" />
                 </div>
                 <div>
                     <label>Sell Price</label>
@@ -2421,8 +2197,7 @@
                     Update
                 </button>
                 &ensp;
-                <button type="button" onclick="closeUpdateProductModal()"
-                    class="mt-2 px-5 py-2 bg-gray-200 rounded-xl">
+                <button type="button" onclick="closeUpdateProductModal()" class="mt-2 px-5 py-2 bg-gray-200 rounded-xl">
                     Cancel
                 </button>
             </div>
@@ -2458,33 +2233,55 @@
                         <!-- Filters Row 1: Date, Status, Customer -->
                         <!-- Filters -->
                         <div class="flex flex-wrap items-center gap-3 mb-4">
-                            <input type="date" id="from_date" class="px-3 py-2 border rounded-md text-sm">
-                            <input type="date" id="to_date" class="px-3 py-2 border rounded-md text-sm">
-                            <select id="invoice_paymentMethod" class="px-6 py-2 border rounded-md text-sm">
-                                <option value="">All Payment</option>
+
+                            <!-- From Date -->
+                            <input type="date" id="from_date"
+                                class="px-3 py-2 border border-gray-300 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-blue-300">
+
+                            <!-- To Date -->
+                            <input type="date" id="to_date"
+                                class="px-3 py-2 border border-gray-300 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-blue-300">
+
+                            <!-- Payment -->
+                            <select id="invoice_paymentMethod"
+                                class="px-4 py-2 border border-gray-300 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-green-300">
+                                <option value="">💳 All Payment</option>
                             </select>
+
+                            <!-- Customer -->
                             <div class="relative w-52">
+                                <i class="fa-solid fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                                 <input type="text" id="customer_search" placeholder="Customer Name"
-                                    autocomplete="off" class="px-3 py-2 border rounded-md text-sm w-full">
+                                    autocomplete="off"
+                                    class="pl-10 pr-3 py-2 border border-gray-300 rounded-xl text-sm w-full shadow-sm focus:ring-2 focus:ring-blue-300">
 
                                 <input type="hidden" id="customer_filter">
 
                                 <ul id="customer_list"
-                                    class="absolute z-50 bg-white border rounded-md w-full mt-1 max-h-60 overflow-y-auto hidden">
+                                    class="absolute z-50 bg-white border border-gray-200 rounded-xl w-full mt-1 max-h-60 overflow-y-auto hidden shadow-lg">
                                 </ul>
                             </div>
 
-                            <input type="text" id="product_search" list="product_datalist"
-                                placeholder="Search product" autocomplete="off"
-                                class="px-3 py-2 border rounded-md text-sm w-64">
+                            <!-- Product -->
+                            <div class="relative w-64">
+                                <i class="fa-solid fa-box absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="product_search" list="product_datalist"
+                                    placeholder="Search Product" autocomplete="off"
+                                    class="pl-10 pr-3 py-2 border border-gray-300 rounded-xl text-sm w-full shadow-sm focus:ring-2 focus:ring-blue-300">
+                            </div>
 
                             <input type="hidden" id="ProductSearchInput_sale_invoice">
-
                             <datalist id="product_datalist"></datalist>
-                            <select id="category_filter" class="px-3 py-2 border rounded-md text-sm w-44">
-                                <option value="">All Categories</option>
+
+                            <!-- Category -->
+                            <select id="category_filter"
+                                class="px-4 py-2 border border-gray-300 rounded-xl text-sm w-44 shadow-sm focus:ring-2 focus:ring-purple-300">
+                                <option value="">📂 All Categories</option>
                             </select>
-                            <select id="sale_view_limit" class="px-5 py-2 border rounded-md text-sm w-36">
+
+                            <!-- Limit -->
+                            <select id="sale_view_limit"
+                                class="px-4 py-2 border border-gray-300 rounded-xl text-sm w-36 shadow-sm focus:ring-2 focus:ring-indigo-300">
                                 <option value="10">10 Invoice</option>
                                 <option value="20">20 Invoice</option>
                                 <option value="30">30 Invoice</option>
@@ -2601,30 +2398,38 @@
 
                 <!-- Modal footer -->
 
-                <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5">
-                    <div class="flex items-center justify-between mt-4">
-                        <div class="flex items-center justify-center gap-1 mt-4 mx-2"
-                            id="paginationContainer_sale_invoice">
-                            <!-- JS will render buttons here -->
+                <div class="flex flex-wrap items-center justify-between border-t border-gray-200 pt-4 md:pt-5">
+
+                    <!-- Pagination -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center gap-1" id="paginationContainer_sale_invoice">
+                            <!-- JS render -->
                         </div>
-                        &ensp;
-                        <span id="pageInfo_sale_invoice" class="text-sm text-gray-600"></span>
+
+                        <span id="pageInfo_sale_invoice" class="text-sm text-gray-500"></span>
                     </div>
-                    <div class="flex">
-                        <button type="button" id="downloadSales" class="px-4 py-2 bg-green-600 text-white rounded">
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-2">
+
+                        <!-- Excel -->
+                        <button type="button" id="downloadSales"
+                            class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-sm transition">
                             <i class="fa-regular fa-file-excel"></i>
                         </button>
 
-
-
-                        &ensp;
-                        <button type="button" id="btnPrintSale" class="px-4 py-2 bg-blue-600 text-white rounded">
+                        <!-- Print -->
+                        <button type="button" id="btnPrintSale"
+                            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-sm transition">
                             <i class="fa-solid fa-print"></i>
                         </button>
-                        &ensp;
-                        <button type="button" id="btnReciept" class="px-4 py-2 bg-blue-600 text-white rounded">
-                            Print Reciept
+
+                        <!-- Receipt -->
+                        <button type="button" id="btnReciept"
+                            class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl shadow-sm transition">
+                            <i class="fa-solid fa-receipt mr-1"></i> Receipt
                         </button>
+
                     </div>
                 </div>
 
@@ -2742,7 +2547,7 @@
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Product Category
                             </button> --}}
-                            <button type="button" {{-- id="btnEditCustomer" --}} id="btnEditProduct"
+                            <button type="button" {{-- id="btnEditCustomer" --}} onclick="alert('Under Development')"
                                 class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                                 Edit
                             </button>
@@ -3055,7 +2860,7 @@
 
                         <!-- Filters Row 1: Date, Status, Customer -->
                         <!-- Filters -->
-                        <div class="flex flex-wrap items-center gap-3 mb-4">
+                        {{-- <div class="flex flex-wrap items-center gap-3 mb-4">
                             <input type="date" id="from_date" class="px-3 py-2 border rounded-md text-sm">
                             <input type="date" id="to_date" class="px-3 py-2 border rounded-md text-sm">
                             <select id="invoice_paymentMethod" class="px-6 py-2 border rounded-md text-sm">
@@ -3092,7 +2897,7 @@
                                 <option value="200">200 Invoice</option>
                                 <option value="All">All Invoices</option>
                             </select>
-                        </div>
+                        </div> --}}
                     </div>
                     <button type="button"
                         class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
@@ -3291,7 +3096,7 @@
                                     <th class="px-4 py-2">Qty</th>
                                     <th class="px-4 py-2">Unit Price</th>
                                     <th class="px-4 py-2">Amount</th>
-                                    <th class="px-4 py-2">Payment Method</th>
+
                                     <th class="px-4 py-2">Note</th>
                                 </tr>
                             </thead>
@@ -3382,14 +3187,15 @@
 
                         </div>
                     </div>
-                    <button type="button"
-                        class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
-                        data-modal-hide="default-modal-sales-order-list">
+                    <button type="button" onclick="closeSaleOrderModal()"
+                        class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center">
+
                         <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
                             height="24" fill="none" viewBox="0 0 24 24">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                                 stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
                         </svg>
+
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
@@ -3400,25 +3206,36 @@
                 <div class="flex-1 overflow-y-auto mt-4">
                     <div class="scroll_content_70 overflow-x-auto">
                         <table id="Table-sale-list" class=" text-sm text-left border border-default rounded-base">
-                            <thead class="bg-gray-100 text-gray-700 text-xs uppercase">
+                            <thead class="bg-gray-100 text-gray-700 text-xs uppercase text-nowrap">
                                 <tr>
                                     <th class="px-4 py-3 text-left"></th>
                                     <th class="px-4 py-3 text-left">#</th>
                                     <th class="px-4 py-3 text-left">Document No</th>
-                                    <th class="px-4 py-3 text-left">Order No</th>
+                                    <th class="px-4 py-3 text-center">Posting Date</th>
+                                    <th class="px-4 py-3 text-center">Order Date</th>
+                                    <th class="px-4 py-3 text-center">Delivery Date</th>
+
                                     <th class="px-4 py-3 text-left">Customer</th>
                                     <th class="px-4 py-3 text-left">Phone</th>
                                     <th class="px-4 py-3 text-left">Address</th>
-                                    <th class="px-4 py-3 text-right">Total</th>
+
+
+
+                                    <th class="px-4 py-3 text-right">Total Amount</th>
                                     <th class="px-4 py-3 text-right">VAT</th>
                                     <th class="px-4 py-3 text-right">Discount</th>
+
+                                    <th class="px-4 py-3 text-right">Grand Total</th>
                                     <th class="px-4 py-3 text-right">Paid</th>
-                                    <th class="px-4 py-3 text-right">Balance</th>
+
                                     <th class="px-4 py-3 text-right">Rest</th>
+
                                     <th class="px-4 py-3 text-right">Status</th>
                                     <th class="px-4 py-3 text-right">Payment Status</th>
-                                    <th class="px-4 py-3 text-center">Order Date</th>
-                                    <th class="px-4 py-3 text-center">Delivery</th>
+                                    <th class="px-4 py-3 text-center">Delivery Status</th>
+                                    <th class="px-4 py-3 text-center">Delivery Info</th>
+                                    <th class="px-4 py-3 text-left">Driver Name</th>
+                                    <th class="px-4 py-3 text-left">Driver Phone</th>
                                 </tr>
                             </thead>
                             <tbody id="Table-sale-order-list">
@@ -3434,22 +3251,22 @@
                 <div class="flex items-center justify-between border-t border-default space-x-4 pt-4 md:pt-5">
 
 
-                        <div class="flex">
-                            <button onclick="viewSelectedSaleOrderLine()"
-                                class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg">
-                                👁 View Line
-                            </button>
-                        </div>
-                        <div class="flex items-center justify-between mt-4">
+                    <div class="flex">
+                        <button onclick="viewSelectedSaleOrderLine()"
+                            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg">
+                            👁 View Line
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between mt-4">
 
-                            <span id="pageInfo_sale_order" class="text-sm text-gray-600"></span>
-                            &ensp;
-                            <div class="flex items-center justify-center gap-1 mt-4 mx-2"
-                                id="paginationContainer_sale_order">
-                                <!-- JS will render buttons here -->
-                            </div>
-
+                        <span id="pageInfo_sale_order" class="text-sm text-gray-600"></span>
+                        &ensp;
+                        <div class="flex items-center justify-center gap-1 mt-4 mx-2"
+                            id="paginationContainer_sale_order">
+                            <!-- JS will render buttons here -->
                         </div>
+
+                    </div>
 
                 </div>
 
@@ -3464,12 +3281,12 @@
 
 
 
-    {{-- <LIST Sale Order DATA> --}}
+    {{-- <LIST Modal Print Order DATA> --}}
     <div id="default-modal-sales-order-save" tabindex="-1" aria-hidden="true"
         class="hidden fixed inset-0 z-50 flex justify-center items-center bg-black/50 p-4">
 
-        <div class="relative w-full max-w-xl">
-            <div class="bg-white rounded-2xl shadow-xl p-6 max-h-[90vh] overflow-y-auto">
+        <div class="relative w-full max-w-5xl">
+            <div class="bg-white rounded-2xl shadow-xl p-6 max-h-[100vh] overflow-y-auto">
 
                 <div class="flex justify-between items-center border-b pb-4 mb-4">
                     <h3 class="text-lg font-semibold text-gray-800">
@@ -3484,10 +3301,12 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4 ">
+                   
                     <div class="mb-3">
                         <label class="block text-gray-700 font-medium mb-1">Posting Date</label>
                         <input type="date" id="so_document_dateInput"
                             class="w-full border border-gray-300 rounded-xl px-3 py-2">
+                            <input type="hidden" id="so_sale_order_id">
                     </div>
 
                     <div class="mb-3">
@@ -3495,12 +3314,6 @@
                         <input type="date" id="so_order_dateInput"
                             class="w-full border border-gray-300 rounded-xl px-3 py-2">
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-gray-700 font-medium mb-1">Delivery Date</label>
-                        <input type="date" id="so_delivery_dateInput"
-                            class="w-full border border-gray-300 rounded-xl px-3 py-2">
-                    </div>
-
                     <div class="mb-3">
                         <label class="block text-gray-700 font-medium mb-1">Payment Method</label>
                         <select id="so_payment_method" class="w-full border border-gray-300 rounded-xl px-3 py-2">
@@ -3515,17 +3328,66 @@
                     <div class="mb-3">
                         <label class="block text-gray-700 font-medium mb-1">Customer Type</label>
                         <select id="so_customer_type" class="w-full border border-gray-300 rounded-xl px-3 py-2">
+                            <option value="Take-Away">Take Away</option>
                             <option value="Dine-In">Dine-In</option>
                             <option value="At-Delivery">At-Delivery</option>
-                            <option value="Take-Away">Take Away</option>
+
+
+
                         </select>
                     </div>
+                    <div id="delivery_section" class="hidden grid grid-cols-2 gap-4 col-span-2">
+                        <div class="mb-3">
+                            <label class="block text-gray-700 font-medium mb-1">Delivery Date</label>
+                            <input type="date" id="so_delivery_dateInput"
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="block text-gray-700 font-medium mb-1">Delivery Status</label>
+                            <select id="so_delivery_status" class="w-full border border-gray-300 rounded-xl px-3 py-2">
+                                <option value="PENDING">Pending</option>
+                                <option value="PROCESSING">Processing</option>
+                                <option value="SHIPPED">Shipped</option>
+                                <option value="DELIVERED">Delivered</option>
+                                <option value="CANCELLED">Cancelled</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-1">Driver Info</label>
+                            <select id="so_delivery_info_status"
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2">
+                                <option value="" selected>Select Driver</option>
+                                <option value="OWN_DRIVER">Own Driver</option>
+                                <option value="NHAM24">Nham24</option>
+                                <option value="FOODPANDA">Foodpanda</option>
+                                <option value="GRAB">Grab</option>
+                                <option value="PASSAPP">PassApp</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-1">Driver Name</label>
+                            <input type="text" id="so_driver_name" placeholder="Driver Name"
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-1">Driver Phone</label>
+                            <input type="text" id="so_driver_phone" placeholder="Driver Phone"
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2">
+                        </div>
+                    </div>
+
                     <div>
                         <label for="so_display_pay_amount" class="block text-gray-600 font-medium mb-1">Total
                             Amount</label>
                         <input type="text" id="so_display_pay_amount" disabled
                             class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
                     </div>
+
                     <div>
                         <label for="so_display_pay_amount_converted" class="block text-gray-600 font-medium mb-1">Total
                             in
@@ -3533,7 +3395,12 @@
                         <input type="text" id="so_display_pay_amount_converted" disabled
                             class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
                     </div>
-
+                    <div class="col-span-2">
+                        <label for="paid_amount" class="block text-gray-600 font-medium mb-1">Paid
+                            Amount</label>
+                        <input type="text" id="paid_amount" disabled value="0"
+                            class="w-full bg-gray-100 border border-gray-300 rounded-xl px-3 py-2 text-gray-700 cursor-not-allowed">
+                    </div>
 
 
 
@@ -3590,49 +3457,84 @@
                             class="w-full border border-gray-300 rounded-xl px-3 py-2">
                     </div>
                 </div>
+                &ensp;
+                <div class="flex flex-wrap justify-between gap-3 border-t pt-4">
+                    <div class="flex flex-wrap gap-3 items-center">
 
-                <div class="flex justify-end gap-2 border-t pt-4">
-                    <button type="button"
-                        onclick="document.getElementById('default-modal-sales-order-save').classList.add('hidden')"
-                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-xl">
-                        Cancel
-                    </button>
+                        <button id="btn-print-quote" onclick="print_document('Quotation')"
+                            class="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-medium rounded-xl shadow-md transition flex items-center gap-2">
+                            <i class="fa-solid fa-print"></i>
+                            Quote
+                        </button>
 
-                    <button type="button" onclick="Confirm_Save_Sale_Order()"
-                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl">
-                        Save Order
-                    </button>
+                        <button onclick="print_document('Order')"
+                            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl shadow-md transition flex items-center gap-2">
+                            <i class="fa-solid fa-print"></i>
+                            Order
+                        </button>
+
+                        <button id="btn-print-delivery" onclick="print_document('Delivery Note')"
+                            class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-xl shadow-md transition flex items-center gap-2">
+                            <i class="fa-solid fa-print"></i>
+                            Delivery
+                        </button>
+
+                        <button id="btn-print-invoice" onclick="print_document('Invoice')"
+                            class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-xl shadow-md transition flex items-center gap-2">
+                            <i class="fa-solid fa-print"></i>
+                            Invoice
+                        </button>
+
+                    </div>
+
+                    <div id="new_order">
+
+
+                        <!-- Save Draft -->
+                        <button type="button" onclick="Confirm_Save_Sale_Order('Draft')"
+                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl shadow-sm transition">
+                            <i class="fa-solid fa-file-pen mr-1"></i> Draft
+                        </button>
+
+                        <!-- Save As Quotation -->
+                        <button type="button" onclick="Confirm_Save_Sale_Order('Quotation')"
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl shadow-sm transition">
+                            <i class="fa-solid fa-file-lines mr-1"></i> Quotation
+                        </button>
+
+                        <!-- Save Order -->
+                        <button type="button" onclick="Confirm_Save_Sale_Order('Ordered')"
+                            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl shadow-sm transition">
+                            <i class="fa-solid fa-floppy-disk mr-1"></i> Pay Order
+                        </button>
+
+
+                    </div>
+                    <div id="update_order">
+
+
+
+                        <!-- Save Order -->
+                        <button type="button" onclick="Confirm_update_Sale_Order()"
+                            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl shadow-sm transition">
+                            <i class="fa-solid fa-floppy-disk mr-1"></i> Pay Order
+                        </button>
+
+
+                    </div>
                 </div>
-
             </div>
         </div>
     </div>
 
 
 
-
-
-
-
-
-
-
-
-
     <!-- Sale Order Line Modal -->
     <div id="saleOrderLineModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50">
         <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-6xl max-h-[92vh] overflow-hidden">
-
             <!-- Modal Header -->
             <div class="flex justify-between items-center px-6 py-4 border-b bg-gray-50">
-                <div>
-                    <h2 class="text-xl font-bold text-gray-800">
-                        Sale Order Details
-                    </h2>
-                    <p class="text-sm text-gray-500">
-                        View sale order header and line items
-                    </p>
-                </div>
+                <h2 class="text-xl font-bold text-gray-800">Sale Order Details</h2>
 
                 <button onclick="closeSaleOrderLineModal()"
                     class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-red-100 text-gray-500 hover:text-red-600 text-2xl">
@@ -3641,151 +3543,224 @@
             </div>
 
             <!-- Body -->
-            <div class="p-6 overflow-y-auto max-h-[75vh] space-y-5">
+            <form>
 
-                <!-- Header Info Card -->
-                <div class="border rounded-2xl p-5 bg-white shadow-sm">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800">
-                                Sale Order Header
-                            </h3>
-                            <p class="text-sm text-gray-500">
-                                General information
-                            </p>
+                @csrf
+
+                <div class="p-6 overflow-y-auto max-h-[75vh] space-y-5">
+
+                    <!-- Modern Header Info -->
+                    <div class="bg-white border rounded-xl p-6 space-y-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 id="sale-order-no" class="text-xl font-bold text-gray-800">-</h3>
+                                <p class="text-sm text-gray-400">
+                                    Created by <span id="sale-order-created-by">-</span> •
+                                    <span id="sale-order-posting-date">-</span>
+                                </p>
+                                <input type="hidden" id="sale_order_id">
+                            </div>
+
+                            <div class="flex items-center gap-4 flex-wrap">
+
+                                <!-- Order Status -->
+                                <div class="flex items-center gap-2">
+                                    <label class="text-sm font-semibold text-gray-700">Order:</label>
+                                    <select id="sale-order-status" onchange="changeSaleOrderStatus(this.value)"
+                                        class="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-700 border-none outline-none cursor-pointer">
+                                        <option value="Quotation">Quotation</option>
+                                        <option value="Ordered">Ordered</option>
+                                        <option value="Deposit">Deposit</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                        <option value="returned">Returned</option>
+                                    </select>
+                                </div>
+
+                                <!-- Payment Status -->
+                                <div class="flex items-center gap-2">
+                                    <label class="text-sm font-semibold text-gray-700">Payment:</label>
+                                    <span id="sale-payment-status"
+                                        class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                                        -
+                                    </span>
+                                </div>
+
+                                <!-- Delivery Status -->
+                                <div class="flex items-center gap-2">
+                                    <label class="text-sm font-semibold text-gray-700">Delivery:</label>
+                                    <span id="sale-delivery-status"
+                                        class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                                        -
+                                    </span>
+                                </div>
+
+                            </div>
                         </div>
 
-                        <div class="flex gap-2">
-                            <!-- Order Status -->
-                            <span id="sale-order-status"
-                                class="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-700">
-                                Pending
-                            </span>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-xs text-gray-400 uppercase">Customer</p>
+                                    <p id="sale-order-customer" class="font-medium text-gray-800">-</p>
+                                </div>
 
-                            <!-- Payment Status -->
-                            <span id="sale-payment-status"
-                                class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700">
-                                Unpaid
-                            </span>
+                                <div>
+                                    <p class="text-xs text-gray-400 uppercase">Phone</p>
+                                    <p id="sale-order-phone" class="font-medium text-gray-800">-</p>
+                                </div>
+
+                                <div>
+                                    <p class="text-xs text-gray-400 uppercase">Address</p>
+                                    <p id="sale-order-address" class="font-medium text-gray-800">-</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-xs text-gray-400 uppercase">Payment Method</p>
+                                    <p id="sale-order-payment-method" class="font-medium text-gray-800">-</p>
+                                </div>
+
+                                <div>
+                                    <p class="text-xs text-gray-400 uppercase">Delivery Date</p>
+                                    <p id="sale-order-delivery-date" class="font-medium text-gray-800">-</p>
+                                </div>
+
+                                <div id="sale-order-delivery-box" class="space-y-4">
+                                    <div>
+                                        <p class="text-xs text-gray-400 uppercase">Delivery Status</p>
+                                        <p id="sale-order-delivery-status" class="font-medium text-gray-800">-
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-xs text-gray-400 uppercase">Delivery Info</p>
+                                        <p id="sale-order-delivery-info" class="font-medium text-gray-800">-</p>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-xs text-gray-400 uppercase">Driver Name</p>
+                                        <p id="sale-order-driver-name" class="font-medium text-gray-800">-</p>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-xs text-gray-400 uppercase">Driver Phone</p>
+                                        <p id="sale-order-driver-phone" class="font-medium text-gray-800">-</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                            <p class="text-gray-500">Sale Order No</p>
-                            <p id="sale-order-no" class="font-semibold text-gray-800">-</p>
+                    &ensp;
+                    <!-- Line Table Card -->
+                    <div class="border rounded-xl overflow-hidden">
+                        <div class="px-5 py-3 bg-gray-50 border-b flex justify-between items-center">
+                            <h3 class="font-semibold text-gray-800">Sale Order Lines</h3>
+                            <span class="text-sm text-gray-500">Items list</span>
                         </div>
 
-                        <div>
-                            <p class="text-gray-500">Posting Date</p>
-                            <p id="sale-order-posting-date" class="font-semibold text-gray-800">-</p>
-                        </div>
+                        <div class="overflow-x-auto p-2">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-gray-100 text-gray-700">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left">#</th>
+                                        <th class="px-4 py-3 text-left">Item Code</th>
+                                        <th class="px-4 py-3 text-left">Item Name</th>
+                                        <th class="px-4 py-3 text-right">Qty</th>
+                                        <th class="px-4 py-3 text-right">Price</th>
+                                        <th class="px-4 py-3 text-right">Sub Total</th>
+                                        <th class="px-4 py-3 text-right">Discount</th>
+                                        <th class="px-4 py-3 text-right">VAT</th>
+                                        <th class="px-4 py-3 text-right">Grand Total</th>
+                                    </tr>
+                                </thead>
 
-                        <div>
-                            <p class="text-gray-500">Delivery Date</p>
-                            <p id="sale-order-delivery-date" class="font-semibold text-gray-800">-</p>
+                                <tbody id="sale-line-data" class="divide-y">
+                                    <!-- JS append rows here -->
+                                </tbody>
+                            </table>
                         </div>
+                    </div>
+                    &ensp;
+                    <!-- Total Summary -->
+                    <div class="flex justify-between">
+                        <div id="currency-rate-info"></div>
+                        <div class="w-full md:w-96 border rounded-xl p-5 bg-gray-50 space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Amount</span>
+                                <span id="sale-order-total" class="font-semibold">$0.00</span>
+                            </div>
 
-                        <div>
-                            <p class="text-gray-500">Customer</p>
-                            <p id="sale-order-customer" class="font-semibold text-gray-800">-</p>
-                        </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Discount</span>
+                                <span id="sale-order-discount" class="font-semibold">$0.00</span>
+                            </div>
 
-                        <div>
-                            <p class="text-gray-500">Phone</p>
-                            <p id="sale-order-phone" class="font-semibold text-gray-800">-</p>
-                        </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">VAT</span>
+                                <span id="sale-order-vat" class="font-semibold">$0.00</span>
+                            </div>
 
-                        <div>
-                            <p class="text-gray-500">Payment Method</p>
-                            <p id="sale-order-payment-method" class="font-semibold text-gray-800">-</p>
-                        </div>
+                            <hr>
 
-                        <div>
-                            <p class="text-gray-500">Currency</p>
-                            <p id="sale-order-currency" class="font-semibold text-gray-800">-</p>
-                        </div>
-
-                        <div>
-                            <p class="text-gray-500">Created By</p>
-                            <p id="sale-order-created-by" class="font-semibold text-gray-800">-</p>
-                        </div>
-
-                        <div class="md:col-span-4">
-                            <p class="text-gray-500">Address</p>
-                            <p id="sale-order-address" class="font-semibold text-gray-800">-</p>
+                            <div class="flex justify-between text-lg font-bold text-gray-800">
+                                <span>Grand Total</span>
+                                <span id="sale-order-grand-total">$0.00</span>
+                            </div>
+                            <div class="flex justify-between text-lg font-bold text-gray-800">
+                                <span></span>
+                                <span id="sale-order-grand-total-converted">$0.00</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <br>
-                <!-- Line Table Card -->
-                <div class="border rounded-2xl overflow-hidden shadow-sm">
-                    <div class="px-5 py-3 bg-gray-50 border-b flex justify-between items-center">
-                        <h3 class="font-semibold text-gray-800">Sale Order Lines</h3>
-                        <span class="text-sm text-gray-500">
-                            Items list
-                        </span>
-                    </div>
-
-                    <div class="overflow-x-auto p-2">
-                        <table id="customer-list" class="w-full text-sm text-left">
-                            <thead class="bg-gray-100 text-gray-700">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">#</th>
-                                    <th class="px-4 py-3 text-left">Item Code</th>
-                                    <th class="px-4 py-3 text-left">Item Name</th>
-                                    <th class="px-4 py-3 text-right">Qty</th>
-                                    <th class="px-4 py-3 text-right">Price</th>
-                                    <th class="px-4 py-3 text-right">Sub Total</th>
-                                    <th class="px-4 py-3 text-right">Discount</th>
-                                    <th class="px-4 py-3 text-right">VAT</th>
-                                    <th class="px-4 py-3 text-right">Grand Total</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="sale-line-data" class="divide-y">
-                                <!-- JS append rows here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <br>
-                <!-- Total Summary -->
-                <div class="flex justify-end">
-                    <div class="w-full md:w-96 border rounded-2xl p-5 bg-gray-50 space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Total Amount</span>
-                            <span id="sale-order-total" class="font-semibold">$0.00</span>
-                        </div>
-
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Discount</span>
-                            <span id="sale-order-discount" class="font-semibold">$0.00</span>
-                        </div>
-
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">VAT</span>
-                            <span id="sale-order-vat" class="font-semibold">$0.00</span>
-                        </div>
-
-                        <hr>
-
-                        <div class="flex justify-between text-lg font-bold text-gray-800">
-                            <span>Grand Total</span>
-                            <span id="sale-order-grand-total">$0.00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            </form>
             <!-- Footer -->
-            <div class="flex justify-end gap-2 px-6 py-4 border-t bg-gray-50">
+            <div class="flex flex-wrap justify-end gap-3 px-6 py-4 border-t bg-gray-50">
 
+                <!-- Close -->
                 <button onclick="closeSaleOrderLineModal()"
-                    class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-xl">
-                    Close
+                    class="bg-gray-400 hover:bg-gray-500 text-white px-5 py-2 rounded-xl shadow-sm transition">
+                    <i class="fa-solid fa-xmark mr-1"></i> Close
                 </button>
-                <button onclick="Load_order()" class="bg-green-500 hover:bg-green-500  text-white px-5 py-2 rounded-xl">
-                    Load Order
+
+                <!-- Update -->
+                <button onclick="save_status()"
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-xl shadow-sm transition">
+                    <i class="fa-solid fa-pen-to-square mr-1"></i> Save
+                </button>
+
+                <!-- Load Order -->
+                <button onclick="Load_order()"
+                    class="bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-xl shadow-sm transition">
+                    <i class="fa-solid fa-cart-shopping mr-1"></i> Load Order
+                </button>
+
+
+            </div>
+        </div>
+    </div>
+
+    <div id="expenseModal"
+        class="fixed inset-0 bg-black/50  bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-96">
+            <h2 class="text-xl font-bold mb-4">Confirm Expense Payment</h2>
+
+            <p class="mb-2">Are you sure you want to pay this expense?</p>
+
+            <label class="block mb-2 font-medium">Select Expense Date </label>
+            <input type="date" id="expenseDate" class="w-full border rounded-lg px-3 py-2 mb-4">
+            &ensp;
+            <div class="flex justify-end gap-2">
+                <button onclick="closeExpenseModal()"
+                    class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg">
+                    Cancel
+                </button>
+
+                <button onclick="confirmExpensePayment()"
+                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
+                    Confirm
                 </button>
             </div>
         </div>

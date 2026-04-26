@@ -191,14 +191,26 @@
                         </option>
                     @endforeach
                 </select>
-                <div id="list_main" class="relative col-span-2" style="width:300px;">
-                    <input type="text" id="vendorSearch" placeholder="General vendor" autocomplete="off">
+                <div id="list_main" class="relative col-span-2 w-[300px]">
 
+                    <!-- Icon -->
+                    <i class="fa-solid fa-user-tie absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+                    <!-- Search Input -->
+                    <input type="text" id="vendorSearch" placeholder="Search Vendor..." autocomplete="off"
+                        class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2 
+               shadow-sm focus:ring-2 focus:ring-green-300 
+               focus:outline-none text-gray-700">
+
+                    <!-- Hidden Value -->
                     <input type="hidden" id="vendorValue" wire:model.live="vendor_id">
 
+                    <!-- Dropdown List -->
                     <ul id="vendorList"
-                        class="list hidden absolute z-50 bg-white border rounded shadow w-full max-h-60 overflow-auto">
+                        class="hidden absolute z-50 mt-1 bg-white border border-gray-200 
+               rounded-xl shadow-lg w-full max-h-60 overflow-auto">
                     </ul>
+
                 </div>
             </div>
 
@@ -214,22 +226,36 @@
 
 
 
+                <!-- Clear -->
                 <button wire:click="clearCart"
-                    class="bg-red-300 hover:bg-red-400 text-white font-semibold px-4 py-2 rounded">
-                    <i class="fa-solid fa-trash-can"></i>
+                    class="bg-red-500 hover:bg-red-600 text-white font-medium px-1 py-1 rounded-xl shadow-md transition">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Clear
                 </button>
 
+                <!-- Purchase -->
                 <button wire:click="post_grn"
-                    class="bg-green-600 hover:bg-green-800 text-white font-semibold px-4 py-2 rounded">
-                    Purchase
+                    class="bg-green-600 hover:bg-green-700 text-white font-medium px-1 py-1 rounded-xl shadow-md transition">
+                    <i class="fa-solid fa-cart-plus mr-1"></i> Purchase
                 </button>
-                <select wire:model="warehouse_id"
-                    class="col-span-2 border rounded px-6 py-2 focus:ring focus:ring-green-300">
+                <div class="relative">
+                    <!-- Icon -->
+                    <i class="fa-solid fa-warehouse absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
 
-                    @foreach ($warehouses as $id => $name)
-                        <option value="{{ $id }}" @selected($warehouse_id == $id)>{{ $name }}</option>
-                    @endforeach
-                </select>
+                    <!-- Select -->
+                    <select wire:model="warehouse_id"
+                        class="border border-gray-300 rounded-xl pl-10 pr-4 py-2 shadow-sm 
+               focus:ring-2 focus:ring-green-300 focus:outline-none 
+               bg-white text-gray-700 min-w-[200px]">
+
+                        <option value="">Choose Warehouse</option>
+
+                        @foreach ($warehouses as $id => $name)
+                            <option value="{{ $id }}" @selected($warehouse_id == $id)>
+                                {{ $name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
         </div>
     </div>

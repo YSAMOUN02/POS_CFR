@@ -57,16 +57,15 @@ class Cart extends Component
     public $cart_mode = 'normal';
     public $openIndex = null;
 
+    // Sale Order Info 
+    public $document_no = 'NA';
+    public $document_id = 0;
+    public $document_type = 'NA';
+
     public function toggleItem($index)
     {
         $this->openIndex = $this->openIndex === $index ? null : $index;
     }
-
-
-
-    public $tables = [];
-    public $Current_table_id = null;
-    public $Current_table_name = "";
 
     #[\Livewire\Attributes\On('set-item-lots')]
     public function setItemLots($index = null, $lots = [])
@@ -125,6 +124,48 @@ class Cart extends Component
 
         return 'EXP' . $year . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
+    #[\Livewire\Attributes\On('payment-expenses')]
+    public function paymentExpenses($payload = [])
+    {
+        if (empty($this->cart)) {
+            $this->dispatch('payment-error', ['message' => 'Cart is empty']);
+            return;
+        }
+
+        DB::transaction(function () use ($payload) {
+            $expenseCode = $this->generateExpenseCode();
+
+            foreach ($this->cart as $cartItem) {
+                $qty = (float) ($cartItem['qty'] ?? 1);
+                $unitPrice = (float) ($cartItem['price'] ?? 0);
+                $amount = $qty * $unitPrice;
+
+                Expense::create([
+                    'expense_date'   => $payload['document_date'] ?? now()->toDateString(),
+                    'product_id'     => $cartItem['id'] ?? null,
+                    'expense_code'   => $expenseCode,
+                    'expense_name'   => $cartItem['name'] ?? 'General Expense',
+                    'qty'            => $qty,
+                    'unit_price'     => $unitPrice,
+                    'amount'         => $amount,
+                    'payment_method' => $payload['paymentMethod'] ?? null,
+                    'note'           => $cartItem['expence_for'] ?? null,
+                    'status'         => 1,
+                ]);
+            }
+
+            $this->cart_queue_no = 0;
+            $this->getDocument($this->cart_queue_no);
+        });
+
+        $this->new_cart = true;
+        $this->cart = [];
+        $this->count_cart = 0;
+
+        $this->dispatch('payment-success', [
+            'message' => 'Expense saved successfully'
+        ]);
+    }
     #[\Livewire\Attributes\On('paymentConfirmed')]
     public function paymentConfirmed($payload)
     {
@@ -134,402 +175,373 @@ class Cart extends Component
             return;
         }
 
-        if ($this->cart_mode === 'expence') {
 
-            DB::transaction(function () use ($payload) {
-                $expenseCode = $this->generateExpenseCode();
-                foreach ($this->cart as $cartItem) {
-                    $qty = (float) ($cartItem['qty'] ?? 1);
-                    $unitPrice = (float) ($cartItem['price'] ?? 0);
-                    $amount = $qty * $unitPrice;
+        $invoiceNumber = '';
+        $totalAmount = 0;
+        $totalDiscount = 0;
+        $totalVAT = 0;
 
-                    Expense::create([
-                        'expense_date'   => $payload['document_date'] ?? now()->toDateString(),
-                        'product_id'     => $cartItem['id'] ?? null,
-                        'expense_code'   => $expenseCode,
-                        'expense_name'   => $cartItem['name'] ?? 'General Expense',
-                        'qty'            => $qty,
-                        'unit_price'     => $unitPrice,
-                        'amount'         => $amount,
-                        'payment_method' => $payload['paymentMethod'] ?? null,
-                        'note'           => $cartItem['expence_for'] ?? null,
-                        'status'         => 1,
-                    ]);
+
+
+
+        DB::transaction(function () use ($payload, &$totalAmount, &$totalDiscount, &$totalVAT) {
+
+
+            $customer_id = !empty($payload['customer_id']) ? (int) $payload['customer_id'] : null;
+            $customer_name = $customer->name ?? ($payload['customer_name'] ?? 'Walk-in Customer');
+            $customer_phone = $customer->phone ?? ($payload['customer_phone'] ?? 'NA');
+            $customer_address = $customer->address ?? ($payload['customer_address'] ?? null);
+
+            // 1️⃣ Create Invoice Header
+            $invoice = InvoiceHeader::create([
+                'invoice_number'   => $this->generateInvoiceNumber(),
+                'invoice_date'     => $payload['document_date'] ?? now(),
+                'customer_id'      =>  $customer_id,
+
+                'contact_name'     => $customer_name,
+                'phone'            => $customer_phone,
+                'address'          => $customer_address,
+
+                'total_amount'     => 0,
+                'vat_amount'       => 0,
+                'discount_percent' => $payload['discount_percent'] ?? 0,
+                'discount_amount'  => $payload['discount_amount'] ?? 0,
+                'grand_total'      => 0,
+
+                'payment_method'   => $payload['paymentMethod'] ?? null,
+                'customer_type'    => $payload['customer_type'] ?? 'walk-in',
+
+                'currency_name'    => $this->currency_name,
+                'factor'           => $this->factor,
+                'created_by'       => Auth::user()->name ?? 'System',
+                'remarks'          => $payload['remark'] ?? null,
+            ]);
+            // Assign **immediately** to external variable
+            $invoiceNumber = $invoice->invoice_number;
+            $this->dispatch('get-reciept-no', ['invoice_number' => $invoice->invoice_number]);
+
+            // 2️⃣ Create Invoice Lines
+            foreach ($this->cart as $cartItem) {
+                $product = Product::find($cartItem['id']);
+                if (!$product) {
+                    continue;
                 }
 
-                $this->cart_queue_no = 0;
-                $this->getDocument($this->cart_queue_no);
-            });
+                $qty = (float) ($cartItem['qty'] ?? 1);
+                $sellPrice = (float) ($cartItem['price'] ?? 0);   // actual selling price from cart
+                $vatRate = (float) ($cartItem['vat'] ?? 0);
+                $discountPercent = (float) ($cartItem['discount_percent'] ?? 0);
+                $unitCost = (float) ($product->cost ?? 0);
+                $unitPrice = (float) ($product->sell_price ?? 0); // product base/default price
 
-            $this->new_cart = true;
-            $this->cart = [];
-            $this->count_cart = 0;
+                $lineAmount = round($sellPrice * $qty, 4); // gross before discount
+                $discountAmount = round(($lineAmount * $discountPercent) / 100, 4);
+                $netAmount = round($lineAmount - $discountAmount, 4); // after discount, before VAT
+                $vatAmount = round(($netAmount * $vatRate) / 100, 4);
+                $grandTotal = round($netAmount + $vatAmount, 4);
 
-            $this->dispatch('payment-success', [
-                'message' => 'Expense saved successfully'
-            ]);
+                // accumulate invoice totals
+                $totalAmount += $lineAmount;
+                $totalDiscount += $discountAmount;
+                $totalVAT += $vatAmount;
 
-            return;
-        } else {
-            $invoiceNumber = '';
-            $totalAmount = 0;
-            $totalDiscount = 0;
-            $totalVAT = 0;
+                // =========================
+                // 1) CREATE INVOICE LINE
+                // =========================
+                InvoiceLine::create([
+                    'sale_invoice_id'    => $invoice->id,
+                    'product_id'         => $product->id,
 
+                    'barcode'            => $product->bar_code,
+                    'item_code'          => $product->code,
+                    'name'               => $product->name,
+                    'variant'            => $product->variant,
+                    'description'        => $product->description,
 
+                    'quantity'           => $qty,
+                    'unit'               => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
+                    'category_name'      => optional($product->category)->name,
 
+                    'cost'               => $unitCost,
+                    'unit_price'         => $unitPrice,
+                    'sell_price'         => $sellPrice,
 
-            DB::transaction(function () use ($payload, &$totalAmount, &$totalDiscount, &$totalVAT) {
+                    'discount_percent'   => $discountPercent,
+                    'discount_amount'    => $discountAmount,
 
+                    'line_amount'        => $lineAmount,
+                    'vat'        => $vatRate,   // ✅ correct for InvoiceLine model
+                    'vat_amount'         => $vatAmount,
+                    'net_amount'         => $netAmount,
+                    'grand_total_amount' => $grandTotal,
 
-                $customer_id = !empty($payload['customer_id']) ? (int) $payload['customer_id'] : null;
-                $customer_name = $customer->name ?? ($payload['customer_name'] ?? 'Walk-in Customer');
-                $customer_phone = $customer->phone ?? ($payload['customer_phone'] ?? 'NA');
-                $customer_address = $customer->address ?? ($payload['customer_address'] ?? null);
-
-                // 1️⃣ Create Invoice Header
-                $invoice = InvoiceHeader::create([
-                    'invoice_number'   => $this->generateInvoiceNumber(),
-                    'invoice_date'     => $payload['document_date'] ?? now(),
-                    'customer_id'      =>  $customer_id,
-
-                    'contact_name'     => $customer_name,
-                    'phone'            => $customer_phone,
-                    'address'          => $customer_address,
-
-                    'total_amount'     => 0,
-                    'vat_amount'       => 0,
-                    'discount_percent' => $payload['discount_percent'] ?? 0,
-                    'discount_amount'  => $payload['discount_amount'] ?? 0,
-                    'grand_total'      => 0,
-
-                    'payment_method'   => $payload['paymentMethod'] ?? null,
-                    'customer_type'    => $payload['customer_type'] ?? 'walk-in',
-
-                    'currency_name'    => $this->currency_name,
-                    'factor'           => $this->factor,
-                    'created_by'       => Auth::user()->name ?? 'System',
-                    'remarks'          => $payload['remark'] ?? null,
+                    'created_by'         => Auth::user()->name ?? 'System',
+                    'remarks'            => null,
                 ]);
-                // Assign **immediately** to external variable
-                $invoiceNumber = $invoice->invoice_number;
-                $this->dispatch('get-reciept-no', ['invoice_number' => $invoice->invoice_number]);
 
-                // 2️⃣ Create Invoice Lines
-                foreach ($this->cart as $cartItem) {
-                    $product = Product::find($cartItem['id']);
-                    if (!$product) {
-                        continue;
-                    }
+                // =========================
+                // 2) ITEM LEDGER FOR STOCK ITEMS
+                // =========================
+                if ($product->track_stock == 1) {
 
-                    $qty = (float) ($cartItem['qty'] ?? 1);
-                    $sellPrice = (float) ($cartItem['price'] ?? 0);   // actual selling price from cart
-                    $vatRate = (float) ($cartItem['vat'] ?? 0);
-                    $discountPercent = (float) ($cartItem['discount_percent'] ?? 0);
-                    $unitCost = (float) ($product->cost ?? 0);
-                    $unitPrice = (float) ($product->sell_price ?? 0); // product base/default price
+                    $cartLots = $cartItem['lots'] ?? [];
+                    $qtyNeeded = $qty;
+                    $saleQty = $qty;
 
-                    $lineAmount = round($sellPrice * $qty, 4); // gross before discount
-                    $discountAmount = round(($lineAmount * $discountPercent) / 100, 4);
-                    $netAmount = round($lineAmount - $discountAmount, 4); // after discount, before VAT
-                    $vatAmount = round(($netAmount * $vatRate) / 100, 4);
-                    $grandTotal = round($netAmount + $vatAmount, 4);
+                    $ledgerRows = [];
 
-                    // accumulate invoice totals
-                    $totalAmount += $lineAmount;
-                    $totalDiscount += $discountAmount;
-                    $totalVAT += $vatAmount;
+                    // CASE 1: User manually selected lots
+                    if (!empty($cartLots)) {
+                        foreach ($cartLots as $lot) {
+                            $warehouseProduct = WarehouseProduct::lockForUpdate()->find($lot['id']);
 
-                    // =========================
-                    // 1) CREATE INVOICE LINE
-                    // =========================
-                    InvoiceLine::create([
-                        'sale_invoice_id'    => $invoice->id,
-                        'product_id'         => $product->id,
-
-                        'barcode'            => $product->bar_code,
-                        'item_code'          => $product->code,
-                        'name'               => $product->name,
-                        'variant'            => $product->variant,
-                        'description'        => $product->description,
-
-                        'quantity'           => $qty,
-                        'unit'               => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
-                        'category_name'      => optional($product->category)->name,
-
-                        'cost'               => $unitCost,
-                        'unit_price'         => $unitPrice,
-                        'sell_price'         => $sellPrice,
-
-                        'discount_percent'   => $discountPercent,
-                        'discount_amount'    => $discountAmount,
-
-                        'line_amount'        => $lineAmount,
-                        'vat'        => $vatRate,   // ✅ correct for InvoiceLine model
-                        'vat_amount'         => $vatAmount,
-                        'net_amount'         => $netAmount,
-                        'grand_total_amount' => $grandTotal,
-
-                        'created_by'         => Auth::user()->name ?? 'System',
-                        'remarks'            => null,
-                    ]);
-
-                    // =========================
-                    // 2) ITEM LEDGER FOR STOCK ITEMS
-                    // =========================
-                    if ($product->track_stock == 1) {
-
-                        $cartLots = $cartItem['lots'] ?? [];
-                        $qtyNeeded = $qty;
-                        $saleQty = $qty;
-
-                        $ledgerRows = [];
-
-                        // CASE 1: User manually selected lots
-                        if (!empty($cartLots)) {
-                            foreach ($cartLots as $lot) {
-                                $warehouseProduct = WarehouseProduct::lockForUpdate()->find($lot['id']);
-
-                                if (!$warehouseProduct) {
-                                    $this->dispatch('error', ['message' => "Lot ID {$lot['id']} not found"]);
-                                    throw new \Exception("Lot ID {$lot['id']} not found");
-                                }
-
-                                $lotQty = (float) ($lot['qty'] ?? 0);
-
-                                if ($lotQty <= 0) {
-                                    continue;
-                                }
-
-                                if ((float) $warehouseProduct->qty < $lotQty) {
-                                    $this->dispatch('error', [
-                                        'message' => "Not enough stock in Lot " . $warehouseProduct->lot
-                                    ]);
-                                    throw new \Exception("Not enough stock in Lot {$warehouseProduct->lot}");
-                                }
-
-                                $warehouseProduct->decrement('qty', $lotQty);
-
-                                $ledgerRows[] = [
-                                    'warehouse_product_id' => $warehouseProduct->id,
-                                    'warehouse_id'         => $warehouseProduct->warehouse_id,
-                                    'lot'                  => $warehouseProduct->lot,
-                                    'expire_date'          => $warehouseProduct->expire,
-                                    'qty'                  => $lotQty,
-                                ];
-
-                                $this->syncPurchaseRemainingQty(
-                                    $product->id,
-                                    $warehouseProduct->lot,
-                                    $warehouseProduct->warehouse_id
-                                );
+                            if (!$warehouseProduct) {
+                                $this->dispatch('error', ['message' => "Lot ID {$lot['id']} not found"]);
+                                throw new \Exception("Lot ID {$lot['id']} not found");
                             }
 
-                            $selectedQty = collect($ledgerRows)->sum('qty');
-                            if (round($selectedQty, 4) != round($saleQty, 4)) {
-                                throw new \Exception("Selected lot quantity does not match sale quantity for product {$product->code}");
-                            }
-                        } else {
-                            // CASE 2: AUTO PICK FEFO
-                            $warehouseProducts = WarehouseProduct::where('product_id', $product->id)
-                                ->where('qty', '>', 0)
-                                ->orderByRaw('CASE WHEN expire IS NULL THEN 1 ELSE 0 END')
-                                ->orderBy('expire', 'asc')
-                                ->lockForUpdate()
-                                ->get();
+                            $lotQty = (float) ($lot['qty'] ?? 0);
 
-                            $remaining = $qtyNeeded;
-
-                            foreach ($warehouseProducts as $wp) {
-                                if ($remaining <= 0) {
-                                    break;
-                                }
-
-                                $deductQty = min((float) $wp->qty, $remaining);
-
-                                if ($deductQty <= 0) {
-                                    continue;
-                                }
-
-                                $wp->decrement('qty', $deductQty);
-
-                                $ledgerRows[] = [
-                                    'warehouse_product_id' => $wp->id,
-                                    'warehouse_id'         => $wp->warehouse_id,
-                                    'lot'                  => $wp->lot,
-                                    'expire_date'          => $wp->expire,
-                                    'qty'                  => $deductQty,
-                                ];
-
-                                $remaining -= $deductQty;
-
-                                $this->syncPurchaseRemainingQty(
-                                    $product->id,
-                                    $wp->lot,
-                                    $wp->warehouse_id
-                                );
+                            if ($lotQty <= 0) {
+                                continue;
                             }
 
-                            if ($remaining > 0) {
-                                $this->dispatch('error', ['message' => "Not enough stock in lot"]);
-                                throw new \Exception("Not enough stock for product {$product->code}");
+                            if ((float) $warehouseProduct->qty < $lotQty) {
+                                $this->dispatch('error', [
+                                    'message' => "Not enough stock in Lot " . $warehouseProduct->lot
+                                ]);
+                                throw new \Exception("Not enough stock in Lot {$warehouseProduct->lot}");
                             }
+
+                            $warehouseProduct->decrement('qty', $lotQty);
+
+                            $ledgerRows[] = [
+                                'warehouse_product_id' => $warehouseProduct->id,
+                                'warehouse_id'         => $warehouseProduct->warehouse_id,
+                                'lot'                  => $warehouseProduct->lot,
+                                'expire_date'          => $warehouseProduct->expire,
+                                'qty'                  => $lotQty,
+                            ];
+
+                            $this->syncPurchaseRemainingQty(
+                                $product->id,
+                                $warehouseProduct->lot,
+                                $warehouseProduct->warehouse_id
+                            );
                         }
 
-                        // =========================
-                        // 3) CREATE ITEM LEDGER ENTRIES
-                        // =========================
-                        if (!empty($ledgerRows)) {
-                            foreach ($ledgerRows as $row) {
-                                $rowQty = (float) $row['qty'];
-                                $rowUnitCost = $this->getLotUnitCost(
-                                    $product->id,
-                                    $row['lot'] ?? null,
-                                    $row['warehouse_id'] ?? null
-                                );
-                                $warehouseName = Warehouse::where('id', $row['warehouse_id'])->value('name');
+                        $selectedQty = collect($ledgerRows)->sum('qty');
+                        if (round($selectedQty, 4) != round($saleQty, 4)) {
 
-                                // distribute amounts proportionally by deducted lot qty
-                                $rowLineAmount = $saleQty > 0 ? round(($lineAmount / $saleQty) * $rowQty, 4) : 0;
-                                $rowDiscountAmount = $saleQty > 0 ? round(($discountAmount / $saleQty) * $rowQty, 4) : 0;
-                                $rowNetAmount = $saleQty > 0 ? round(($netAmount / $saleQty) * $rowQty, 4) : 0;
-                                $rowVatAmount = $saleQty > 0 ? round(($vatAmount / $saleQty) * $rowQty, 4) : 0;
-                                $rowGrandTotal = $saleQty > 0 ? round(($grandTotal / $saleQty) * $rowQty, 4) : 0;
 
-                                $ledger = $this->createLedgerEntry([
-                                    'posting_date'        => $payload['document_date'] ?? now()->toDateString(),
-                                    'document_type'       => 'Sales Order',
-                                    'document_no'         => $invoice->invoice_number,
+                            $this->dispatch('no-stock', [
+                                'message' => "{$product->name}  មិនមានស្តុកទេ"
+                            ]);
 
-                                    'source_id'           => $invoice->id,
-                                    'source_table'        => 'sale_invoice_headers',
-
-                                    'product_id'          => $product->id,
-                                    'barcode'             => $product->bar_code,
-                                    'item_code'           => $product->code,
-                                    'name'                => $product->name,
-                                    'variant'             => $product->variant,
-                                    'description'         => $product->description,
-                                    'unit'                => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
-                                    'category_name'       => optional($product->category)->name,
-                                    'type'                =>  'product',
-
-                                    'warehouse_id'        => $row['warehouse_id'] ?? null,
-                                    'warehouse_name'      => $warehouseName ?? null,
-                                    'lot'                 => $row['lot'] ?? null,
-                                    'expire_date'         => $row['expire_date'] ?? null,
-
-                                    'quantity'            => -1 * $rowQty,
-                                    'remaining_quantity'  => 0,
-                                    'entry_type'          => 'negative',
-
-                                    'unit_cost'           => $rowUnitCost,
-                                    'unit_price'          => $unitPrice,
-                                    'sell_price'          => $sellPrice,
-
-                                    'discount_percent'    => $discountPercent,
-                                    'discount_amount'     => $rowDiscountAmount,
-
-                                    'vat'                 => $vatRate,
-                                    'vat_amount'          => $rowVatAmount,
-
-                                    'line_amount'         => $rowLineAmount,
-                                    'net_amount'          => $rowNetAmount,
-                                    'grand_total_amount'  => $rowGrandTotal,
-
-                                    'customer_id'         =>  $customer_id,
-                                    'customer_name'       => $customer_name ?? null,
-                                    'customer_phone'      => $customer_phone ?? null,
-                                    'customer_address'    => $customer_address ?? null,
-
-                                    'payment_method'      => $payload['paymentMethod'] ?? null,
-                                    'remark'              => '',
-                                    'created_by'          => Auth::user()->name ?? 'System',
-                                ]);
-                                $ledger->update([
-                                    'entry_no' => $ledger->id
-                                ]);
-                            }
+                            DB::rollBack();
+                            return;
                         }
                     } else {
+                        // CASE 2: AUTO PICK FEFO
+                        $warehouseProducts = WarehouseProduct::where('product_id', $product->id)
+                            ->where('qty', '>', 0)
+                            ->orderByRaw('CASE WHEN expire IS NULL THEN 1 ELSE 0 END')
+                            ->orderBy('expire', 'asc')
+                            ->lockForUpdate()
+                            ->get();
 
-                        // Non-stock / service item still creates ledger entry without warehouse/lot
-                        $ledger = ItemLedgerEntry::create([
-                            'entry_no'            => null,
+                        $remaining = $qtyNeeded;
 
-                            'posting_date'        => $payload['document_date'] ?? now()->toDateString(),
-                            'document_type'       => 'Sales Order',
-                            'document_no'         => $invoice->invoice_number,
+                        foreach ($warehouseProducts as $wp) {
+                            if ($remaining <= 0) {
+                                break;
+                            }
 
-                            'source_id'           => $invoice->id,
-                            'source_table'        => 'sale_invoice_headers',
+                            $deductQty = min((float) $wp->qty, $remaining);
 
-                            'product_id'          => $product->id,
-                            'barcode'             => $product->bar_code,
-                            'item_code'           => $product->code,
-                            'name'                => $product->name,
-                            'variant'             => $product->variant,
-                            'description'         => $product->description,
-                            'unit'                => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
-                            'category_name'       => optional($product->category)->name,
-                            'type'                => $product->type ?? 'product',
+                            if ($deductQty <= 0) {
+                                continue;
+                            }
 
-                            'warehouse_id'        => null,
-                            'warehouse_name'      => null,
-                            'lot'                 => null,
-                            'expire_date'         => null,
+                            $wp->decrement('qty', $deductQty);
 
-                            'quantity'            => -1 * $qty,
-                            'remaining_quantity'  => 0,
-                            'entry_type'          => 'negative',
+                            $ledgerRows[] = [
+                                'warehouse_product_id' => $wp->id,
+                                'warehouse_id'         => $wp->warehouse_id,
+                                'lot'                  => $wp->lot,
+                                'expire_date'          => $wp->expire,
+                                'qty'                  => $deductQty,
+                            ];
 
-                            'unit_cost'           => $unitCost,
-                            'unit_price'          => $unitPrice,
-                            'sell_price'          => $sellPrice,
+                            $remaining -= $deductQty;
 
-                            'discount_percent'    => $discountPercent,
-                            'discount_amount'     => $discountAmount,
+                            $this->syncPurchaseRemainingQty(
+                                $product->id,
+                                $wp->lot,
+                                $wp->warehouse_id
+                            );
+                        }
 
-                            'vat'                 => $vatRate,
-                            'vat_amount'          => $vatAmount,
+                        if ($remaining > 0) {
+                            $this->dispatch('no-stock', [
+                                'message' => "{$product->name} មិនមានស្តុកទេ"
+                            ]);
 
-                            'line_amount'         => $lineAmount,
-                            'net_amount'          => $netAmount,
-                            'grand_total_amount'  => $grandTotal,
-
-                            'customer_id'         =>  $customer_id,
-                            'customer_name'       => $customer_name ?? null,
-                            'customer_phone'      => $customer_phone ?? null,
-                            'customer_address'    => $customer_address ?? null,
-
-                            'vendor_id'           => null,
-                            'payment_method'      => $payload['paymentMethod'] ?? null,
-                            'remark'              => null,
-                            'created_by'          => Auth::user()->name ?? 'System',
-                        ]);
-                        $ledger->update([
-                            'entry_no' => $ledger->id
-                        ]);
+                            DB::rollBack();
+                            return;
+                        }
                     }
+
+                    // =========================
+                    // 3) CREATE ITEM LEDGER ENTRIES
+                    // =========================
+                    if (!empty($ledgerRows)) {
+                        foreach ($ledgerRows as $row) {
+                            $rowQty = (float) $row['qty'];
+                            $rowUnitCost = $this->getLotUnitCost(
+                                $product->id,
+                                $row['lot'] ?? null,
+                                $row['warehouse_id'] ?? null
+                            );
+                            $warehouseName = Warehouse::where('id', $row['warehouse_id'])->value('name');
+
+                            // distribute amounts proportionally by deducted lot qty
+                            $rowLineAmount = $saleQty > 0 ? round(($lineAmount / $saleQty) * $rowQty, 4) : 0;
+                            $rowDiscountAmount = $saleQty > 0 ? round(($discountAmount / $saleQty) * $rowQty, 4) : 0;
+                            $rowNetAmount = $saleQty > 0 ? round(($netAmount / $saleQty) * $rowQty, 4) : 0;
+                            $rowVatAmount = $saleQty > 0 ? round(($vatAmount / $saleQty) * $rowQty, 4) : 0;
+                            $rowGrandTotal = $saleQty > 0 ? round(($grandTotal / $saleQty) * $rowQty, 4) : 0;
+
+                            $ledger = $this->createLedgerEntry([
+                                'posting_date'        => $payload['document_date'] ?? now()->toDateString(),
+                                'document_type'       => 'Sales Order',
+                                'document_no'         => $invoice->invoice_number,
+
+                                'source_id'           => $invoice->id,
+                                'source_table'        => 'sale_invoice_headers',
+
+                                'product_id'          => $product->id,
+                                'barcode'             => $product->bar_code,
+                                'item_code'           => $product->code,
+                                'name'                => $product->name,
+                                'variant'             => $product->variant,
+                                'description'         => $product->description,
+                                'unit'                => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
+                                'category_name'       => optional($product->category)->name,
+                                'type'                =>  'product',
+
+                                'warehouse_id'        => $row['warehouse_id'] ?? null,
+                                'warehouse_name'      => $warehouseName ?? null,
+                                'lot'                 => $row['lot'] ?? null,
+                                'expire_date'         => $row['expire_date'] ?? null,
+
+                                'quantity'            => -1 * $rowQty,
+                                'remaining_quantity'  => 0,
+                                'entry_type'          => 'negative',
+
+                                'unit_cost'           => $rowUnitCost,
+                                'unit_price'          => $unitPrice,
+                                'sell_price'          => $sellPrice,
+
+                                'discount_percent'    => $discountPercent,
+                                'discount_amount'     => $rowDiscountAmount,
+
+                                'vat'                 => $vatRate,
+                                'vat_amount'          => $rowVatAmount,
+
+                                'line_amount'         => $rowLineAmount,
+                                'net_amount'          => $rowNetAmount,
+                                'grand_total_amount'  => $rowGrandTotal,
+
+                                'customer_id'         =>  $customer_id,
+                                'customer_name'       => $customer_name ?? null,
+                                'customer_phone'      => $customer_phone ?? null,
+                                'customer_address'    => $customer_address ?? null,
+
+                                'payment_method'      => $payload['paymentMethod'] ?? null,
+                                'remark'              => '',
+                                'created_by'          => Auth::user()->name ?? 'System',
+                            ]);
+                            $ledger->update([
+                                'entry_no' => $ledger->id
+                            ]);
+                        }
+                    }
+                } else {
+
+                    // Non-stock / service item still creates ledger entry without warehouse/lot
+                    $ledger = ItemLedgerEntry::create([
+                        'entry_no'            => null,
+
+                        'posting_date'        => $payload['document_date'] ?? now()->toDateString(),
+                        'document_type'       => 'Sales Order',
+                        'document_no'         => $invoice->invoice_number,
+
+                        'source_id'           => $invoice->id,
+                        'source_table'        => 'sale_invoice_headers',
+
+                        'product_id'          => $product->id,
+                        'barcode'             => $product->bar_code,
+                        'item_code'           => $product->code,
+                        'name'                => $product->name,
+                        'variant'             => $product->variant,
+                        'description'         => $product->description,
+                        'unit'                => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
+                        'category_name'       => optional($product->category)->name,
+                        'type'                => $product->type ?? 'product',
+
+                        'warehouse_id'        => null,
+                        'warehouse_name'      => null,
+                        'lot'                 => null,
+                        'expire_date'         => null,
+
+                        'quantity'            => -1 * $qty,
+                        'remaining_quantity'  => 0,
+                        'entry_type'          => 'negative',
+
+                        'unit_cost'           => $unitCost,
+                        'unit_price'          => $unitPrice,
+                        'sell_price'          => $sellPrice,
+
+                        'discount_percent'    => $discountPercent,
+                        'discount_amount'     => $discountAmount,
+
+                        'vat'                 => $vatRate,
+                        'vat_amount'          => $vatAmount,
+
+                        'line_amount'         => $lineAmount,
+                        'net_amount'          => $netAmount,
+                        'grand_total_amount'  => $grandTotal,
+
+                        'customer_id'         =>  $customer_id,
+                        'customer_name'       => $customer_name ?? null,
+                        'customer_phone'      => $customer_phone ?? null,
+                        'customer_address'    => $customer_address ?? null,
+
+                        'vendor_id'           => null,
+                        'payment_method'      => $payload['paymentMethod'] ?? null,
+                        'remark'              => null,
+                        'created_by'          => Auth::user()->name ?? 'System',
+                    ]);
+                    $ledger->update([
+                        'entry_no' => $ledger->id
+                    ]);
                 }
-                // 3️⃣ Update invoice totals
-                $invoice->update([
-                    'total_amount'     => $totalAmount,
-                    'discount_amount'  => $totalDiscount,
-                    'vat_amount'       => $totalVAT,
-                    'grand_total'      => $totalAmount - $totalDiscount + $totalVAT,
-                ]);
-                $this->cart_queue_no = 0;
-                $this->getDocument($this->cart_queue_no); // send queue to front
-            });
-
-
-
+            }
+            // 3️⃣ Update invoice totals
+            $invoice->update([
+                'total_amount'     => $totalAmount,
+                'discount_amount'  => $totalDiscount,
+                'vat_amount'       => $totalVAT,
+                'grand_total'      => $totalAmount - $totalDiscount + $totalVAT,
+            ]);
             $this->new_cart = true;
             $this->dispatch('payment-success', [
                 'message' => 'Invoice Payment ' . $invoiceNumber . ' is successfully'
             ]);
-        }
+            $this->cart_queue_no = 0;
+            $this->getDocument($this->cart_queue_no); // send queue to front
+        });
     }
     private function createLedgerEntry(array $data)
     {
@@ -587,9 +599,7 @@ class Cart extends Component
 
         // Clear cart/session
         $this->clearCustomer();
-        $this->clearCart();
-        $this->Current_table_id = null;
-        $this->Current_table_name = "";
+        $this->clearCart_no_message();
     }
 
 
@@ -781,8 +791,7 @@ class Cart extends Component
     {
         $this->cart = [];
         $this->count_cart = 0;
-        $this->Current_table_id = null;
-        $this->Current_table_name  = "";
+
         $this->clearCart();
         $this->clearCustomer();
     }
@@ -892,22 +901,24 @@ class Cart extends Component
         }
 
         if ($this->cart_mode === 'expence' && $product['type'] !== 'expence') {
-            $this->dispatch('error', [
-                'message' => 'ចំណាយ មិនអាចបន្ថែមទំនិញលក់ ឬសេវាកម្មបានទេ'
+            $this->dispatch('product_item_prevented', [
+                'message' => 'ចំណាយ មិនអាចបន្ថែមបានទេ'
             ]);
             return;
         }
 
         if ($this->cart_mode === 'sale' && $product['type'] === 'expence') {
-            $this->dispatch('error', [
-                'message' => 'ទំនិញលក់មិនអាចបន្ថែមទំនិញ ប្រភេទចំណាយបានទេ'
+            $this->dispatch('expense_item_prevented', [
+                'message' => 'ទំនិញលក់ មិនអាចបន្ថែមចំណាយបានទេ'
             ]);
             return;
         }
 
         $vat = (float) ($product['vat'] ?? 0);
         $price = (float) ($product['sell_price'] ?? 0);
-        if ($this->customer_discount_percent > 0 && $product['type'] !== 'expence') {
+        $type = strtolower($product['type'] ?? '');
+
+        if ($this->customer_discount_percent > 0 && $type === 'product') {
             $discountPercent = (float) $this->customer_discount_percent;
         } else {
             $discountPercent = (float) ($product['discount_percent'] ?? 0);
@@ -922,10 +933,10 @@ class Cart extends Component
         $vatAmount = ($netPrice * $vat) / 100;         // VAT on net price
         $grandPrice = $netPrice + $vatAmount;          // optional, if needed
 
-        if ($trackStock && $stock <= 0) {
-            $this->dispatch('out-of-stock', name: $product['name']);
-            return;
-        }
+        // if ($trackStock && $stock <= 0) {
+        //     $this->dispatch('out-of-stock', name: $product['name']);
+        //     return;
+        // }
 
         static $lastAddedId = null;
         static $lastClickTime = 0;
@@ -941,13 +952,13 @@ class Cart extends Component
 
         foreach ($this->cart as $index => $item) {
             if ($item['id'] === $product['id']) {
-                if ($trackStock) {
-                    if ($item['qty'] < $stock) {
-                        $this->cart[$index]['qty']++;
-                    }
-                } else {
-                    $this->cart[$index]['qty']++;
-                }
+                // if ($trackStock) {
+                //     if ($item['qty'] < $stock) {
+                //         $this->cart[$index]['qty']++;
+                //     }
+                // } else {
+                $this->cart[$index]['qty']++;
+                // }
 
                 $qty = $this->cart[$index]['qty'];
 
@@ -994,22 +1005,35 @@ class Cart extends Component
     {
         $this->customer_id = null;
         $this->customer_discount_percent = 0;
-        $this->Current_table_id = null;
     }
     #[\Livewire\Attributes\On('clearCart')]
     public function clearCart()
     {
-        $this->Current_table_id = null;
-        $this->Current_table_name = "";
+
         $this->new_cart = true;
         $this->cart = [];
         $this->qty = 0;
         $this->count_cart = 0;
         $this->cart_mode = 'normal';
         $this->customer_discount_percent = 0;
+        $this->document_no = 'NA';
+        $this->document_id = 0;
+        $this->document_type = 'NA';
         $this->dispatch('cart-cleared', [
             'message' => 'Cart has been cleared'
         ]);
+    }
+    public function clearCart_no_message()
+    {
+        $this->document_no = 'NA';
+        $this->new_cart = true;
+        $this->cart = [];
+        $this->qty = 0;
+        $this->count_cart = 0;
+        $this->cart_mode = 'normal';
+        $this->customer_discount_percent = 0;
+        $this->document_id = 0;
+        $this->document_type = 'NA';
     }
     public function getTotalsProperty()
     {
@@ -1188,306 +1212,497 @@ class Cart extends Component
 
         $saleOrderNo = '';
 
-        DB::transaction(function () use ($payload, &$saleOrderNo) {
+        try {
+            DB::transaction(function () use ($payload, &$saleOrderNo) {
 
-            $totalAmount = 0;
-            $totalDiscount = 0;
-            $totalVAT = 0;
+                $totalAmount = 0;
+                $totalDiscount = 0;
+                $totalVAT = 0;
 
-            $customer_id = !empty($payload['customer_id']) ? (int) $payload['customer_id'] : null;
-            $customer_name = $payload['customer_name'] ?? 'Walk-in Customer';
-            $customer_phone = $payload['customer_phone'] ?? 'NA';
-            $customer_address = $payload['customer_address'] ?? null;
+                $customer_id = !empty($payload['customer_id']) ? (int) $payload['customer_id'] : null;
+                $customer_name = $payload['customer_name'] ?? 'Walk-in Customer';
+                $customer_phone = $payload['customer_phone'] ?? 'NA';
+                $customer_address = $payload['customer_address'] ?? null;
 
-            $saleOrderNo = $this->generateSaleOrderNo();
+                $saleOrderNo = $this->generateSaleOrderNo();
 
-            // Create header first with zero totals
-            $saleOrder = SaleOrderHeader::create([
-                'document_no'      => $saleOrderNo,
+                $requestedStatus = $payload['status'] ?? 'Ordered';
 
-                'customer_id'      => $customer_id,
-                'contact_name'     => $customer_name,
-                'phone'            => $customer_phone,
-                'address'          => $customer_address,
+                $saleOrder = SaleOrderHeader::create([
+                    'document_no'      => $saleOrderNo,
 
-                'posting_date'     => $payload['document_date'] ?? now()->toDateString(),
-                'delivery_date'    => $payload['delivery_date'] ?? null,
+                    'customer_id'      => $customer_id,
+                    'contact_name'     => $customer_name,
+                    'phone'            => $customer_phone,
+                    'address'          => $customer_address,
 
-                'total_amount'     => 0,
-                'vat_amount'       => 0,
-                'discount_percent' => $payload['discount_percent'] ?? 0,
-                'discount_amount'  => 0,
-                'grand_total'      => 0,
+                    'posting_date'     => $payload['document_date'] ?? now()->toDateString(),
+                    'order_date'       => $payload['order_date'] ?? null,
+                    'delivery_date'    => $payload['delivery_date'] ?? null,
 
-                'deposit_amount'   => 0,
-                'paid_amount'      => 0,
-                'balance_amount'   => 0,
+                    'delivery_status'  => $payload['delivery_status'] ?? 'N/A',
+                    'delivery_info'    => $payload['delivery_info'] ?? null,
+                    'driver_name'      => $payload['driver_name'] ?? null,
+                    'driver_phone'     => $payload['driver_phone'] ?? null,
 
-                'status'           => 'Ordered',
-                'payment_status'   => 'unpaid',
+                    'total_amount'     => 0,
+                    'vat_amount'       => 0,
+                    'discount_percent' => $payload['discount_percent'] ?? 0,
+                    'discount_amount'  => 0,
+                    'grand_total'      => 0,
 
-                'customer_type'    => $payload['customer_type'] ?? null,
-                'payment_method'   => $payload['paymentMethod'] ?? null,
-                'currency_name'    => $this->currency_name ?? 'USD',
-                'factor'           => $this->factor ?? 1,
+                    'deposit_amount'   => 0,
+                    'paid_amount'      => 0,
+                    'balance_amount'   => 0,
 
-                'remarks'          => $payload['remark'] ?? null,
-                'created_by'       => Auth::user()->name ?? 'System',
-            ]);
+                    'status'           => $requestedStatus,
+                    'payment_status'   => 'Unpaid',
 
-            foreach ($this->cart as $cartItem) {
-                $product = Product::find($cartItem['id']);
+                    'customer_type'    => $payload['customer_type'] ?? null,
+                    'payment_method'   => $payload['paymentMethod'] ?? null,
+                    'currency_name'    => $this->currency_name ?? 'USD',
+                    'factor'           => $this->factor ?? 1,
 
-                if (!$product) {
-                    continue;
-                }
-
-                $qty = (float) ($cartItem['qty'] ?? 1);
-                $sellPrice = (float) ($cartItem['price'] ?? 0);
-                $vatRate = (float) ($cartItem['vat'] ?? 0);
-                $discountPercent = (float) ($cartItem['discount_percent'] ?? 0);
-
-                $unitCost = (float) ($product->cost ?? 0);
-                $unitPrice = (float) ($product->sell_price ?? 0);
-
-                $lineAmount = round($sellPrice * $qty, 4);
-                $discountAmount = round(($lineAmount * $discountPercent) / 100, 4);
-                $netAmount = round($lineAmount - $discountAmount, 4);
-                $vatAmount = round(($netAmount * $vatRate) / 100, 4);
-                $lineGrandTotal = round($netAmount + $vatAmount, 4);
-
-                $totalAmount += $lineAmount;
-                $totalDiscount += $discountAmount;
-                $totalVAT += $vatAmount;
-
-                SaleOrderLine::create([
-                    'sale_order_id'      => $saleOrder->id,
-                    'product_id'         => $product->id,
-
-                    'barcode'            => $product->bar_code,
-                    'item_code'          => $product->code,
-                    'name'               => $product->name,
-                    'variant'            => $product->variant,
-                    'description'        => $product->description,
-
-                    'quantity'           => $qty,
-                    'unit'               => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
-                    'category_name'      => optional($product->category)->name,
-
-                    'cost'               => $unitCost,
-                    'unit_price'         => $unitPrice,
-                    'sell_price'         => $sellPrice,
-
-                    'discount_percent'   => $discountPercent,
-                    'discount_amount'    => $discountAmount,
-
-                    'line_amount'        => $lineAmount,
-                    'vat'                => $vatRate,
-                    'vat_amount'         => $vatAmount,
-                    'net_amount'         => $netAmount,
-                    'grand_total_amount' => $lineGrandTotal,
-
-                    'created_by'         => Auth::user()->name ?? 'System',
+                    'remarks'          => $payload['remark'] ?? null,
+                    'created_by'       => Auth::user()->name ?? 'System',
                 ]);
-            }
 
-            $grandTotal = round($totalAmount - $totalDiscount + $totalVAT, 4);
-            $deposit = (float) ($payload['deposit_amount'] ?? 0);
+                foreach ($this->cart as $cartItem) {
+                    $product = Product::find($cartItem['id']);
 
-            $saleOrder->update([
-                'total_amount'    => $totalAmount,
-                'discount_amount' => $totalDiscount,
-                'vat_amount'      => $totalVAT,
-                'grand_total'     => $grandTotal,
+                    if (!$product) {
+                        continue;
+                    }
 
-                'deposit_amount'  => $deposit,
-                'paid_amount'     => $deposit,
-                'balance_amount'  => $grandTotal - $deposit,
+                    $qty = (float) ($cartItem['qty'] ?? 1);
+                    $sellPrice = (float) ($cartItem['price'] ?? $cartItem['sell_price'] ?? 0);
+                    $vatRate = (float) ($cartItem['vat'] ?? 0);
+                    $discountPercent = (float) ($cartItem['discount_percent'] ?? 0);
 
-                'payment_status'  => $deposit <= 0
-                    ? 'unpaid'
-                    : ($deposit >= $grandTotal ? 'paid' : 'partial'),
+                    $unitCost = (float) ($product->cost ?? 0);
+                    $unitPrice = (float) ($product->sell_price ?? 0);
 
-                'status'          => $deposit <= 0
-                    ? 'Ordered'
-                    : ($deposit >= $grandTotal ? 'completed' : 'Deposit'),
-            ]);
-            $this->cart_queue_no = 0;
-            $this->getDocument($this->cart_queue_no);
-            if ($deposit >= $grandTotal) {
-                $this->completeSaleOrderToInvoice($saleOrder, $payload);
-            }
-        });
+                    $lineAmount = round($sellPrice * $qty, 4);
+                    $discountAmount = round(($lineAmount * $discountPercent) / 100, 4);
+                    $netAmount = round($lineAmount - $discountAmount, 4);
+                    $vatAmount = round(($netAmount * $vatRate) / 100, 4);
+                    $lineGrandTotal = round($netAmount + $vatAmount, 4);
 
-        $this->new_cart = true;
-        $this->cart = [];
-        $this->count_cart = 0;
+                    $totalAmount += $lineAmount;
+                    $totalDiscount += $discountAmount;
+                    $totalVAT += $vatAmount;
 
-        $this->dispatch('ordered', [
-            'message' => 'Sale Order ' . $saleOrderNo . ' created successfully'
-        ]);
-    }
-    private function completeSaleOrderToInvoice($saleOrder, $payload)
-    {
-        // 1️⃣ Create Invoice Header
-        $invoice = InvoiceHeader::create([
-            'source_no'        => $saleOrder->document_no,
-            'invoice_number'   => $this->generateInvoiceNumber(),
-            'invoice_date'     => $payload['document_date'] ?? now()->toDateString(),
+                    SaleOrderLine::create([
+                        'sale_order_id'      => $saleOrder->id,
+                        'product_id'         => $product->id,
 
-            'customer_id'      => $saleOrder->customer_id,
-            'contact_name'     => $saleOrder->contact_name,
-            'phone'            => $saleOrder->phone,
-            'address'          => $saleOrder->address,
+                        'barcode'            => $product->bar_code,
+                        'item_code'          => $product->code,
+                        'name'               => $product->name,
+                        'variant'            => $product->variant,
+                        'description'        => $product->description,
 
-            'total_amount'     => $saleOrder->total_amount,
-            'vat_amount'       => $saleOrder->vat_amount,
-            'discount_percent' => $saleOrder->discount_percent,
-            'discount_amount'  => $saleOrder->discount_amount,
-            'grand_total'      => $saleOrder->grand_total,
+                        'quantity'           => $qty,
+                        'unit'               => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
+                        'category_name'      => optional($product->category)->name,
 
-            'payment_method'   => $payload['paymentMethod'] ?? $saleOrder->payment_method,
-            'customer_type'    => $saleOrder->customer_type,
+                        'cost'               => $unitCost,
+                        'unit_price'         => $unitPrice,
+                        'sell_price'         => $sellPrice,
 
-            'currency_name'    => $saleOrder->currency_name,
-            'factor'           => $saleOrder->factor,
+                        'discount_percent'   => $discountPercent,
+                        'discount_amount'    => $discountAmount,
 
-            'remarks'          => 'Converted from SO: ' . $saleOrder->document_no,
-            'created_by'       => Auth::user()->name ?? 'System',
-        ]);
+                        'line_amount'        => $lineAmount,
+                        'vat'                => $vatRate,
+                        'vat_amount'         => $vatAmount,
+                        'net_amount'         => $netAmount,
+                        'grand_total_amount' => $lineGrandTotal,
 
-        // 2️⃣ Create Invoice Lines
-        foreach ($saleOrder->lines as $line) {
-
-            $product = Product::find($line->product_id);
-            if (!$product) continue;
-
-            InvoiceLine::create([
-                'sale_invoice_id'    => $invoice->id,
-                'product_id'         => $line->product_id,
-
-                'barcode'            => $line->barcode,
-                'item_code'          => $line->item_code,
-                'name'               => $line->name,
-                'variant'            => $line->variant,
-                'description'        => $line->description,
-
-                'quantity'           => $line->quantity,
-                'unit'               => $line->unit,
-                'category_name'      => $line->category_name,
-
-                'cost'               => $line->cost,
-                'unit_price'         => $line->unit_price,
-                'sell_price'         => $line->sell_price,
-
-                'discount_percent'   => $line->discount_percent,
-                'discount_amount'    => $line->discount_amount,
-
-                'line_amount'        => $line->line_amount,
-                'vat'                => $line->vat,
-                'vat_amount'         => $line->vat_amount,
-                'net_amount'         => $line->net_amount,
-                'grand_total_amount' => $line->grand_total_amount,
-
-                'created_by'         => Auth::user()->name ?? 'System',
-            ]);
-
-            // 3️⃣ Deduct Stock + Ledger
-            if ($product->track_stock == 1) {
-
-                $remaining = $line->quantity;
-                $saleQty = $line->quantity;
-
-                $warehouseProducts = WarehouseProduct::where('product_id', $product->id)
-                    ->where('qty', '>', 0)
-                    ->orderByRaw('CASE WHEN expire IS NULL THEN 1 ELSE 0 END')
-                    ->orderBy('expire', 'asc')
-                    ->lockForUpdate()
-                    ->get();
-
-                foreach ($warehouseProducts as $wp) {
-                    if ($remaining <= 0) break;
-
-                    $deductQty = min($wp->qty, $remaining);
-
-                    if ($deductQty <= 0) continue;
-
-                    $wp->decrement('qty', $deductQty);
-                    $remaining -= $deductQty;
-
-                    $warehouseName = Warehouse::where('id', $wp->warehouse_id)->value('name');
-
-                    $ledger = $this->createLedgerEntry([
-                        'posting_date'        => $payload['document_date'] ?? now()->toDateString(),
-                        'document_type'       => 'Sales Invoice',
-                        'document_no'         => $invoice->invoice_number,
-
-                        'source_id'           => $invoice->id,
-                        'source_table'        => 'sale_invoice_headers',
-
-                        'product_id'          => $product->id,
-                        'barcode'             => $line->barcode,
-                        'item_code'           => $line->item_code,
-                        'name'                => $line->name,
-                        'variant'             => $line->variant,
-                        'description'         => $line->description,
-                        'unit'                => $line->unit,
-                        'category_name'       => $line->category_name,
-                        'type'                => 'product',
-
-                        'warehouse_id'        => $wp->warehouse_id,
-                        'warehouse_name'      => $warehouseName,
-                        'lot'                 => $wp->lot,
-                        'expire_date'         => $wp->expire,
-
-                        'quantity'            => -1 * $deductQty,
-                        'remaining_quantity'  => 0,
-                        'entry_type'          => 'negative',
-
-                        'unit_cost'           => $line->cost,
-                        'unit_price'          => $line->unit_price,
-                        'sell_price'          => $line->sell_price,
-
-                        'discount_percent'    => $line->discount_percent,
-                        'discount_amount'     => $line->discount_amount,
-
-                        'vat'                 => $line->vat,
-                        'vat_amount'          => $line->vat_amount,
-
-                        'line_amount'         => $line->line_amount,
-                        'net_amount'          => $line->net_amount,
-                        'grand_total_amount'  => $line->grand_total_amount,
-
-                        'customer_id'         => $saleOrder->customer_id,
-                        'customer_name'       => $saleOrder->contact_name,
-                        'customer_phone'      => $saleOrder->phone,
-                        'customer_address'    => $saleOrder->address,
-
-                        'payment_method'      => $payload['paymentMethod'] ?? $saleOrder->payment_method,
-                        'remark'              => 'From Sale Order',
-                        'created_by'          => Auth::user()->name ?? 'System',
+                        'created_by'         => Auth::user()->name ?? 'System',
                     ]);
-
-                    $ledger->update([
-                        'entry_no' => $ledger->id
-                    ]);
-
-                    $this->syncPurchaseRemainingQty(
-                        $product->id,
-                        $wp->lot,
-                        $wp->warehouse_id
-                    );
                 }
 
-                if ($remaining > 0) {
-                    throw new \Exception("Not enough stock for {$product->code}");
+                $grandTotal = round($totalAmount - $totalDiscount + $totalVAT, 4);
+                $deposit = (float) ($payload['deposit_amount'] ?? 0);
+
+                if ($requestedStatus === 'Quotation') {
+                    $deposit = 0;
+                    $paymentStatus = 'N/A';
+                    $finalStatus = 'Quotation';
+                    $delivery = 'N/A';
+                } elseif ($requestedStatus === 'Draft') {
+                    $deposit = 0;
+                    $paymentStatus = 'N/A';
+                    $finalStatus = 'Draft';
+                    $delivery = 'N/A';
+                } else {
+                    if ($deposit <= 0) {
+                        $paymentStatus = 'Unpaid';
+                        $finalStatus = 'Ordered';
+                    } elseif ($deposit >= $grandTotal) {
+                        $deposit = $grandTotal;
+                        $paymentStatus = 'Paid';
+                        $finalStatus = 'Completed';
+                    } else {
+                        $paymentStatus = 'Partial';
+                        $finalStatus = 'Deposit';
+                    }
+
+                    $delivery = $payload['delivery_status'] ?? 'N/A';
+                    if($delivery == ''){
+                        $delivery = 'NA';
+                    }
                 }
-            }
+
+                $saleOrder->update([
+                    'total_amount'     => $totalAmount,
+                    'vat_amount'       => $totalVAT,
+                    'discount_amount'  => $totalDiscount,
+                    'grand_total'      => $grandTotal,
+
+                    'deposit_amount'   => $deposit,
+                    'paid_amount'      => $deposit,
+                    'balance_amount'   => max($grandTotal - $deposit, 0),
+
+                    'payment_status'   => $paymentStatus,
+                    'status'           => $finalStatus,
+                    'delivery_status'  => $delivery,
+                ]);
+
+                if ($paymentStatus !== 'Paid') {
+                    $this->cart_queue_no = 0;
+                    $this->getDocument($this->cart_queue_no);
+                    return;
+                }
+
+                $invoice = InvoiceHeader::create([
+                    'sale_order_id'    => $saleOrder->id,
+                    'invoice_number'   => $this->generateInvoiceNumber(),
+                    'document_no'      => $saleOrder->document_no,
+                    'invoice_date'     => $payload['document_date'] ?? now()->toDateString(),
+
+                    'customer_id'      => $customer_id,
+                    'contact_name'     => $customer_name,
+                    'phone'            => $customer_phone,
+                    'address'          => $customer_address,
+
+                    'total_amount'     => 0,
+                    'vat_amount'       => 0,
+                    'discount_percent' => $payload['discount_percent'] ?? 0,
+                    'discount_amount'  => 0,
+                    'grand_total'      => 0,
+
+                    'payment_method'   => $payload['paymentMethod'] ?? null,
+                    'customer_type'    => $payload['customer_type'] ?? null,
+                    'currency_name'    => $this->currency_name ?? 'USD',
+                    'factor'           => $this->factor ?? 1,
+
+                    'created_by'       => Auth::user()->name ?? 'System',
+                    'remarks'          => $payload['remark'] ?? null,
+                ]);
+
+                $invoiceTotal = 0;
+                $invoiceDiscount = 0;
+                $invoiceVAT = 0;
+
+                foreach ($this->cart as $cartItem) {
+                    $product = Product::find($cartItem['id']);
+
+                    if (!$product) {
+                        continue;
+                    }
+
+                    $qty = (float) ($cartItem['qty'] ?? 1);
+                    $sellPrice = (float) ($cartItem['price'] ?? $cartItem['sell_price'] ?? 0);
+                    $vatRate = (float) ($cartItem['vat'] ?? 0);
+                    $discountPercent = (float) ($cartItem['discount_percent'] ?? 0);
+
+                    $unitCost = (float) ($product->cost ?? 0);
+                    $unitPrice = (float) ($product->sell_price ?? 0);
+
+                    $lineAmount = round($sellPrice * $qty, 4);
+                    $discountAmount = round(($lineAmount * $discountPercent) / 100, 4);
+                    $netAmount = round($lineAmount - $discountAmount, 4);
+                    $vatAmount = round(($netAmount * $vatRate) / 100, 4);
+                    $grandTotalLine = round($netAmount + $vatAmount, 4);
+
+                    $invoiceTotal += $lineAmount;
+                    $invoiceDiscount += $discountAmount;
+                    $invoiceVAT += $vatAmount;
+
+                    InvoiceLine::create([
+                        'sale_invoice_id'    => $invoice->id,
+                        'product_id'         => $product->id,
+
+                        'barcode'            => $product->bar_code,
+                        'item_code'          => $product->code,
+                        'name'               => $product->name,
+                        'variant'            => $product->variant,
+                        'description'        => $product->description,
+
+                        'quantity'           => $qty,
+                        'unit'               => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
+                        'category_name'      => optional($product->category)->name,
+
+                        'cost'               => $unitCost,
+                        'unit_price'         => $unitPrice,
+                        'sell_price'         => $sellPrice,
+
+                        'discount_percent'   => $discountPercent,
+                        'discount_amount'    => $discountAmount,
+
+                        'line_amount'        => $lineAmount,
+                        'vat'                => $vatRate,
+                        'vat_amount'         => $vatAmount,
+                        'net_amount'         => $netAmount,
+                        'grand_total_amount' => $grandTotalLine,
+
+                        'created_by'         => Auth::user()->name ?? 'System',
+                    ]);
+
+                    if ((int) ($product->track_stock ?? 0) === 1) {
+                        $ledgerRows = [];
+                        $cartLots = $cartItem['lots'] ?? [];
+                        $saleQty = $qty;
+
+                        if (!empty($cartLots)) {
+                            foreach ($cartLots as $lot) {
+                                $warehouseProduct = WarehouseProduct::lockForUpdate()->find($lot['id']);
+
+                                if (!$warehouseProduct) {
+                                    throw new \Exception("Lot ID {$lot['id']} not found");
+                                }
+
+                                $lotQty = (float) ($lot['qty'] ?? 0);
+
+                                if ($lotQty <= 0) {
+                                    continue;
+                                }
+
+                                if ((float) $warehouseProduct->qty < $lotQty) {
+                                    throw new \Exception("Not enough stock in Lot {$warehouseProduct->lot}");
+                                }
+
+                                $warehouseProduct->decrement('qty', $lotQty);
+
+                                $ledgerRows[] = [
+                                    'warehouse_id' => $warehouseProduct->warehouse_id,
+                                    'lot' => $warehouseProduct->lot,
+                                    'expire_date' => $warehouseProduct->expire,
+                                    'qty' => $lotQty,
+                                ];
+
+                                $this->syncPurchaseRemainingQty(
+                                    $product->id,
+                                    $warehouseProduct->lot,
+                                    $warehouseProduct->warehouse_id
+                                );
+                            }
+
+                            if (round(collect($ledgerRows)->sum('qty'), 4) != round($saleQty, 4)) {
+                                throw new \Exception("Selected lot quantity not equal sale quantity for {$product->name}");
+                            }
+                        } else {
+                            $warehouseProducts = WarehouseProduct::where('product_id', $product->id)
+                                ->where('qty', '>', 0)
+                                ->orderByRaw('CASE WHEN expire IS NULL THEN 1 ELSE 0 END')
+                                ->orderBy('expire', 'asc')
+                                ->lockForUpdate()
+                                ->get();
+
+                            $remaining = $qty;
+
+                            foreach ($warehouseProducts as $wp) {
+                                if ($remaining <= 0) {
+                                    break;
+                                }
+
+                                $deductQty = min((float) $wp->qty, $remaining);
+
+                                if ($deductQty <= 0) {
+                                    continue;
+                                }
+
+                                $wp->decrement('qty', $deductQty);
+
+                                $ledgerRows[] = [
+                                    'warehouse_id' => $wp->warehouse_id,
+                                    'lot' => $wp->lot,
+                                    'expire_date' => $wp->expire,
+                                    'qty' => $deductQty,
+                                ];
+
+                                $remaining -= $deductQty;
+
+                                $this->syncPurchaseRemainingQty(
+                                    $product->id,
+                                    $wp->lot,
+                                    $wp->warehouse_id
+                                );
+                            }
+
+                            if ($remaining > 0) {
+                                throw new \Exception("Not enough stock for {$product->name}");
+                            }
+                        }
+
+                        foreach ($ledgerRows as $row) {
+                            $rowQty = (float) $row['qty'];
+
+                            $rowUnitCost = $this->getLotUnitCost(
+                                $product->id,
+                                $row['lot'] ?? null,
+                                $row['warehouse_id'] ?? null
+                            );
+
+                            $warehouseName = Warehouse::where('id', $row['warehouse_id'])->value('name');
+
+                            $rowLineAmount = $saleQty > 0 ? round(($lineAmount / $saleQty) * $rowQty, 4) : 0;
+                            $rowDiscountAmount = $saleQty > 0 ? round(($discountAmount / $saleQty) * $rowQty, 4) : 0;
+                            $rowNetAmount = $saleQty > 0 ? round(($netAmount / $saleQty) * $rowQty, 4) : 0;
+                            $rowVatAmount = $saleQty > 0 ? round(($vatAmount / $saleQty) * $rowQty, 4) : 0;
+                            $rowGrandTotal = $saleQty > 0 ? round(($grandTotalLine / $saleQty) * $rowQty, 4) : 0;
+
+                            $ledger = $this->createLedgerEntry([
+                                'posting_date'        => $payload['document_date'] ?? now()->toDateString(),
+                                'document_type'       => 'Sales Invoice',
+                                'document_no'         => $invoice->invoice_number,
+
+                                'source_id'           => $invoice->id,
+                                'source_table'        => 'sale_invoice_headers',
+
+                                'product_id'          => $product->id,
+                                'barcode'             => $product->bar_code,
+                                'item_code'           => $product->code,
+                                'name'                => $product->name,
+                                'variant'             => $product->variant,
+                                'description'         => $product->description,
+                                'unit'                => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
+                                'category_name'       => optional($product->category)->name,
+                                'type'                => 'product',
+
+                                'warehouse_id'        => $row['warehouse_id'] ?? null,
+                                'warehouse_name'      => $warehouseName,
+                                'lot'                 => $row['lot'] ?? null,
+                                'expire_date'         => $row['expire_date'] ?? null,
+
+                                'quantity'            => -1 * $rowQty,
+                                'remaining_quantity'  => 0,
+                                'entry_type'          => 'negative',
+
+                                'unit_cost'           => $rowUnitCost,
+                                'unit_price'          => $unitPrice,
+                                'sell_price'          => $sellPrice,
+
+                                'discount_percent'    => $discountPercent,
+                                'discount_amount'     => $rowDiscountAmount,
+
+                                'vat'                 => $vatRate,
+                                'vat_amount'          => $rowVatAmount,
+
+                                'line_amount'         => $rowLineAmount,
+                                'net_amount'          => $rowNetAmount,
+                                'grand_total_amount'  => $rowGrandTotal,
+
+                                'customer_id'         => $customer_id,
+                                'customer_name'       => $customer_name,
+                                'customer_phone'      => $customer_phone,
+                                'customer_address'    => $customer_address,
+
+                                'payment_method'      => $payload['paymentMethod'] ?? null,
+                                'remark'              => '',
+                                'created_by'          => Auth::user()->name ?? 'System',
+                            ]);
+
+                            $ledger->update([
+                                'entry_no' => $ledger->id,
+                            ]);
+                        }
+                    } else {
+                        $ledger = ItemLedgerEntry::create([
+                            'entry_no'            => null,
+
+                            'posting_date'        => $payload['document_date'] ?? now()->toDateString(),
+                            'document_type'       => 'Sales Invoice',
+                            'document_no'         => $invoice->invoice_number,
+
+                            'source_id'           => $invoice->id,
+                            'source_table'        => 'sale_invoice_headers',
+
+                            'product_id'          => $product->id,
+                            'barcode'             => $product->bar_code,
+                            'item_code'           => $product->code,
+                            'name'                => $product->name,
+                            'variant'             => $product->variant,
+                            'description'         => $product->description,
+                            'unit'                => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
+                            'category_name'       => optional($product->category)->name,
+                            'type'                => $product->type ?? 'product',
+
+                            'warehouse_id'        => null,
+                            'warehouse_name'      => null,
+                            'lot'                 => null,
+                            'expire_date'         => null,
+
+                            'quantity'            => -1 * $qty,
+                            'remaining_quantity'  => 0,
+                            'entry_type'          => 'negative',
+
+                            'unit_cost'           => $unitCost,
+                            'unit_price'          => $unitPrice,
+                            'sell_price'          => $sellPrice,
+
+                            'discount_percent'    => $discountPercent,
+                            'discount_amount'     => $discountAmount,
+
+                            'vat'                 => $vatRate,
+                            'vat_amount'          => $vatAmount,
+
+                            'line_amount'         => $lineAmount,
+                            'net_amount'          => $netAmount,
+                            'grand_total_amount'  => $grandTotalLine,
+
+                            'customer_id'         => $customer_id,
+                            'customer_name'       => $customer_name,
+                            'customer_phone'      => $customer_phone,
+                            'customer_address'    => $customer_address,
+
+                            'vendor_id'           => null,
+                            'payment_method'      => $payload['paymentMethod'] ?? null,
+                            'remark'              => null,
+                            'created_by'          => Auth::user()->name ?? 'System',
+                        ]);
+
+                        $ledger->update([
+                            'entry_no' => $ledger->id,
+                        ]);
+                    }
+                }
+
+                $invoice->update([
+                    'total_amount'    => $invoiceTotal,
+                    'discount_amount' => $invoiceDiscount,
+                    'vat_amount'      => $invoiceVAT,
+                    'grand_total'     => $invoiceTotal - $invoiceDiscount + $invoiceVAT,
+                ]);
+
+                $this->cart_queue_no = 0;
+                $this->getDocument($this->cart_queue_no);
+            });
+
+            $this->new_cart = true;
+            $this->cart = [];
+            $this->count_cart = 0;
+
+            $this->dispatch('ordered', [
+                'message' => 'ការកម្មង់ បានដាក់រួច : ' . $saleOrderNo
+            ]);
+        } catch (\Throwable $e) {
+            $this->dispatch('payment-error', [
+                'message' => $e->getMessage(),
+            ]);
         }
-
-        $this->dispatch('payment-success', [
-            'message' => 'Invoice ' . $invoice->invoice_number . ' created successfully'
-        ]);
     }
     private function generateSaleOrderNo()
     {
@@ -1523,8 +1738,14 @@ class Cart extends Component
             ]);
             return;
         }
+        $this->document_id = $saleOrder->id;
+        $this->document_type = $saleOrder->status;
+        $this->document_no =   $saleOrder->document_no;
+        $this->customer_id =    $saleOrder->phone;
+        $this->customer_name = $saleOrder->contact_name;
+        $this->customer_phone =  $saleOrder->address;
 
-        // New cart document if needed
+        //  New cart document if needed
         if ($this->new_cart && $this->cart_queue_no == 0) {
             $this->cart_queue_no = $this->incrementQueueTable();
             $this->getDocument($this->cart_queue_no);
@@ -1546,8 +1767,8 @@ class Cart extends Component
         $this->customer_contact_phone = $saleOrder->phone ?? '';
 
         // Currency
-        $this->currency_name = $saleOrder->currency_name ?? 'US Dollar';
-        $this->factor = $saleOrder->factor ?? 1;
+        // $this->currency_name = $saleOrder->currency_name ?? 'US Dollar';
+        // $this->factor = $saleOrder->factor ?? 1;
 
         foreach ($saleOrder->lines as $line) {
             $qty = (float) ($line->quantity ?? 1);
@@ -1586,8 +1807,512 @@ class Cart extends Component
 
         $this->count_cart = count($this->cart);
 
-        $this->dispatch('success', [
-            'message' => 'Sale order loaded to cart successfully'
+        $this->dispatch('load-sale-order', [
+            'message' => 'Sale order loaded to cart successfully',
+            'header' =>  $saleOrder
         ]);
+    }
+    #[On('resetCustomer')]
+    public function resetCustomer()
+    {
+        $this->customer_name = 'Walk-in Customer';
+        $this->customer_id = null;
+        $this->customer_phone = '';
+        $this->customer_address1 = '';
+        $this->customer_address2 = '';
+        $this->customer_contact_name = '';
+        $this->customer_contact_phone = '';
+        $this->customer_city = '';
+        $this->customer_discount_percent = 0;
+    }
+
+    #[\Livewire\Attributes\On('confirmUpdateSaleOrder')]
+    public function confirmUpdateSaleOrder($payload)
+    {
+        DB::transaction(function () use ($payload) {
+
+            $clean = function ($value) {
+                return $value === '' ? null : $value;
+            };
+
+            $saleOrderId = $clean($payload['sale_order_id'] ?? null);
+            $saleOrder = SaleOrderHeader::lockForUpdate()->findOrFail($saleOrderId);
+
+            if (empty($this->cart)) {
+                $this->dispatch('error', [
+                    'message' => 'Cart is empty. Cannot update sale order.',
+                ]);
+                return;
+            }
+
+            $documentDate = $clean($payload['document_date'] ?? null) ?? now()->toDateString();
+            $orderDate = $clean($payload['order_date'] ?? null);
+            $deliveryDate = $clean($payload['delivery_date'] ?? null);
+
+            SaleOrderLine::where('sale_order_id', $saleOrder->id)->delete();
+
+            foreach ($this->cart as $item) {
+                $qty = (float) ($item['qty'] ?? $item['quantity'] ?? 1);
+                $price = (float) ($item['sell_price'] ?? $item['price'] ?? $item['unit_price'] ?? 0);
+                $discountPercent = (float) ($item['discount_percent'] ?? 0);
+
+                $lineAmount = round($qty * $price, 4);
+                $discountAmount = (float) ($item['discount_amount'] ?? 0);
+
+                if ($discountAmount <= 0 && $discountPercent > 0) {
+                    $discountAmount = round($lineAmount * ($discountPercent / 100), 4);
+                }
+
+                $netAmount = max($lineAmount - $discountAmount, 0);
+                $vat = (float) ($item['vat'] ?? 0);
+                $vatAmount = round($netAmount * ($vat / 100), 4);
+                $grandTotalAmount = round($netAmount + $vatAmount, 4);
+
+                SaleOrderLine::create([
+                    'sale_order_id'      => $saleOrder->id,
+                    'product_id'         => $item['product_id'] ?? $item['id'] ?? null,
+
+                    'order_no'           => $saleOrder->document_no,
+                    'document_no'        => $saleOrder->document_no,
+
+                    'barcode'            => $item['barcode'] ?? null,
+                    'item_code'          => $item['item_code'] ?? $item['code'] ?? null,
+                    'name'               => $item['name'] ?? '',
+                    'variant'            => $item['variant'] ?? null,
+                    'description'        => $item['description'] ?? null,
+
+                    'quantity'           => $qty,
+                    'unit'               => $item['unit'] ?? null,
+                    'category_name'      => $item['category_name'] ?? null,
+
+                    'cost'               => $item['cost'] ?? $item['cost_price'] ?? 0,
+                    'unit_price'         => $price,
+                    'sell_price'         => $price,
+
+                    'discount_percent'   => $discountPercent,
+                    'discount_amount'    => $discountAmount,
+
+                    'line_amount'        => $lineAmount,
+                    'vat'                => $vat,
+                    'vat_amount'         => $vatAmount,
+                    'net_amount'         => $netAmount,
+                    'grand_total_amount' => $grandTotalAmount,
+                ]);
+            }
+
+            $totalAmount = (float) SaleOrderLine::where('sale_order_id', $saleOrder->id)
+                ->sum('grand_total_amount');
+
+            $oldPaidAmount = (float) ($saleOrder->paid_amount ?? 0);
+            $newPaidAmount = (float) ($payload['new_paid_amount'] ?? 0);
+
+            if ($newPaidAmount < 0) {
+                $newPaidAmount = 0;
+            }
+
+            $paidAmount = $oldPaidAmount + $newPaidAmount;
+
+            if ($paidAmount > $totalAmount) {
+                $paidAmount = $totalAmount;
+            }
+
+            $balanceAmount = max($totalAmount - $paidAmount, 0);
+
+            if ($paidAmount <= 0) {
+                $paymentStatus = 'Unpaid';
+            } elseif ($balanceAmount > 0) {
+                $paymentStatus = 'Partial';
+            } else {
+                $paymentStatus = 'Paid';
+            }
+
+            $status = match ($paymentStatus) {
+                'Paid' => 'Completed',
+                'Partial' => 'Deposit',
+                default => 'Ordered',
+            };
+
+            $deliveryStatus = $clean($payload['delivery_status'] ?? null) ?? 'N/A';
+
+            $saleOrder->update([
+                'customer_id'     => $clean($payload['customer_id'] ?? null),
+                'contact_name'    => $clean($payload['customer_name'] ?? null),
+                'phone'           => $clean($payload['customer_phone'] ?? null),
+                'address'         => $clean($payload['customer_address'] ?? null),
+
+                'posting_date'    => $documentDate,
+                'order_date'      => $orderDate,
+                'delivery_date'   => $deliveryDate,
+
+                'total_amount'    => $totalAmount,
+                'deposit_amount'  => $newPaidAmount,
+                'paid_amount'     => $paidAmount,
+                'balance_amount'  => $balanceAmount,
+
+                'payment_method'  => $clean($payload['paymentMethod'] ?? null),
+                'payment_status'  => $paymentStatus,
+                'status'          => $status,
+
+                'customer_type'   => $clean($payload['customer_type'] ?? null),
+                'delivery_status' => $deliveryStatus,
+                'delivery_info'   => $clean($payload['delivery_info'] ?? null),
+                'driver_name'     => $clean($payload['driver_name'] ?? null),
+                'driver_phone'    => $clean($payload['driver_phone'] ?? null),
+
+                'remarks'         => $clean($payload['remark'] ?? null),
+            ]);
+
+            if ($paymentStatus !== 'Paid') {
+                return;
+            }
+
+            if (!empty($saleOrder->invoice_id ?? null)) {
+                return;
+            }
+
+            $invoice = InvoiceHeader::create([
+                'sale_order_id'      => $saleOrder->id,
+                'invoice_number'     => $this->generateInvoiceNumber(),
+                'document_no'        => $saleOrder->document_no,
+                'invoice_date'       => $documentDate,
+
+                'customer_id'        => $saleOrder->customer_id,
+                'contact_name'       => $saleOrder->contact_name,
+                'phone'              => $saleOrder->phone,
+                'address'            => $saleOrder->address,
+
+                'total_amount'       => 0,
+                'vat_amount'         => 0,
+                'discount_percent'   => 0,
+                'discount_amount'    => 0,
+                'grand_total'        => 0,
+
+                'customer_type'      => $saleOrder->customer_type,
+                'payment_method'     => $saleOrder->payment_method,
+
+                'currency_name'      => $this->currency_name ?? null,
+                'factor'             => $this->factor ?? 1,
+
+                'remarks'            => $saleOrder->remarks,
+                'created_by'         => Auth::user()->name ?? 'System',
+            ]);
+
+            $invoiceTotalAmount = 0;
+            $invoiceDiscountAmount = 0;
+            $invoiceVatAmount = 0;
+
+            foreach ($this->cart as $cartItem) {
+                $productId = $cartItem['product_id'] ?? $cartItem['id'] ?? null;
+                $product = Product::find($productId);
+
+                if (!$product) {
+                    continue;
+                }
+
+                $qty = (float) ($cartItem['qty'] ?? $cartItem['quantity'] ?? 1);
+                $sellPrice = (float) ($cartItem['sell_price'] ?? $cartItem['price'] ?? $cartItem['unit_price'] ?? 0);
+                $vatRate = (float) ($cartItem['vat'] ?? 0);
+                $discountPercent = (float) ($cartItem['discount_percent'] ?? 0);
+
+                $unitCost = (float) ($product->cost ?? $cartItem['cost'] ?? $cartItem['cost_price'] ?? 0);
+                $unitPrice = (float) ($product->sell_price ?? $sellPrice);
+
+                $lineAmount = round($sellPrice * $qty, 4);
+                $discountAmount = round(($lineAmount * $discountPercent) / 100, 4);
+                $netAmount = round($lineAmount - $discountAmount, 4);
+                $vatAmount = round(($netAmount * $vatRate) / 100, 4);
+                $grandTotal = round($netAmount + $vatAmount, 4);
+
+                $invoiceTotalAmount += $lineAmount;
+                $invoiceDiscountAmount += $discountAmount;
+                $invoiceVatAmount += $vatAmount;
+
+                InvoiceLine::create([
+                    'sale_invoice_id'    => $invoice->id,
+                    'product_id'         => $product->id,
+
+                    'barcode'            => $product->bar_code ?? $cartItem['barcode'] ?? null,
+                    'item_code'          => $product->code ?? $cartItem['code'] ?? null,
+                    'name'               => $product->name ?? $cartItem['name'] ?? '',
+                    'variant'            => $product->variant ?? $cartItem['variant'] ?? null,
+                    'description'        => $product->description ?? $cartItem['description'] ?? null,
+
+                    'quantity'           => $qty,
+                    'unit'               => $cartItem['unit'] ?? ($product->unit ?? null),
+                    'category_name'      => optional($product->category)->name ?? ($cartItem['category_name'] ?? null),
+
+                    'cost'               => $unitCost,
+                    'unit_price'         => $unitPrice,
+                    'sell_price'         => $sellPrice,
+
+                    'discount_percent'   => $discountPercent,
+                    'discount_amount'    => $discountAmount,
+
+                    'line_amount'        => $lineAmount,
+                    'vat'                => $vatRate,
+                    'vat_amount'         => $vatAmount,
+                    'net_amount'         => $netAmount,
+                    'grand_total_amount' => $grandTotal,
+
+                    'created_by'         => Auth::user()->name ?? 'System',
+                    'remarks'            => null,
+                ]);
+
+                if ((int) ($product->track_stock ?? 0) === 1) {
+                    $cartLots = $cartItem['lots'] ?? [];
+                    $saleQty = $qty;
+                    $ledgerRows = [];
+
+                    if (!empty($cartLots)) {
+                        foreach ($cartLots as $lot) {
+                            $warehouseProduct = WarehouseProduct::lockForUpdate()->find($lot['id']);
+
+                            if (!$warehouseProduct) {
+                                $this->dispatch('error', [
+                                    'message' => "Lot ID {$lot['id']} not found",
+                                ]);
+                                throw new \Exception("Lot ID {$lot['id']} not found");
+                            }
+
+                            $lotQty = (float) ($lot['qty'] ?? 0);
+
+                            if ($lotQty <= 0) {
+                                continue;
+                            }
+
+                            if ((float) $warehouseProduct->qty < $lotQty) {
+                                $this->dispatch('error', [
+                                    'message' => "Not enough stock in Lot " . $warehouseProduct->lot,
+                                ]);
+                                throw new \Exception("Not enough stock in Lot {$warehouseProduct->lot}");
+                            }
+
+                            $warehouseProduct->decrement('qty', $lotQty);
+
+                            $ledgerRows[] = [
+                                'warehouse_product_id' => $warehouseProduct->id,
+                                'warehouse_id'         => $warehouseProduct->warehouse_id,
+                                'lot'                  => $warehouseProduct->lot,
+                                'expire_date'          => $warehouseProduct->expire,
+                                'qty'                  => $lotQty,
+                            ];
+
+                            $this->syncPurchaseRemainingQty(
+                                $product->id,
+                                $warehouseProduct->lot,
+                                $warehouseProduct->warehouse_id
+                            );
+                        }
+
+                        $selectedQty = collect($ledgerRows)->sum('qty');
+
+                        if (round($selectedQty, 4) != round($saleQty, 4)) {
+                            $this->dispatch('no-stock', [
+                                'message' => "{$product->name} មិនមានស្តុកទេ",
+                            ]);
+                            throw new \Exception("Selected lot quantity not equal sale quantity");
+                        }
+                    } else {
+                        $warehouseProducts = WarehouseProduct::where('product_id', $product->id)
+                            ->where('qty', '>', 0)
+                            ->orderByRaw('CASE WHEN expire IS NULL THEN 1 ELSE 0 END')
+                            ->orderBy('expire', 'asc')
+                            ->lockForUpdate()
+                            ->get();
+
+                        $remaining = $qty;
+
+                        foreach ($warehouseProducts as $wp) {
+                            if ($remaining <= 0) {
+                                break;
+                            }
+
+                            $deductQty = min((float) $wp->qty, $remaining);
+
+                            if ($deductQty <= 0) {
+                                continue;
+                            }
+
+                            $wp->decrement('qty', $deductQty);
+
+                            $ledgerRows[] = [
+                                'warehouse_product_id' => $wp->id,
+                                'warehouse_id'         => $wp->warehouse_id,
+                                'lot'                  => $wp->lot,
+                                'expire_date'          => $wp->expire,
+                                'qty'                  => $deductQty,
+                            ];
+
+                            $remaining -= $deductQty;
+
+                            $this->syncPurchaseRemainingQty(
+                                $product->id,
+                                $wp->lot,
+                                $wp->warehouse_id
+                            );
+                        }
+
+                        if ($remaining > 0) {
+                            $this->dispatch('no-stock', [
+                                'message' => "{$product->name} មិនមានស្តុកទេ",
+                            ]);
+                            throw new \Exception("Not enough stock for {$product->name}");
+                        }
+                    }
+
+                    foreach ($ledgerRows as $row) {
+                        $rowQty = (float) $row['qty'];
+
+                        $rowUnitCost = $this->getLotUnitCost(
+                            $product->id,
+                            $row['lot'] ?? null,
+                            $row['warehouse_id'] ?? null
+                        );
+
+                        $warehouseName = Warehouse::where('id', $row['warehouse_id'])->value('name');
+
+                        $rowLineAmount = $saleQty > 0 ? round(($lineAmount / $saleQty) * $rowQty, 4) : 0;
+                        $rowDiscountAmount = $saleQty > 0 ? round(($discountAmount / $saleQty) * $rowQty, 4) : 0;
+                        $rowNetAmount = $saleQty > 0 ? round(($netAmount / $saleQty) * $rowQty, 4) : 0;
+                        $rowVatAmount = $saleQty > 0 ? round(($vatAmount / $saleQty) * $rowQty, 4) : 0;
+                        $rowGrandTotal = $saleQty > 0 ? round(($grandTotal / $saleQty) * $rowQty, 4) : 0;
+
+                        $ledger = $this->createLedgerEntry([
+                            'posting_date'        => $documentDate,
+                            'document_type'       => 'Sales Invoice',
+                            'document_no'         => $invoice->invoice_number,
+
+                            'source_id'           => $invoice->id,
+                            'source_table'        => 'sale_invoice_headers',
+
+                            'product_id'          => $product->id,
+                            'barcode'             => $product->bar_code,
+                            'item_code'           => $product->code,
+                            'name'                => $product->name,
+                            'variant'             => $product->variant,
+                            'description'         => $product->description,
+                            'unit'                => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
+                            'category_name'       => optional($product->category)->name,
+                            'type'                => 'product',
+
+                            'warehouse_id'        => $row['warehouse_id'] ?? null,
+                            'warehouse_name'      => $warehouseName ?? null,
+                            'lot'                 => $row['lot'] ?? null,
+                            'expire_date'         => $row['expire_date'] ?? null,
+
+                            'quantity'            => -1 * $rowQty,
+                            'remaining_quantity'  => 0,
+                            'entry_type'          => 'negative',
+
+                            'unit_cost'           => $rowUnitCost,
+                            'unit_price'          => $unitPrice,
+                            'sell_price'          => $sellPrice,
+
+                            'discount_percent'    => $discountPercent,
+                            'discount_amount'     => $rowDiscountAmount,
+
+                            'vat'                 => $vatRate,
+                            'vat_amount'          => $rowVatAmount,
+
+                            'line_amount'         => $rowLineAmount,
+                            'net_amount'          => $rowNetAmount,
+                            'grand_total_amount'  => $rowGrandTotal,
+
+                            'customer_id'         => $saleOrder->customer_id,
+                            'customer_name'       => $saleOrder->contact_name,
+                            'customer_phone'      => $saleOrder->phone,
+                            'customer_address'    => $saleOrder->address,
+
+                            'payment_method'      => $saleOrder->payment_method,
+                            'remark'              => '',
+                            'created_by'          => Auth::user()->name ?? 'System',
+                        ]);
+
+                        $ledger->update([
+                            'entry_no' => $ledger->id,
+                        ]);
+                    }
+                } else {
+                    $ledger = ItemLedgerEntry::create([
+                        'entry_no'            => null,
+
+                        'posting_date'        => $documentDate,
+                        'document_type'       => 'Sales Invoice',
+                        'document_no'         => $invoice->invoice_number,
+
+                        'source_id'           => $invoice->id,
+                        'source_table'        => 'sale_invoice_headers',
+
+                        'product_id'          => $product->id,
+                        'barcode'             => $product->bar_code,
+                        'item_code'           => $product->code,
+                        'name'                => $product->name,
+                        'variant'             => $product->variant,
+                        'description'         => $product->description,
+                        'unit'                => $cartItem['unit'] ?? ($product->unit ?? 'NA'),
+                        'category_name'       => optional($product->category)->name,
+                        'type'                => $product->type ?? 'product',
+
+                        'warehouse_id'        => null,
+                        'warehouse_name'      => null,
+                        'lot'                 => null,
+                        'expire_date'         => null,
+
+                        'quantity'            => -1 * $qty,
+                        'remaining_quantity'  => 0,
+                        'entry_type'          => 'negative',
+
+                        'unit_cost'           => $unitCost,
+                        'unit_price'          => $unitPrice,
+                        'sell_price'          => $sellPrice,
+
+                        'discount_percent'    => $discountPercent,
+                        'discount_amount'     => $discountAmount,
+
+                        'vat'                 => $vatRate,
+                        'vat_amount'          => $vatAmount,
+
+                        'line_amount'         => $lineAmount,
+                        'net_amount'          => $netAmount,
+                        'grand_total_amount'  => $grandTotal,
+
+                        'customer_id'         => $saleOrder->customer_id,
+                        'customer_name'       => $saleOrder->contact_name,
+                        'customer_phone'      => $saleOrder->phone,
+                        'customer_address'    => $saleOrder->address,
+
+                        'vendor_id'           => null,
+                        'payment_method'      => $saleOrder->payment_method,
+                        'remark'              => null,
+                        'created_by'          => Auth::user()->name ?? 'System',
+                    ]);
+
+                    $ledger->update([
+                        'entry_no' => $ledger->id,
+                    ]);
+                }
+            }
+
+            $invoice->update([
+                'total_amount'    => $invoiceTotalAmount,
+                'discount_amount' => $invoiceDiscountAmount,
+                'vat_amount'      => $invoiceVatAmount,
+                'grand_total'     => $invoiceTotalAmount - $invoiceDiscountAmount + $invoiceVatAmount,
+            ]);
+
+            $saleOrder->update([
+                'invoice_id' => $invoice->id,
+                'status' => 'Completed',
+                'payment_status' => 'Paid',
+                'balance_amount' => 0,
+            ]);
+        });
+
+        $this->dispatch('load-sale-order', [
+            'message' => 'Sale order updated successfully',
+            'id' => $payload['sale_order_id'] ?? null,
+        ]);
+
+        $this->clearCart_no_message();
     }
 }

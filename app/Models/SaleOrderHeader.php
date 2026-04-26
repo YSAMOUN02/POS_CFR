@@ -17,6 +17,9 @@ class SaleOrderHeader extends Model
 
         'posting_date',
         'delivery_date',
+        'order_date',
+
+
 
         'total_amount',
         'vat_amount',
@@ -31,6 +34,12 @@ class SaleOrderHeader extends Model
         'status',
         'payment_status',
 
+        // Delivery
+        'delivery_status',
+        'delivery_info',
+        'driver_name',
+        'driver_phone',
+
         'customer_type',
         'payment_method',
         'currency_name',
@@ -39,10 +48,10 @@ class SaleOrderHeader extends Model
         'remarks',
         'created_by',
     ];
-public function lines()
-{
-    return $this->hasMany(SaleOrderLine::class, 'sale_order_id', 'id');
-}
+    public function lines()
+    {
+        return $this->hasMany(SaleOrderLine::class, 'sale_order_id', 'id');
+    }
     public function invoices()
     {
         return $this->hasMany(InvoiceHeader::class, 'sale_order_id');

@@ -79,9 +79,6 @@ Route::middleware(['auth'])->group(function () {
 
 
 
-    Route::get('/tables', [TableController::class, 'GetTables']);
-    Route::post('/restaurant-tables/store', [TableController::class, 'store'])
-        ->name('restaurant-tables.store');
 
     // Report
 
@@ -123,11 +120,14 @@ Route::middleware(['auth'])->group(function () {
 
 
 
-Route::get('/item-ledger-entry', [ItemLedgerEntryController::class, 'latest']);
+    Route::get('/item-ledger-entry', [ItemLedgerEntryController::class, 'latest']);
 
-Route::get('/expenses/latest', [ExpenseController::class, 'latest']);
+    Route::get('/expenses/latest', [ExpenseController::class, 'latest']);
 
-Route::get('/get-sale-orders', [SaleOrderController::class, 'getSaleOrders']);
+    Route::get('/get-sale-orders', [SaleOrderController::class, 'getSaleOrders']);
 
-Route::get('/sale-order-lines/{id}', [SaleOrderController::class, 'getSaleOrderLines']);
+    Route::get('/sale-order-lines/{id}', [SaleOrderController::class, 'getSaleOrderLines']);
+
+    Route::post('/update-sale-order-status', [SaleOrderController::class, 'updateStatus'])
+        ->name('sale-order.update-status');
 });

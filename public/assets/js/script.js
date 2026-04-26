@@ -74,24 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// DELETE CUSTOMER
-document.getElementById("btnDeleteCustomer").addEventListener("click", () => {
-    openDeleteCustModal();
-});
-// DELETE CUSTOMER 2
-function openDeleteCustModal() {
-    const customerId = getSelectedCustomerId();
-
-    if (!customerId) {
-        showToast({
-            message: "Please select a customer first",
-            type: "warning",
-        });
-        return;
-    }
-    document.getElementById("confirm-delete-cust").classList.remove("hidden");
-}
-
 // GLOBAL VARIABLE ID CUSTOMER SELETED  FOR UPDATE DELETE
 let selectedCustomerId = null;
 // UPDATE CUSTOMER
@@ -408,6 +390,22 @@ const searchInput = document.getElementById("customerSearchInput");
 const typeSelect = document.getElementById("customerTypeSelect");
 const activeCheckbox = document.getElementById("customerSearchCheckbox");
 const tbody = document.getElementById("customer-table-body");
+const customerSearch = document.getElementById("customerSearch");
+
+if (customerSearch) {
+    customerSearch.addEventListener("input", function () {
+        if (this.value.trim() === "") {
+            Livewire.dispatch("resetCustomer");
+
+            // also clear modal customer fields
+            document.getElementById("so_customer_id_info").value = "";
+            document.getElementById("so_customer_name_info").value =
+                "Walk-in Customer";
+            document.getElementById("so_customer_phone_info").value = "";
+            document.getElementById("so_customer_address_info").value = "";
+        }
+    });
+}
 
 let customers = []; // store async fetched data
 let sortColumn = ""; // e.g., 'name', 'credit_limit'
@@ -1101,7 +1099,67 @@ async function loadWarehouseStock(warehouseId, page = 1) {
         alert("Error fetching stock");
     }
 }
+function renderStockPagination(result) {
+    const container = document.getElementById("paginationContainer_stock");
+    const pageInfo = document.getElementById("pageInfo_stock");
 
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    if (result.per_page === "All") {
+        if (pageInfo) {
+            pageInfo.textContent = `Showing all ${result.total} items`;
+        }
+        return;
+    }
+
+    const currentPage = result.current_page;
+    const lastPage = result.last_page;
+
+    if (pageInfo) {
+        pageInfo.textContent = `Page ${currentPage} of ${lastPage} | Total ${result.total}`;
+    }
+
+    // Prev
+    const prevBtn = document.createElement("button");
+    prevBtn.innerHTML = `<i class="fa-solid fa-chevron-left"></i>`;
+    prevBtn.disabled = currentPage <= 1;
+    prevBtn.className = stockPaginationBtnClass(prevBtn.disabled);
+    prevBtn.onclick = () =>
+        loadWarehouseStock(currentWarehouseId, currentPage - 1);
+    container.appendChild(prevBtn);
+
+    // Pages
+    for (let i = 1; i <= lastPage; i++) {
+        if (i === 1 || i === lastPage || Math.abs(i - currentPage) <= 2) {
+            const btn = document.createElement("button");
+            btn.textContent = i;
+            btn.className =
+                i === currentPage
+                    ? "px-3 py-1 rounded-lg bg-blue-600 text-white text-sm"
+                    : "px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm";
+
+            btn.onclick = () => loadWarehouseStock(currentWarehouseId, i);
+            container.appendChild(btn);
+        }
+    }
+
+    // Next
+    const nextBtn = document.createElement("button");
+    nextBtn.innerHTML = `<i class="fa-solid fa-chevron-right"></i>`;
+    nextBtn.disabled = currentPage >= lastPage;
+    nextBtn.className = stockPaginationBtnClass(nextBtn.disabled);
+    nextBtn.onclick = () =>
+        loadWarehouseStock(currentWarehouseId, currentPage + 1);
+    container.appendChild(nextBtn);
+}
+
+function stockPaginationBtnClass(disabled) {
+    return disabled
+        ? "px-3 py-1 rounded-lg bg-gray-100 text-gray-400 text-sm cursor-not-allowed"
+        : "px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm";
+}
 function renderStockTable(products, currentPage = 1, perPage = 10) {
     tbody_stock.innerHTML = "";
 
@@ -1161,7 +1219,12 @@ function renderStockTable(products, currentPage = 1, perPage = 10) {
                 <td class="px-3 text-right text-sm">${Number(p.sell_price ?? 0).toFixed(2)}</td>
                 <td class="px-3 text-right text-sm">${Number(p.sell_price_vat ?? 0).toFixed(2)}</td>
                 <td class="px-3 text-left text-sm">${p.category_name ?? "NA"}</td>
-                            <td class="px-3 text-left text-sm" style="background:${color}">${p.warehouse_name ?? "NA"}</td>
+                       <td class="px-3 text-left text-sm">
+    <span class="px-2 py-1 rounded-full text-xs font-medium"
+        style="background:${color}20; color:${color}; border:1px solid ${color}50;">
+        ${p.warehouse_name ?? "NA"}
+    </span>
+</td>
 
                 <td class="px-3      text-sm ${p.status ? "text-green-600" : "text-red-500"}">
                     ${p.status ? "Active" : "Inactive"}
@@ -1238,7 +1301,7 @@ function print(document_type) {
         });
         return;
     }
-    updatePayment();
+
     // Handle documents that need modals first
     if (document_type === "Receipt") {
         openDatePromt_Modal(() => print_document("Receipt"));
@@ -1255,22 +1318,6 @@ function print(document_type) {
     // Other documents
     print_document(document_type);
 }
-
-const dateInput = document.getElementById("document_dateInput");
-let quotationNextAction = null;
-let formattedDocDate = null;
-let formattedDueDate = null;
-
-function closeDatePromtModal() {
-    document.getElementById("DatePromptModal").classList.add("hidden");
-    quotationNextAction = null; // reset after closing
-}
-
-document
-    .querySelector("[data-quotation-cancel]")
-    .addEventListener("click", () => {
-        closeDatePromtModal();
-    });
 
 // Get Category on Click New
 document
@@ -1708,203 +1755,7 @@ function calculateFinalPrice() {
     document.getElementById(id).addEventListener("input", calculateFinalPrice);
 });
 
-const displayUSD = document.getElementById("total_amount"); // total amount USD
-const payUSDInput = document.getElementById("pay_usd");
-const payOtherInput = document.getElementById("pay_other");
-const currencyFactorInput = document.getElementById("currency_display_factor");
-const returnedInput = document.getElementById("returned_amount");
-const returnedInputOther = document.getElementById("returned_amount_other");
-const confirmPayBtn = document.getElementById("confirmPayBtn");
-
-function formatCurrency(value, symbol) {
-    return `${value} ${symbol}`;
-}
-function cleanNumberInput(input) {
-    let value = input.value;
-
-    // Allow empty
-    if (value === "") return;
-
-    // If contains decimal → DO NOT TOUCH
-
-    // Remove leading zeros ONLY if no decimal
-    input.value = value.replace(/^0+(?=\d)/, "");
-}
-let paymentData = {};
-function updatePayment() {
-    const totalAmountUSD = Number(
-        (parseFloat(displayUSD.value) || 0).toFixed(3),
-    );
-    cleanNumberInput(payUSDInput);
-    cleanNumberInput(payOtherInput);
-
-    const payUSD = payUSDInput.value || 0;
-    const payOther = payOtherInput.value || 0;
-
-    const factor = parseFloat(currencyFactorInput.value) || 1;
-    const currency_other_symbol = document.querySelector(
-        "#currency_display_symbol",
-    ).value;
-    // Convert other currency to USD
-    const convert_float = parseFloat(payOther);
-    const payOtherInUSD = convert_float / factor;
-
-    const totalPaidUSD = parseFloat(payUSD) + parseFloat(payOtherInUSD);
-    let returnedUSD = 0;
-    let returnedOther = 0;
-    // Calculate returned
-    returnedUSD = totalPaidUSD - totalAmountUSD;
-    returnedOther = returnedUSD * factor;
-
-    // Update inputs with formatted value
-    if (returnedUSD < 0) {
-        returnedUSD = 0;
-    }
-    if (returnedOther < 0) {
-        returnedOther = 0;
-    }
-    returnedInput.value = formatCurrency(returnedUSD.toFixed(2), "$");
-    returnedInputOther.value = formatCurrency(
-        returnedOther.toFixed(0),
-        currency_other_symbol,
-    );
-
-    // Update input formatting while typing
-    payUSDInput.value = payUSD;
-    payOtherInput.value = payOther;
-
-    // Highlight
-    const isEnough = totalPaidUSD >= totalAmountUSD;
-
-    if (isEnough) {
-        // Dates from inputs
-
-        const input_document_date_value_local =
-            document.getElementById("document_dateInput");
-        const Payment_Method = document.getElementById("payment_method").value;
-
-        const document_date = new Date(input_document_date_value_local.value);
-        const customer_type = document.getElementById("customer_type").value;
-
-        const customer_name =
-            document.getElementById("customer_name_info").value;
-        const customer_id = document.getElementById("customer_id_info").value;
-        const customer_phone = document.getElementById(
-            "customer_phone_info",
-        ).value;
-        const customer_address = document.getElementById(
-            "customer_address_info",
-        ).value;
-        const remark = document.getElementById("remark_invoice").value;
-
-        // Store everything in global object
-        paymentData = {
-            paymentMethod: Payment_Method,
-            document_date: document_date ?? null,
-            customer_type: customer_type ?? null,
-            customer_id: customer_id ?? null,
-            customer_name: customer_name ?? null,
-            customer_phone: customer_phone ?? null,
-            customer_address: customer_address ?? null,
-            remark: remark ?? null,
-        };
-
-        console.log("Payment Data Prepared:", paymentData);
-        // enable button
-        confirmPayBtn.disabled = false;
-        confirmPayBtn.textContent = "Payment";
-
-        confirmPayBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
-        confirmPayBtn.classList.add(
-            "bg-emerald-600",
-            "hover:bg-emerald-700",
-            "cursor-pointer",
-        );
-    } else {
-        // disable button
-        confirmPayBtn.disabled = true;
-        confirmPayBtn.textContent = "Enter Amount";
-
-        confirmPayBtn.classList.remove(
-            "bg-emerald-600",
-            "hover:bg-emerald-700",
-            "cursor-pointer",
-        );
-        confirmPayBtn.classList.add("bg-gray-400", "cursor-not-allowed");
-    }
-}
-function initializePayment() {
-    // Reset inputs
-    payUSDInput.value = "";
-    payOtherInput.value = "";
-    returnedInput.value = formatCurrency(0, "$");
-    returnedInputOther.value = formatCurrency(
-        0,
-        document.querySelector("#currency_display_symbol").value,
-    );
-
-    // Reset display (if needed)
-    displayUSD.value = "0.000";
-
-    // Reset global object
-    paymentData = {};
-
-    // Reset button
-    confirmPayBtn.disabled = true;
-    confirmPayBtn.textContent = "Enter Amount";
-    confirmPayBtn.classList.remove(
-        "bg-emerald-600",
-        "hover:bg-emerald-700",
-        "cursor-pointer",
-    );
-    confirmPayBtn.classList.add("bg-gray-400", "cursor-not-allowed");
-
-    // Optional: reset extra fields
-    document.getElementById("payment_method").value = "";
-    document.getElementById("customer_type").value = "";
-
-    // Optional: reset dates
-
-    document.getElementById("document_dateInput").value = "";
-
-    // Reset currency factor if needed
-    currencyFactorInput.value = 1;
-}
-confirmPayBtn.addEventListener("click", Final_Payment);
-function Final_Payment() {
-    Livewire.dispatch("paymentConfirmed", {
-        payload: paymentData,
-    });
-}
-
-document.getElementById("pay_usd")?.addEventListener("input", updatePayment);
-document.getElementById("pay_other")?.addEventListener("input", updatePayment);
-
-document
-    .getElementById("payment_method")
-    ?.addEventListener("change", updatePayment);
-document
-    .getElementById("customer_type")
-    ?.addEventListener("change", updatePayment);
-document
-    .getElementById("document_dateInput")
-    ?.addEventListener("change", updatePayment);
-
-document
-    .getElementById("customer_name_info")
-    ?.addEventListener("input", updatePayment);
-document
-    .getElementById("customer_address_info")
-    ?.addEventListener("input", updatePayment);
-document
-    .getElementById("customer_phone_info")
-    ?.addEventListener("input", updatePayment);
-document
-    .getElementById("remark_invoice")
-    ?.addEventListener("input", updatePayment);
-
 // Initialize
-updatePayment();
 
 const fileInput = document.getElementById("update_image");
 const previewImg = document.getElementById("preview_img");
@@ -3905,7 +3756,7 @@ document.getElementById("expense_data").addEventListener("click", function () {
 
                          <td class="border px-3 py-2 text-right">${formatNumber(expense.unit_price)} $</td>
                          <td class="border px-3 py-2 text-right">${formatNumber(expense.amount)} $</td>
-                        <td class="border px-3 py-2 text-right">${expense.payment_method ?? ""}</td>
+                   
                         <td class="border px-3 py-2 text-left">${expense.note ?? ""}</td>
                     </tr>
                 `;
@@ -3934,13 +3785,12 @@ window.addEventListener("payment-success", (e) => {
 
     reloadProducts();
 });
-
-window.addEventListener("error", (e) => {
+window.addEventListener("expense-success", (e) => {
     const message = e.detail[0].message;
 
     showToast({
         message: message,
-        type: "error",
+        type: "success",
     });
 });
 window.addEventListener("ordered", (e) => {
@@ -4025,7 +3875,7 @@ window.addEventListener("get-date", (event) => {
 });
 window.addEventListener("trigger-print", (e) => {
     print_document("Receipt");
-    Livewire.dispatch("clearCart");
+    Livewire.dispatch("clearCart_no_message");
 });
 window.addEventListener("cart-loaded", (e) => {
     document.querySelector("#count_cart_input").value = 1;
@@ -4081,14 +3931,44 @@ window.addEventListener("payment-error", (e) => {
 
     // Ask before printing
 });
-document.getElementById("sale-order-data").addEventListener("click", () => {
-    loadSaleOrders(1);
+
+window.addEventListener("no-stock", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "error",
+    });
 });
+
+// function openSaleOrderModal() {
+//     const modal = document.getElementById("default-modal-sales-order-list");
+//     modal.style.display = "flex";
+// }
+
+// function closeSaleOrderModal() {
+//     const modal = document.getElementById("default-modal-sales-order-list");
+//     modal.style.display = "none";
+// }
 
 document.getElementById("sale_order_status").addEventListener("change", () => {
     loadSaleOrders(1);
 });
+function openSaleOrderModal() {
+    const modal = document.getElementById("default-modal-sales-order-list");
+    if (!modal) return;
 
+    modal.classList.remove("hidden");
+
+    loadSaleOrders(1);
+}
+
+function closeSaleOrderModal() {
+    const modal = document.getElementById("default-modal-sales-order-list");
+    if (!modal) return;
+
+    modal.classList.add("hidden");
+}
 document
     .getElementById("sale_order_payment_status")
     .addEventListener("change", () => {
@@ -4100,10 +3980,22 @@ document.getElementById("sale_order_search").addEventListener("input", () => {
 });
 
 function loadSaleOrders(page = 1) {
+    console.log(123);
     let status = document.getElementById("sale_order_status").value;
     let paymentStatus = document.getElementById(
         "sale_order_payment_status",
     ).value;
+
+    const modal = document.getElementById("default-modal-sales-order-list");
+
+    if (!modal) {
+        console.error("Modal not found: default-modal-sales-order-list");
+        return;
+    }
+
+    // open modal
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
     let search = document.getElementById("sale_order_search").value;
 
     fetch(
@@ -4117,7 +4009,7 @@ function loadSaleOrders(page = 1) {
             if (!res.data || res.data.length === 0) {
                 tbody.innerHTML = `
         <tr>
-            <td colspan="17" class="text-center py-6 text-gray-500">
+            <td colspan="21" class="text-center py-6 text-gray-500">
                 No Sale Orders Found 😢
             </td>
         </tr>
@@ -4133,54 +4025,47 @@ function loadSaleOrders(page = 1) {
 
             res.data.forEach((row, index) => {
                 tbody.innerHTML += `
-            <tr
-                        onclick="selectSaleOrderRow(this, ${row.id})"
+                <tr onclick="selectSaleOrderRow(this, ${row.id})"
                         ondblclick="viewSaleOrderLine(${row.id})"
-                        class="cursor-pointer hover:bg-gray-50"
-                    >
+                        class="cursor-pointer hover:bg-gray-50 text-nowrap">
+
                         <td class="px-4 py-2">
                             <input type="checkbox" class="sale-order-checkbox pointer-events-none">
                         </td>
-                    <td class="px-4 py-3">${index + 1}</td>
-                    <td class="px-4 py-3">${row.document_no ?? ""}</td>
-                    <td class="px-4 py-3">${row.order_number ?? ""}</td>
-                    <td class="px-4 py-3">${row.contact_name ?? ""}</td>
-                    <td class="px-4 py-3">${row.phone ?? ""}</td>
-                    <td class="px-4 py-3">${row.address ?? ""}</td>
-                    <td class="px-4 py-3 text-right">$${parseFloat(row.total_amount ?? 0).toFixed(2)}</td>
-                    <td class="px-4 py-3 text-right">$${parseFloat(row.vat_amount ?? 0).toFixed(2)}</td>
-                    <td class="px-4 py-3 text-right">$${parseFloat(row.discount_amount ?? 0).toFixed(2)}</td>
-                    <td class="px-4 py-3 text-right">$${parseFloat(row.paid_amount ?? 0).toFixed(2)}</td>
-                    <td class="px-4 py-3 text-right ">$${parseFloat(row.balance_amount ?? 0).toFixed(2)}</td>
-                <td class="px-4 py-3 text-right ${
-                    parseFloat(row.grand_total ?? 0) -
-                        parseFloat(row.paid_amount ?? 0) <=
-                    0
-                        ? "text-green-500"
-                        : "text-red-500"
-                }">
-    $${(
-        parseFloat(row.grand_total ?? 0) - parseFloat(row.paid_amount ?? 0)
-    ).toFixed(2)}
+
+                        <td class="px-4 py-3">${index + 1}</td>
+                        <td class="px-4 py-3">${row.document_no ?? ""}</td>
+                        <td class="px-4 py-3 text-center">${row.posting_date ?? ""}</td>
+                        <td class="px-4 py-3 text-center">${row.order_date ?? ""}</td>
+                        <td class="px-4 py-3 text-center">${row.delivery_date ?? ""}</td>
+
+                        <td class="px-4 py-3">${row.contact_name ?? ""}</td>
+                        <td class="px-4 py-3">${row.phone ?? ""}</td>
+                        <td class="px-4 py-3">${row.address ?? ""}</td>
+
+
+                         <td class="px-4 py-3 text-right">$${parseFloat(row.total_amount ?? 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-right">$${parseFloat(row.vat_amount ?? 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-right">$${parseFloat(row.discount_amount ?? 0).toFixed(2)}</td>
+                   
+                                <td class="px-4 py-3 text-right">$${parseFloat(row.grand_total ?? 0).toFixed(2)}</td>
+                        <td class="px-4 py-3 text-right">$${parseFloat(row.paid_amount ?? 0).toFixed(2)}</td>
+                    
+
+               <td class="px-4 py-3 text-right ${
+                   parseFloat(row.balance_amount ?? 0) > 0
+                       ? "text-red-500"
+                       : "text-green-500"
+               }">
+    ${parseFloat(row.balance_amount ?? 0).toFixed(2)}
 </td>
-
-                    <td class="px-4 py-3 text-right">
-        <div class="flex flex-col items-end">
-            ${getStatusBadge(row.status)}
-
-        </div>
-
-    </td>
-      <td class="px-4 py-3 text-right">
-        <div class="flex flex-col items-end">
-
-            <div class="mt-1">${getPaymentBadge(row.payment_status)}</div>
-        </div>
-
-    </td>
-    <td class="px-4 py-3 text-center">${row.order_date ?? ""}</td>
-    <td class="px-4 py-3 text-center">${row.delivery_date ?? ""}</td>
-</tr>                `;
+                        <td class="px-4 py-3 text-right text-nowrap">${getStatusBadge(row.status)}</td>
+                        <td class="px-4 py-3 text-right text-nowrap">${getPaymentBadge(row.payment_status)}</td>
+                        <td class="px-4 py-3 text-center text-nowrap">${getDeliveryBadge(row.delivery_status)}</td>
+                        <td class="px-4 py-3 text-center">${row.delivery_info ?? ""}</td>
+                        <td class="px-4 py-3">${row.driver_name ?? ""}</td>
+                        <td class="px-4 py-3">${row.driver_phone ?? ""}</td>
+                    </tr>`;
             });
             renderSaleOrderPagination(res);
         })
@@ -4195,6 +4080,58 @@ function loadSaleOrders(page = 1) {
             `;
             console.error(err);
         });
+}
+function getDeliveryBadge(status) {
+    const styles = {
+        Pending: {
+            text: "Pending",
+            icon: "⏳",
+            class: "bg-amber-100 text-amber-700",
+        },
+        Processing: {
+            text: "Processing",
+            icon: "⚙️",
+            class: "bg-sky-100 text-sky-700",
+        },
+        Shipped: {
+            text: "Shipped",
+            icon: "🚚",
+            class: "bg-violet-100 text-violet-700",
+        },
+        Delivered: {
+            text: "Delivered",
+            icon: "✅",
+            class: "bg-emerald-100 text-emerald-700",
+        },
+        Cancelled: {
+            text: "Cancelled",
+            icon: "❌",
+            class: "bg-rose-100 text-rose-700",
+        },
+        Returned: {
+            text: "Returned",
+            icon: "↩️",
+            class: "bg-orange-100 text-orange-700",
+        },
+        "N/A": {
+            text: "N/A",
+            icon: "⚪",
+            class: "bg-gray-100 text-gray-700",
+        },
+    };
+
+    const item = styles[status] || {
+        text: "Unknown",
+        icon: "❔",
+        class: "bg-gray-100 text-gray-700",
+    };
+
+    return `
+        <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full ${item.class}">
+            <span>${item.icon}</span>
+            <span>${item.text}</span>
+        </span>
+    `;
 }
 function renderSaleOrderPagination(res) {
     const container = document.getElementById("paginationContainer_sale_order");
@@ -4261,7 +4198,10 @@ function getStatusBadge(status) {
             return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-rose-50 text-rose-700 border border-rose-200 shadow-sm">
                         ❌ Cancelled
                     </span>`;
-
+        case "returned":
+            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">
+                        ↩️ Returned
+                    </span>`;
         default:
             return `<span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700">${status}</span>`;
     }
@@ -4284,6 +4224,11 @@ function getPaymentBadge(status) {
                         💵 Paid
                     </span>`;
 
+        case "refunded":
+            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
+                        ↩️ Refunded
+                    </span>`;
+
         default:
             return `<span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700">${status}</span>`;
     }
@@ -4291,7 +4236,15 @@ function getPaymentBadge(status) {
 function Save_Sale_Order() {
     let input_count_cart = document.getElementById("count_cart_input");
     let count_cart = input_count_cart.value;
+    let new_order = document.querySelector("#new_order");
+    if (new_order) {
+        new_order.style.display = "block";
+    }
 
+    let update_order = document.querySelector("#update_order");
+    if (update_order) {
+        update_order.style.display = "none";
+    }
     if (count_cart == 0) {
         showToast({
             message: "Cart is Empty.",
@@ -4343,29 +4296,32 @@ function moneyNumber(value) {
         ) || 0
     );
 }
-
 function validateSaleOrderPayment(e = null) {
     const totalAmount = moneyNumber(
-        document.querySelector("#total_amount")?.value,
+        document.querySelector("#so_display_pay_amount")?.value
+    );
+
+    const oldPaidAmount = moneyNumber(
+        document.querySelector("#paid_amount")?.value
     );
 
     const payUSDInput = document.getElementById("so_pay_usd");
     const payOtherInput = document.getElementById("so_pay_other");
 
-    const payUSD = moneyNumber(payUSDInput.value);
-    const payOther = moneyNumber(payOtherInput.value);
+    const payUSD = moneyNumber(payUSDInput?.value);
+    const payOther = moneyNumber(payOtherInput?.value);
 
     const factor =
-        moneyNumber(
-            document.querySelector("#currency_display_factor")?.value,
-        ) || 4000;
+        moneyNumber(document.querySelector("#currency_display_factor")?.value) || 4000;
 
-    const paidAmount = payUSD + payOther / factor;
-    const remainUSD = totalAmount - paidAmount;
+    const newPaidAmount = payUSD + payOther / factor;
+
+    const totalPaidAmount = oldPaidAmount + newPaidAmount;
+    const remainUSD = totalAmount - totalPaidAmount;
 
     if (remainUSD < -0.0001) {
         showToast({
-            message: "USD + Riel exceeds total!",
+            message: "Payment exceeds balance!",
             type: "error",
         });
 
@@ -4384,26 +4340,33 @@ function validateSaleOrderPayment(e = null) {
     updateSaleOrderRemaining();
     return true;
 }
-
 function updateSaleOrderRemaining() {
     const totalAmount = moneyNumber(
-        document.querySelector("#total_amount")?.value,
+        document.querySelector("#so_display_pay_amount")?.value
     );
 
-    const payUSD = moneyNumber(document.getElementById("so_pay_usd")?.value);
+    const oldPaidAmount = moneyNumber(
+        document.querySelector("#paid_amount")?.value
+    );
+
+    const payUSD = moneyNumber(
+        document.getElementById("so_pay_usd")?.value
+    );
 
     const payOther = moneyNumber(
-        document.getElementById("so_pay_other")?.value,
+        document.getElementById("so_pay_other")?.value
     );
 
     const factor =
         moneyNumber(
-            document.querySelector("#currency_display_factor")?.value,
+            document.querySelector("#currency_display_factor")?.value
         ) || 4000;
 
-    const paidAmount = payUSD + payOther / factor;
+    const newPaidAmount = payUSD + payOther / factor;
 
-    let remainUSD = totalAmount - paidAmount;
+    const totalPaidAmount = oldPaidAmount + newPaidAmount;
+
+    let remainUSD = totalAmount - totalPaidAmount;
     let remainRiel = Math.round(remainUSD * factor);
 
     // ignore tiny rounding issue
@@ -4421,57 +4384,6 @@ function updateSaleOrderRemaining() {
     document.getElementById("so_need_more_other").textContent =
         remainRiel.toLocaleString() + " ៛";
 }
-function Confirm_Save_Sale_Order() {
-    const totalAmount = parseFloat(
-        document.querySelector("#total_amount")?.value || 0,
-    );
-    const payUSD = parseFloat(
-        document.getElementById("so_pay_usd")?.value || 0,
-    );
-    const payOther = parseFloat(
-        document.getElementById("so_pay_other")?.value || 0,
-    );
-    const factor = parseFloat(
-        document.querySelector("#currency_display_factor")?.value || 1,
-    );
-
-    const paidAmount = payUSD + payOther / factor;
-
-    let paymentData = {
-        document_date:
-            document.getElementById("so_document_dateInput")?.value ?? null,
-        order_date:
-            document.getElementById("so_order_dateInput")?.value ?? null,
-        delivery_date:
-            document.getElementById("so_delivery_dateInput")?.value ?? null,
-        paymentMethod:
-            document.getElementById("so_payment_method")?.value ?? null,
-        customer_type:
-            document.getElementById("so_customer_type")?.value ?? null,
-
-        customer_id:
-            document.getElementById("so_customer_id_info")?.value ?? null,
-        customer_name:
-            document.getElementById("so_customer_name_info")?.value ?? null,
-        customer_phone:
-            document.getElementById("so_customer_phone_info")?.value ?? null,
-        customer_address:
-            document.getElementById("so_customer_address_info")?.value ?? null,
-
-        paid_amount: paidAmount,
-        deposit_amount: paidAmount,
-        total_amount: totalAmount,
-
-        remark: document.getElementById("so_remark_invoice")?.value ?? null,
-    };
-    console.log("Payment Data:", paymentData);
-    Livewire.dispatch("confirmSaleOrder", [paymentData]);
-
-    document
-        .getElementById("default-modal-sales-order-save")
-        .classList.add("hidden");
-}
-
 function openDatePromt_Modal(onConfirm) {
     const payUSDInput = document.getElementById("pay_usd");
     const payOtherInput = document.getElementById("pay_other");
@@ -4499,6 +4411,9 @@ function openDatePromt_Modal(onConfirm) {
     const currency = document.querySelector("#currency_name");
     const currency_factor = document.querySelector("#currency_display_factor");
     const currency_factor_input = document.querySelector("#currency_factor");
+
+    // initailize each click
+    document.querySelector("#paid_amount").value = 0;
 
     document.querySelector("#display_pay_amount").value = total_amount + " $";
     document.querySelector("#display_pay_amount_converted").value =
@@ -4549,7 +4464,11 @@ function selectSaleOrderRow(rowElement, id) {
 }
 function viewSelectedSaleOrderLine() {
     if (!selectedSaleOrderId) {
-        alert("Please select a sale order first");
+        showToast({
+            message: "Please select a sale order first",
+            type: "error",
+        });
+
         return;
     }
 
@@ -4561,57 +4480,187 @@ function viewSelectedSaleOrderLine() {
 function closeSaleOrderLineModal() {
     document.getElementById("saleOrderLineModal").classList.add("hidden");
 }
+
+function Load_order(e) {
+    if (!currentSaleOrderId) {
+        alert("No sale order selected");
+        return;
+    }
+    // check cart Logic
+    let input_count_cart = document.getElementById("count_cart_input");
+    let count_cart = input_count_cart.value;
+    if (count_cart > 0) {
+        showToast({
+            message: "Cart is not Empty.",
+            type: "error",
+        });
+        return;
+    }
+
+    Livewire.dispatch("load-sale-order-to-cart", {
+        saleOrderId: currentSaleOrderId,
+    });
+
+    closeSaleOrderLineModal();
+}
+
+document
+    .getElementById("so_customer_type")
+    .addEventListener("change", function () {
+        const deliverySection = document.getElementById("delivery_section");
+
+        if (this.value === "At-Delivery") {
+            deliverySection.classList.remove("hidden");
+        } else {
+            deliverySection.classList.add("hidden");
+
+            document.getElementById("so_delivery_dateInput").value = "";
+            document.getElementById("so_delivery_status").value = "PENDING";
+            document.getElementById("so_delivery_info_status").value = "";
+            document.getElementById("so_driver_name").value = "";
+            document.getElementById("so_driver_phone").value = "";
+        }
+    });
+
+function changeSaleOrderStatus(status) {
+    const select = document.getElementById("sale-order-status");
+
+    let className = "";
+
+    switch (status) {
+        case "Quotation":
+            className = "bg-gray-100 text-gray-700";
+            break;
+        case "Ordered":
+            className = "bg-yellow-100 text-yellow-700";
+            break;
+        case "Deposit":
+            className = "bg-blue-100 text-blue-700";
+            break;
+        case "completed":
+            className = "bg-green-100 text-green-700";
+            break;
+        case "cancelled":
+            className = "bg-red-100 text-red-700";
+            break;
+    }
+
+    select.className = `px-3 py-1 rounded-full text-sm font-semibold border-none outline-none ${className}`;
+
+    console.log("new status:", status);
+
+    // fetch('/update-sale-order-status', ...)
+}
+
 let currentSaleOrderId = null;
+
 async function viewSaleOrderLine(id) {
     try {
         currentSaleOrderId = id;
-        // Open modal
+
         const modal = document.getElementById("saleOrderLineModal");
         modal.classList.remove("hidden");
         modal.setAttribute("aria-hidden", "false");
+
         const res = await fetch(`/sale-order-lines/${id}`);
+        if (!res.ok) throw new Error("Failed to load sale order");
+
         const data = await res.json();
-        console.log(data);
-        // Header
-        document.getElementById("sale-order-no").textContent =
-            data.header.no ?? "-";
-        document.getElementById("sale-order-posting-date").textContent =
-            data.header.posting_date ?? "-";
-        document.getElementById("sale-order-delivery-date").textContent =
-            data.header.delivery_date ?? "-";
-        document.getElementById("sale-order-customer").textContent =
-            data.header.contact_name ?? "-";
-        document.getElementById("sale-order-phone").textContent =
-            data.header.phone ?? "-";
-        document.getElementById("sale-order-payment-method").textContent =
-            data.header.payment_method ?? "-";
-        document.getElementById("sale-order-currency").textContent =
-            data.header.currency_name ?? "-";
-        document.getElementById("sale-order-created-by").textContent =
-            data.header.created_by ?? "-";
-        document.getElementById("sale-order-address").textContent =
-            data.header.address ?? "-";
+        const header = data.header ?? {};
 
-        document.getElementById("sale-order-total").textContent =
-            "$" + parseFloat(data.header.total_amount ?? 0).toFixed(2);
+        const setText = (id, value = "-") => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value || "-";
+        };
+        document.querySelector("#sale_order_id").value = id;
 
-        document.getElementById("sale-order-discount").textContent =
-            "$" + parseFloat(data.header.discount_amount ?? 0).toFixed(2);
+        setText("sale-order-no", header.document_no);
+        setText("sale-order-created-by", header.created_by);
+        setText("sale-order-posting-date", header.posting_date);
 
-        document.getElementById("sale-order-vat").textContent =
-            "$" + parseFloat(data.header.vat_amount ?? 0).toFixed(2);
+        setText("sale-order-customer", header.contact_name);
+        setText("sale-order-phone", header.phone);
+        setText("sale-order-address", header.address);
 
-        document.getElementById("sale-order-grand-total").textContent =
-            "$" + parseFloat(data.header.grand_total ?? 0).toFixed(2);
+        setText("sale-order-payment-method", header.payment_method);
+        setText("sale-order-delivery-date", header.delivery_date);
 
-        // Status
+        setText("sale-order-delivery-status", header.delivery_status);
+        setText("sale-order-delivery-info", header.delivery_info);
+        setText("sale-order-driver-name", header.driver_name);
+        setText("sale-order-driver-phone", header.driver_phone);
+
+        const deliveryBox = document.getElementById("sale-order-delivery-box");
+        if (deliveryBox) {
+            const isDelivery =
+                header.customer_type === "At-Delivery" ||
+                header.customer_type === "DELIVERY";
+
+            deliveryBox.classList.toggle("hidden", !isDelivery);
+        }
+
         const statusEl = document.getElementById("sale-order-status");
-        statusEl.textContent = data.header.status ?? "Pending";
-        setStatusColor("sale-order-status", data.header.status);
-        setStatusColor("sale-payment-status", data.header.payment_status);
-        // Lines
+        if (statusEl) {
+            statusEl.value = header.status ?? "Ordered";
+            changeSaleOrderStatus(statusEl.value);
+        }
+
+        const paymentEl = document.getElementById("sale-payment-status");
+        if (paymentEl) {
+            paymentEl.textContent = header.payment_status ?? "unpaid";
+            setStatusColor(
+                "sale-payment-status",
+                header.payment_status ?? "unpaid",
+            );
+        }
+
+        setText(
+            "sale-order-total",
+            "$" + parseFloat(header.total_amount ?? 0).toFixed(2),
+        );
+        setText(
+            "sale-order-discount",
+            "$" + parseFloat(header.discount_amount ?? 0).toFixed(2),
+        );
+        setText(
+            "sale-order-vat",
+            "$" + parseFloat(header.vat_amount ?? 0).toFixed(2),
+        );
+        setText(
+            "sale-order-grand-total",
+            "$" + parseFloat(header.grand_total ?? 0).toFixed(2),
+        );
+
+        const factor = parseFloat(
+            document.querySelector("#currency_display_factor")?.value || 1,
+        );
+
+        const currency =
+            document.querySelector("#currency_display_symbol")?.value || "$";
+
+        let convertedTotal = (header.grand_total ?? 0) * factor;
+
+        if (currency === "៛") {
+            convertedTotal = parseFloat(convertedTotal).toFixed(0);
+        } else {
+            convertedTotal = parseFloat(convertedTotal).toFixed(2);
+        }
+
+        setText(
+            "sale-order-grand-total-converted",
+            "តម្លៃសរុប " + currency + " : " + convertedTotal + " " + currency,
+        );
+        if (factor !== 1) {
+            setText(
+                "currency-rate-info",
+                "1$ = " + factor.toLocaleString() + " " + currency,
+            );
+        } else {
+            setText("currency-rate-info", "");
+        }
         let html = "";
-        data.lines.forEach((line, index) => {
+
+        (data.lines ?? []).forEach((line, index) => {
             html += `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="px-4 py-2">${index + 1}</td>
@@ -4630,59 +4679,312 @@ async function viewSaleOrderLine(id) {
         document.getElementById("sale-line-data").innerHTML = html;
     } catch (e) {
         console.error(e);
+        alert("Error loading sale order");
     }
 }
-function setStatusColor(elementId, status) {
-    const el = document.getElementById(elementId);
+function openSaleLine() {
+    const modal = document.getElementById("saleOrderLineModal");
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+}
+function setStatusColor(id, status) {
+    const el = document.getElementById(id);
     if (!el) return;
 
-    status = (status ?? "Pending").toString().trim();
+    let className = "bg-gray-100 text-gray-700";
 
-    el.textContent = status;
-
-    // reset class
-    el.className = "px-3 py-1 rounded-full text-sm font-semibold";
-
-    switch (status.toLowerCase()) {
-        case "paid":
-        case "approved":
-        case "completed":
-        case "posted":
-            el.classList.add("bg-green-100", "text-green-700");
-            break;
-
-        case "pending":
-        case "open":
-        case "waiting":
-            el.classList.add("bg-yellow-100", "text-yellow-700");
-            break;
-
-        case "partial":
-        case "processing":
-            el.classList.add("bg-blue-100", "text-blue-700");
-            break;
-
+    switch (status) {
         case "unpaid":
-        case "cancelled":
-        case "rejected":
-            el.classList.add("bg-red-100", "text-red-700");
+            className = "bg-red-100 text-red-700";
             break;
-
-        default:
-            el.classList.add("bg-gray-100", "text-gray-700");
+        case "partial":
+            className = "bg-yellow-100 text-yellow-700";
+            break;
+        case "paid":
+            className = "bg-green-100 text-green-700";
+            break;
+        case "N/A":
+            className = "bg-gray-100 text-gray-700";
+            break;
     }
+
+    el.className = `px-3 py-1 rounded-full text-sm font-medium ${className}`;
 }
 
+function update_sale_order() {
+    document
+        .getElementById("default-modal-sales-order-save")
+        .classList.remove("hidden");
+}
 
-function Load_order() {
-    if (!currentSaleOrderId) {
-        alert("No sale order selected");
+function Confirm_Save_Sale_Order(document_status) {
+    const totalAmount = parseFloat(
+        document.querySelector("#total_amount")?.value || 0,
+    );
+
+    const payUSD = parseFloat(
+        document.getElementById("so_pay_usd")?.value || 0,
+    );
+
+    const payOther = parseFloat(
+        document.getElementById("so_pay_other")?.value || 0,
+    );
+
+    const factor = parseFloat(
+        document.querySelector("#currency_display_factor")?.value || 1,
+    );
+
+    const paidAmount = payUSD + payOther / factor;
+
+    let paymentData = {
+        // Dates
+        document_date:
+            document.getElementById("so_document_dateInput")?.value ?? null,
+        order_date:
+            document.getElementById("so_order_dateInput")?.value ?? null,
+        delivery_date:
+            document.getElementById("so_delivery_dateInput")?.value ?? null,
+
+        // Payment
+        paymentMethod:
+            document.getElementById("so_payment_method")?.value ?? null,
+        paid_amount: paidAmount,
+        deposit_amount: paidAmount,
+        total_amount: totalAmount,
+
+        // Customer
+        customer_type:
+            document.getElementById("so_customer_type")?.value ?? null,
+        customer_id:
+            document.getElementById("so_customer_id_info")?.value ?? null,
+        customer_name:
+            document.getElementById("so_customer_name_info")?.value ?? null,
+        customer_phone:
+            document.getElementById("so_customer_phone_info")?.value ?? null,
+        customer_address:
+            document.getElementById("so_customer_address_info")?.value ?? null,
+
+        // Delivery
+        delivery_status:
+            document.getElementById("so_delivery_status")?.value ?? null,
+        delivery_info:
+            document.getElementById("so_delivery_info_status")?.value ?? null,
+        driver_name: document.getElementById("so_driver_name")?.value ?? null,
+        driver_phone: document.getElementById("so_driver_phone")?.value ?? null,
+        status: document_status,
+        // Optional
+        remark: document.getElementById("so_remark_invoice")?.value ?? null,
+    };
+
+    console.log("Payment Data:", paymentData);
+
+    Livewire.dispatch("confirmSaleOrder", [paymentData]);
+    document.getElementById("so_customer_type").value = "";
+    document.getElementById("so_delivery_dateInput").value = "";
+    document.getElementById("so_delivery_status").value = "PENDING";
+    document.getElementById("so_delivery_info_status").value = "";
+    document.getElementById("so_driver_name").value = "";
+    document.getElementById("so_driver_phone").value = "";
+
+    // Hide delivery section again
+    document.getElementById("delivery_section").classList.add("hidden");
+    document
+        .getElementById("default-modal-sales-order-save")
+        .classList.add("hidden");
+}
+
+window.addEventListener("load-sale-order", (e) => {
+    const message = e.detail[0].message;
+    fillSaleOrderModal(e.detail[0].header);
+    showToast({
+        message: message,
+        type: "success",
+    });
+});
+window.addEventListener("expense_item_prevented", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "error",
+    });
+});
+window.addEventListener("product_item_prevented", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "error",
+    });
+});
+function fillSaleOrderModal(data = {}) {
+    document.getElementById("so_sale_order_id").value = data.id ?? "";
+
+    document.getElementById("so_document_dateInput").value =
+        data.posting_date ?? data.document_date ?? "";
+
+    document.getElementById("so_order_dateInput").value = data.order_date ?? "";
+    document.getElementById("so_delivery_dateInput").value =
+        data.delivery_date ?? "";
+
+    const factor = parseFloat(
+        document.querySelector("#currency_display_factor")?.value || 1,
+    );
+    const currency =
+        document.querySelector("#currency_display_symbol")?.value || "$";
+
+    const grandTotal =
+        parseFloat(data.grand_total ?? data.total_amount ?? 0) || 0;
+
+    let convertedTotal = grandTotal * factor;
+    convertedTotal =
+        currency === "៛"
+            ? convertedTotal.toFixed(0)
+            : convertedTotal.toFixed(2);
+
+    document.getElementById("so_payment_method").value =
+        data.payment_method ?? "ABA";
+
+    document.getElementById("paid_amount").value = data.paid_amount ?? 0;
+
+    document.getElementById("so_pay_usd").value = 0;
+    document.getElementById("so_pay_other").value = 0;
+
+    document.getElementById("so_display_pay_amount").value = grandTotal;
+    document.getElementById("so_display_pay_amount_converted").value =
+        convertedTotal + " " + currency;
+
+    document.getElementById("so_customer_type").value =
+        data.customer_type ?? "Take-Away";
+    document.getElementById("so_customer_id_info").value =
+        data.customer_id ?? "";
+    document.getElementById("so_customer_name_info").value =
+        data.contact_name ?? data.customer_name ?? "";
+    document.getElementById("so_customer_phone_info").value =
+        data.phone ?? data.customer_phone ?? "";
+    document.getElementById("so_customer_address_info").value =
+        data.address ?? data.customer_address ?? "";
+
+    if (document.querySelector("#customerSearch")) {
+        document.querySelector("#customerSearch").value =
+            data.contact_name ?? data.customer_name ?? "";
+    }
+
+    document.getElementById("so_delivery_status").value =
+        data.delivery_status ?? "PENDING";
+    document.getElementById("so_delivery_info_status").value =
+        data.delivery_info ?? "";
+    document.getElementById("so_driver_name").value = data.driver_name ?? "";
+    document.getElementById("so_driver_phone").value = data.driver_phone ?? "";
+
+    document.getElementById("so_remark_invoice").value =
+        data.remarks ?? data.remark ?? "";
+
+    if (data.customer_type === "At-Delivery") {
+        document.getElementById("delivery_section").classList.remove("hidden");
+    } else {
+        document.getElementById("delivery_section").classList.add("hidden");
+    }
+
+    if (typeof validateSaleOrderPayment === "function") {
+        validateSaleOrderPayment();
+    }
+    document
+        .getElementById("default-modal-sales-order-save")
+        .classList.add("hidden");
+    document.querySelector("#new_order").style.display = "none";
+    document.querySelector("#update_order").style.display = "block";
+}
+
+function Confirm_update_Sale_Order() {
+    const factor = parseFloat(
+        document.querySelector("#currency_display_factor")?.value || 1,
+    );
+
+    const payUSD = parseFloat(
+        document.getElementById("so_pay_usd")?.value || 0,
+    );
+    const payOther = parseFloat(
+        document.getElementById("so_pay_other")?.value || 0,
+    );
+
+    const newPaidAmount = payUSD + payOther / factor;
+
+    let paymentData = {
+        sale_order_id:
+            document.getElementById("so_sale_order_id")?.value ?? null,
+
+        // Dates
+        document_date:
+            document.getElementById("so_document_dateInput")?.value ?? null,
+        order_date:
+            document.getElementById("so_order_dateInput")?.value ?? null,
+        delivery_date:
+            document.getElementById("so_delivery_dateInput")?.value ?? null,
+
+        // Payment
+        paymentMethod:
+            document.getElementById("so_payment_method")?.value ?? null,
+        new_paid_amount: newPaidAmount,
+
+        // Customer
+        customer_type:
+            document.getElementById("so_customer_type")?.value ?? null,
+        customer_id:
+            document.getElementById("so_customer_id_info")?.value ?? null,
+        customer_name:
+            document.getElementById("so_customer_name_info")?.value ?? null,
+        customer_phone:
+            document.getElementById("so_customer_phone_info")?.value ?? null,
+        customer_address:
+            document.getElementById("so_customer_address_info")?.value ?? null,
+
+        // Delivery
+        delivery_status:
+            document.getElementById("so_delivery_status")?.value ?? null,
+        delivery_info:
+            document.getElementById("so_delivery_info_status")?.value ?? null,
+        driver_name: document.getElementById("so_driver_name")?.value ?? null,
+        driver_phone: document.getElementById("so_driver_phone")?.value ?? null,
+
+        // Remark
+        remark: document.getElementById("so_remark_invoice")?.value ?? null,
+    };
+
+    document
+        .getElementById("default-modal-sales-order-save")
+        .classList.add("hidden");
+    console.log(paymentData);
+    Livewire.dispatch("confirmUpdateSaleOrder", {
+        payload: paymentData,
+    });
+}
+function openExpenseModal() {
+    document.getElementById("expenseModal").classList.remove("hidden");
+
+    let today = new Date().toISOString().split("T")[0];
+    document.getElementById("expenseDate").value = today;
+}
+
+function closeExpenseModal() {
+    document.getElementById("expenseModal").classList.add("hidden");
+}
+
+function confirmExpensePayment() {
+    const selectedDate = document.getElementById("expenseDate").value;
+
+    if (!selectedDate) {
+        alert("Please select expense date");
         return;
     }
 
-    Livewire.dispatch('load-sale-order-to-cart', {
-        saleOrderId: currentSaleOrderId
-    });
+    pay_expense(selectedDate);
 
-    closeSaleOrderLineModal();
+    closeExpenseModal();
+}
+
+function pay_expense(payload) {
+    Livewire.dispatch("payment-expenses", {
+        payload: payload,
+    });
 }

@@ -1157,35 +1157,51 @@
                         <!-- Filters Row 1: Date, Status, Customer -->
                         <!-- Filters -->
                         <div class="flex flex-wrap items-center gap-3 mb-4">
-                            <input type="date" id="from_date" class="px-3 py-2 border rounded-md text-sm" onchange="FetchPurchase(1)">
-                            <input type="date" id="to_date" class="px-3 py-2 border rounded-md text-sm" onchange="FetchPurchase(1)">
+                              <input type="date" id="from_date" onchange="FetchPurchase(1)"
+        class="px-3 py-2 border border-gray-300 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none">
 
-                            <div class="relative w-52">
-                                <input type="text" id="vendor_search" placeholder="vendor name or code"
-                                    autocomplete="off" class="px-3 py-2 border rounded-md text-sm w-full">
+    <input type="date" id="to_date" onchange="FetchPurchase(1)"
+        class="px-3 py-2 border border-gray-300 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none">
 
-                                <input type="hidden" id="vendor_filter" onchange="FetchPurchase(1)">
+    <!-- Vendor -->
+    <div class="relative w-56">
+        <i class="fa-solid fa-truck-field absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
 
-                                <ul id="vendor_list"
-                                    class="absolute z-50 bg-white border rounded-md w-full mt-1 max-h-60 overflow-y-auto hidden">
-                                </ul>
-                            </div>
+        <input type="text" id="vendor_search" placeholder="Vendor name or code"
+            autocomplete="off"
+            class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-green-300 focus:outline-none">
 
-                            <input type="text" id="product_search" list="product_datalist"
-                                placeholder="Search product" autocomplete="off"
-                                class="px-3 py-2 border rounded-md text-sm w-64">
+        <input type="hidden" id="vendor_filter" onchange="FetchPurchase(1)">
 
-                            <input type="hidden" id="ProductSearchInput_sale_invoice" onchange="FetchPurchase(1)">
+        <ul id="vendor_list"
+            class="absolute z-50 hidden w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+        </ul>
+    </div>
 
-                            <datalist id="product_datalist"></datalist>
-                            <select id="category_filter" onchange="FetchPurchase(1)" class="px-3 py-2 border rounded-md text-sm w-44">
-                                <option value="">All Categories</option>
-                            </select>
-                            <select id="limit_filter" onchange="FetchPurchase(1)" class="px-3 py-2 border rounded-md text-sm w-32">
-                                <option value="100">100</option>
-                                <option value="200">200</option>
-                                <option value="300">300</option>
-                            </select>
+    <!-- Product -->
+    <div class="relative w-64">
+        <i class="fa-solid fa-box absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+        <input type="text" id="product_search" list="product_datalist"
+            placeholder="Search product" autocomplete="off"
+            class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl text-sm shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none">
+    </div>
+
+    <input type="hidden" id="ProductSearchInput_sale_invoice" onchange="FetchPurchase(1)">
+    <datalist id="product_datalist"></datalist>
+
+    <select id="category_filter" onchange="FetchPurchase(1)"
+        class="px-4 py-2 border border-gray-300 rounded-xl text-sm w-44 shadow-sm focus:ring-2 focus:ring-purple-300 focus:outline-none">
+        <option value="">📂 All Categories</option>
+    </select>
+
+    <select id="limit_filter" onchange="FetchPurchase(1)"
+        class="px-4 py-2 border border-gray-300 rounded-xl text-sm w-32 shadow-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none">
+        <option value="100">100 Rows</option>
+        <option value="200">200 Rows</option>
+        <option value="300">300 Rows</option>
+    </select>
+
                         </div>
                     </div>
                     <button type="button"

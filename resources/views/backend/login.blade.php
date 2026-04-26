@@ -160,7 +160,7 @@
     function showToast({
         message,
         type = "success",
-        duration = 3000
+        duration = 5000
     }) {
         const toast = document.getElementById("toastMessage");
         const text = document.getElementById("toastText");

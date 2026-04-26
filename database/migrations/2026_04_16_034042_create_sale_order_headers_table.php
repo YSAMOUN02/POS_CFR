@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('address')->nullable();
 
             $table->date('posting_date');
+            $table->date('order_date')->nullable(); // add
             $table->date('delivery_date')->nullable(); // add
 
             // Amount
@@ -34,20 +35,38 @@ return new class extends Migration
             $table->decimal('paid_amount', 15, 2)->default(0); // add
             $table->decimal('balance_amount', 15, 2)->default(0); // add
 
-            // Status
             $table->enum('status', [
-                'draft',
+                'Draft',
+                'Quotation',
                 'Ordered',
                 'Deposit',
-                'completed',
-                'cancelled'
-            ])->default('draft');
+                'Completed',
+                'Cancelled',
+                'Returned'
+            ])->default('Draft');
 
             $table->enum('payment_status', [
-                'unpaid',
-                'partial',
-                'paid'
-            ])->default('unpaid');
+                'Unpaid',
+                'Partial',
+                'Paid',
+                'Refunded',
+                'N/A'
+            ])->default('Unpaid');
+
+            $table->enum('delivery_status', [
+                'Pending',
+                'Processing',
+                'Shipped',
+                'Delivered',
+                'Cancelled',
+                'Returned',
+                'N/A'
+            ])->nullable();
+            $table->string('delivery_info')->nullable(); // Nham24 / Grab / Own Driver
+            $table->string('driver_name')->nullable();
+            $table->string('driver_phone')->nullable();
+
+
 
             // Extra
             $table->text('customer_type')->nullable();

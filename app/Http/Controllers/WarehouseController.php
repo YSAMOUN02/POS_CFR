@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\ItemLedgerEntry;
 use App\Models\Product;
+use App\Models\PurchaseLine;
 use App\Models\Warehouse;
 use App\Models\WarehouseProduct;
 
@@ -230,7 +232,9 @@ class WarehouseController extends Controller
         DB::beginTransaction();
 
         try {
-            $row = WarehouseProduct::where('id', $request->wh_product_id)->first();
+            $row = WarehouseProduct::where('id', $request->wh_product_id)
+                ->lockForUpdate()
+                ->first();
 
             if (!$row) {
                 DB::rollBack();
@@ -259,6 +263,44 @@ class WarehouseController extends Controller
                 ], 422);
             }
 
+            $product = Product::with('category')->find($row->product_id);
+            $fromWarehouse = Warehouse::find($row->warehouse_id);
+            $toWarehouse = Warehouse::find($toWarehouseId);
+
+            if (!$product || !$fromWarehouse || !$toWarehouse) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product or warehouse not found'
+                ], 404);
+            }
+
+            $year = now()->format('y'); // 26
+            $prefix = 'TO' . $year . '-';
+
+            // Find last document no this year
+            $lastTransfer = ItemLedgerEntry::where('document_type', 'Transfer')
+                ->where('document_no', 'like', $prefix . '%')
+                ->orderByDesc('id')
+                ->first();
+
+            if ($lastTransfer) {
+                $lastNumber = (int) substr($lastTransfer->document_no, strlen($prefix));
+                $nextNumber = $lastNumber + 1;
+            } else {
+                $nextNumber = 1;
+            }
+
+            $transferNo = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+            // Keep old row data before update/delete
+            $oldRowId = $row->id;
+            $oldWarehouseId = $row->warehouse_id;
+            $oldLot = $row->lot;
+            $oldExpire = $row->expire;
+            $oldTrackLot = $row->track_lot;
+            $oldControlExp = $row->control_exp;
+
             $targetRow = WarehouseProduct::where('product_id', $row->product_id)
                 ->where('warehouse_id', $toWarehouseId)
                 ->where('lot', $row->lot)
@@ -269,8 +311,15 @@ class WarehouseController extends Controller
                         $q->whereNull('expire');
                     }
                 })
+                ->lockForUpdate()
+                ->first();
+            $purchaseLine = PurchaseLine::where('product_id', $product->id)
+                ->when(!is_null($oldLot), fn($q) => $q->where('lot', $oldLot), fn($q) => $q->whereNull('lot'))
+                ->when(!is_null($oldExpire), fn($q) => $q->whereDate('expire_date', $oldExpire), fn($q) => $q->whereNull('expire_date'))
+                ->latest('id')
                 ->first();
 
+            $unitCost = $purchaseLine->unit_cost ?? $product->cost ?? 0;
             if ($targetRow) {
                 $targetRow->qty += $transferQty;
                 $targetRow->original_qty += $transferQty;
@@ -287,30 +336,137 @@ class WarehouseController extends Controller
                     $row->warehouse_id = $toWarehouseId;
                     $row->save();
                 } else {
-                    $productId  = $row->product_id;
-                    $trackLot   = $row->track_lot;
-                    $lot        = $row->lot;
-                    $expire     = $row->expire;
-                    $controlExp = $row->control_exp;
-
                     $row->qty -= $transferQty;
                     $row->save();
 
                     WarehouseProduct::create([
-                        'product_id'   => $productId,
+                        'product_id'   => $product->id,
                         'warehouse_id' => $toWarehouseId,
                         'original_qty' => $transferQty,
                         'qty'          => $transferQty,
-                        'track_lot'    => $trackLot,
-                        'lot'          => $lot,
-                        'expire'       => $expire,
-                        'control_exp'  => $controlExp,
+                        'track_lot'    => $oldTrackLot,
+                        'lot'          => $oldLot,
+                        'expire'       => $oldExpire,
+                        'control_exp'  => $oldControlExp,
                         'created_at'   => now(),
                         'updated_at'   => now(),
                     ]);
                 }
             }
 
+            // =========================
+            // Item Ledger: Transfer OUT
+            // =========================
+            $item_ledger = ItemLedgerEntry::create([
+                'posting_date'       => now()->toDateString(),
+                'document_type'      => 'Transfer Shipment',
+                'document_no'        => $transferNo,
+
+                'source_id'          => $oldRowId,
+                'source_table'       => 'warehouse_product',
+
+                'product_id'         => $product->id,
+                'barcode'            => $product->bar_code,
+                'item_code'          => $product->code,
+                'name'               => $product->name,
+                'variant'            => $product->variant,
+                'description'        => $product->description,
+                'unit'               => $product->unit ?? 'NA',
+                'category_name'      => optional($product->category)->name,
+                'type'               => 'product',
+
+                'warehouse_id'       => $oldWarehouseId,
+                'warehouse_name'     => $fromWarehouse->name,
+                'lot'                => $oldLot,
+                'expire_date'        => $oldExpire,
+
+                'quantity'           => -1 * $transferQty,
+                'remaining_quantity' => 0,
+                'entry_type'         => 'negative',
+
+                'unit_cost'          => $unitCost,
+                'unit_price'         => $product->sell_price ?? 0,
+                'sell_price'         => $product->sell_price ?? 0,
+
+                'discount_percent'   => 0,
+                'discount_amount'    => 0,
+                'vat'                => $product->vat ?? 0,
+                'vat_amount'         => 0,
+
+                'line_amount'        => 0,
+                'net_amount'         => 0,
+                'grand_total_amount' => 0,
+
+                'customer_id'        => null,
+                'customer_name'      => null,
+                'customer_phone'     => null,
+                'customer_address'   => null,
+
+                'payment_method'     => null,
+                'remark'             => 'Transfer OUT to ' . $toWarehouse->name,
+                'created_by'         => Auth::user()->name ?? 'System',
+            ]);
+            $item_ledger->update([
+                'entry_no' => $item_ledger->id
+            ]);
+            // ========================
+            // Item Ledger: Transfer IN
+            // ========================
+            $item_ledger2 = ItemLedgerEntry::create([
+                'posting_date'       => now()->toDateString(),
+                'document_type'      => 'Transfer Receipt',
+                'document_no'        => $transferNo,
+
+                'source_id'          => $oldRowId,
+                'source_table'       => 'warehouse_product',
+
+                'product_id'         => $product->id,
+                'barcode'            => $product->bar_code,
+                'item_code'          => $product->code,
+                'name'               => $product->name,
+                'variant'            => $product->variant,
+                'description'        => $product->description,
+                'unit'               => $product->unit ?? 'NA',
+                'category_name'      => optional($product->category)->name,
+                'type'               => 'product',
+
+                'warehouse_id'       => $toWarehouse->id,
+                'warehouse_name'     => $toWarehouse->name,
+                'lot'                => $oldLot,
+                'expire_date'        => $oldExpire,
+
+                'quantity'           => $transferQty,
+                'remaining_quantity' => $transferQty,
+                'entry_type'         => 'positive',
+
+                'unit_cost'          => $unitCost,
+                'unit_price'         => $product->sell_price ?? 0,
+                'sell_price'         => $product->sell_price ?? 0,
+
+                'discount_percent'   => 0,
+                'discount_amount'    => 0,
+                'vat'                => $product->vat ?? 0,
+                'vat_amount'         => 0,
+
+                'line_amount'        => 0,
+                'net_amount'         => 0,
+                'grand_total_amount' => 0,
+
+                'customer_id'        => null,
+                'customer_name'      => null,
+                'customer_phone'     => null,
+                'customer_address'   => null,
+
+                'payment_method'     => null,
+                'remark'             => 'Transfer IN from ' . $fromWarehouse->name,
+                'created_by'         => Auth::user()->name ?? 'System',
+            ]);
+            $item_ledger2->update([
+                'entry_no' =>  $item_ledger2->id
+            ]);
+            // ✅ Sync purchase remaining qty
+            $this->syncPurchaseRemainingQty($product->id, $oldLot, $oldWarehouseId);
+            $this->syncPurchaseRemainingQty($product->id, $oldLot, $toWarehouseId);
             DB::commit();
 
             return response()->json([
@@ -325,5 +481,31 @@ class WarehouseController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function syncPurchaseRemainingQty($productId, $lot = null, $warehouseId = null)
+    {
+        $lot = !is_null($lot) && trim($lot) !== '' ? trim($lot) : null;
+
+        $remainingQty = WarehouseProduct::where('product_id', $productId)
+            ->when(!is_null($lot), fn($q) => $q->where('lot', $lot), fn($q) => $q->whereNull('lot'))
+            ->when(!is_null($warehouseId), fn($q) => $q->where('warehouse_id', $warehouseId))
+            ->sum('qty');
+
+        $lastPurchaseEntry = ItemLedgerEntry::where('product_id', $productId)
+            ->where('entry_type', 'positive')
+            ->where('document_type', 'Purchase')
+            ->when(!is_null($lot), fn($q) => $q->where('lot', $lot), fn($q) => $q->whereNull('lot'))
+            ->when(!is_null($warehouseId), fn($q) => $q->where('warehouse_id', $warehouseId))
+            ->latest('id')
+            ->first();
+
+        if ($lastPurchaseEntry) {
+            $lastPurchaseEntry->update([
+                'remaining_quantity' => $remainingQty,
+            ]);
+        }
+
+        return $remainingQty;
     }
 }
