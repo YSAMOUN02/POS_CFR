@@ -9,35 +9,59 @@ use Illuminate\Support\Facades\Auth;
 class SaleOrderController extends Controller
 {
     public function getSaleOrders(Request $request)
-{
-    $query = SaleOrderHeader::query();
+    {
+        $query = SaleOrderHeader::query();
 
-    if ($request->filled('search')) {
-        $search = $request->search;
+        if ($request->filled('search')) {
+            $search = $request->search;
 
-        $query->where(function ($q) use ($search) {
-            $q->where('contact_name', 'like', "%{$search}%")
-                ->orWhere('phone', 'like', "%{$search}%")
-                ->orWhere('document_no', 'like', "%{$search}%");
-        });
-    }
+            $query->where(function ($q) use ($search) {
+                $q->where('contact_name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('search_document')) {
+            $search_document = $request->search_document;
 
-    // Status priority first
-    $query->orderByRaw("
+            $query->where('document_no' ,'like','%'.$search_document.'%');
+
+        }
+
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        if ($request->filled('delivery_status')) {
+            $query->where('delivery_status', $request->delivery_status);
+        }
+
+        if ($request->filled('from_posting_date')) {
+            $query->whereDate('posting_date', '>=', $request->from_posting_date);
+        }
+
+        if ($request->filled('to_posting_date')) {
+            $query->whereDate('posting_date', '<=', $request->to_posting_date);
+        }
+
+        $query->orderByRaw("
         CASE status
             WHEN 'Ordered' THEN 1
             WHEN 'Deposit' THEN 2
             WHEN 'Quotation' THEN 3
-            WHEN 'Draft' THEN 4
-            WHEN 'Completed' THEN 5
-            WHEN 'Returned' THEN 6
-            WHEN 'Cancelled' THEN 7
+
+            WHEN 'Completed' THEN 4
+            WHEN 'Returned' THEN 5
+            WHEN 'Cancelled' THEN 6
             ELSE 8
         END
     ");
 
-    // Payment priority second
-    $query->orderByRaw("
+        $query->orderByRaw("
         CASE payment_status
             WHEN 'Unpaid' THEN 1
             WHEN 'Partial' THEN 2
@@ -48,10 +72,10 @@ class SaleOrderController extends Controller
         END
     ");
 
-    $query->orderByDesc('id');
+        $query->orderByDesc('document_no');
 
-    return response()->json($query->paginate(20));
-}
+        return response()->json($query->paginate(20));
+    }
     public function getSaleOrderLines($id)
     {
         $saleOrder = SaleOrderHeader::with('lines')->find($id);
@@ -62,6 +86,7 @@ class SaleOrderController extends Controller
 
         $lines = $saleOrder->lines->map(function ($line) {
             $quantity = (float) ($line->quantity ?? 0);
+                        $quantity_shiped = (float) ($line->quantity_shiped ?? 0);
             $sellPrice = (float) ($line->sell_price ?? 0);
             $discountAmount = (float) ($line->discount_amount ?? 0);
             $vatAmount = (float) ($line->vat_amount ?? 0);
@@ -74,6 +99,7 @@ class SaleOrderController extends Controller
                 'item_code' => $line->item_code ?? '',
                 'name' => $line->name ?? '',
                 'quantity' => $quantity,
+                 'quantity_shiped' => $quantity_shiped,
                 'unit' => $line->unit ?? '',
                 'sell_price' => $sellPrice,
                 'sub_total' => $subTotal,
@@ -87,6 +113,7 @@ class SaleOrderController extends Controller
             'header' => [
                 'id' => $saleOrder->id,
                 'document_no' => $saleOrder->document_no,
+                                'source_no' => $saleOrder->source_no,
                 'contact_name' => $saleOrder->contact_name,
                 'phone' => $saleOrder->phone,
                 'address' => $saleOrder->address,
@@ -123,7 +150,7 @@ class SaleOrderController extends Controller
         try {
             $request->validate([
                 'sale_order_id' => 'required|integer|exists:sale_order_headers,id',
-                'status' => 'required|string|in:Draft,Quotation,Ordered,Deposit,Completed,Cancelled,Returned',
+                'status' => 'required|string|in:Quotation,Ordered,Deposit,Completed,Cancelled,Returned',
             ]);
 
             $saleOrder = SaleOrderHeader::findOrFail($request->sale_order_id);

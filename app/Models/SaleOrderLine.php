@@ -17,6 +17,7 @@ class SaleOrderLine extends Model
         'variant',
         'description',
         'quantity',
+        'quantity_shiped',
         'unit',
         'category_name',
         'cost',

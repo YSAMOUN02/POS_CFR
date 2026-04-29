@@ -399,8 +399,7 @@ if (customerSearch) {
 
             // also clear modal customer fields
             document.getElementById("so_customer_id_info").value = "";
-            document.getElementById("so_customer_name_info").value =
-                "Walk-in Customer";
+            document.getElementById("so_customer_name_info").value = "";
             document.getElementById("so_customer_phone_info").value = "";
             document.getElementById("so_customer_address_info").value = "";
         }
@@ -1290,35 +1289,6 @@ function renderPagination(result) {
     }
 }
 
-function print(document_type) {
-    // check cart Logic
-    let input_count_cart = document.getElementById("count_cart_input");
-    let count_cart = input_count_cart.value;
-    if (count_cart == 0) {
-        showToast({
-            message: "Cart is Empty.",
-            type: "error",
-        });
-        return;
-    }
-
-    // Handle documents that need modals first
-    if (document_type === "Receipt") {
-        openDatePromt_Modal(() => print_document("Receipt"));
-        return;
-    } else if (document_type === "Invoice") {
-        openDatePromt_Modal(() => print_document("Invoice"));
-
-        return;
-    } else if (document_type === "Delivery Note") {
-        openDatePromt_Modal(() => print_document("Delivery Note"));
-        return;
-    }
-
-    // Other documents
-    print_document(document_type);
-}
-
 // Get Category on Click New
 document
     .getElementById("btnAddProduct")
@@ -2008,6 +1978,7 @@ function renderTable(response) {
 <tr class="text-nowrap">
     <td>${no++}</td>
     <td>${header.invoice_number ?? ""}</td>
+        <td>${header.source_no ?? ""}</td>
     <td>${
         header.created_at
             ? new Date(header.created_at).toLocaleString("en-GB", {
@@ -3668,7 +3639,7 @@ async function loadItemLedgerEntries() {
                 <td class="border px-3 py-2 text-center">${formatDate(row.posting_date)}</td>
                 <td class="border px-3 py-2 text-left">${row.document_type ?? ""}</td>
                 <td class="border px-3 py-2 text-left">${row.document_no ?? ""}</td>
-
+                <td class="border px-3 py-2 text-left">${row.source_no ?? ""}</td>
                 <td class="border px-3 py-2 text-left">${row.barcode ?? ""}</td>
                 <td class="border px-3 py-2 text-left">${row.item_code ?? ""}</td>
                 <td class="border px-3 py-2 text-left">${row.name ?? ""}</td>
@@ -3756,7 +3727,7 @@ document.getElementById("expense_data").addEventListener("click", function () {
 
                          <td class="border px-3 py-2 text-right">${formatNumber(expense.unit_price)} $</td>
                          <td class="border px-3 py-2 text-right">${formatNumber(expense.amount)} $</td>
-                   
+
                         <td class="border px-3 py-2 text-left">${expense.note ?? ""}</td>
                     </tr>
                 `;
@@ -3783,6 +3754,18 @@ window.addEventListener("payment-success", (e) => {
     // Clear after confirmation (whether printed or not)
     Livewire.dispatch("clearAll_after_payment");
 
+    reloadProducts();
+});
+window.addEventListener("deposit-success", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "success",
+    });
+    // Ask before printing
+    // Clear after confirmation (whether printed or not)
+    Livewire.dispatch("clearAll_after_payment");
     reloadProducts();
 });
 window.addEventListener("expense-success", (e) => {
@@ -3863,25 +3846,21 @@ window.addEventListener("view-cart-lots", (event) => {
     // Show modal
     document.getElementById("viewLotModal").classList.remove("hidden");
 });
-window.addEventListener("get-date", (event) => {
-    const input_document_date = document.getElementById("document_dateInput");
+// window.addEventListener("get-date", (event) => {
+//     const input_document_date = document.getElementById("document_dateInput");
 
-    // Livewire sends full ISO string, we need YYYY-MM-DD
-    const documentDate = event.detail[0].invoice_date.split("T")[0]; // "2026-03-19"
+//     // Livewire sends full ISO string, we need YYYY-MM-DD
+//     const documentDate = event.detail[0].invoice_date.split("T")[0]; // "2026-03-19"
 
-    input_document_date.value = documentDate;
+//     input_document_date.value = documentDate;
 
-    reciept_no = event.detail[0].invoice_no;
-});
+//     reciept_no = event.detail[0].invoice_no;
+// });
+
 window.addEventListener("trigger-print", (e) => {
-    print_document("Receipt");
+    console.log(e.detail[0]);
+    // print_document("Receipt");
     Livewire.dispatch("clearCart_no_message");
-});
-window.addEventListener("cart-loaded", (e) => {
-    document.querySelector("#count_cart_input").value = 1;
-    initializePayment();
-    updatePayment();
-    print("Receipt");
 });
 
 window.addEventListener("serve-table", (e) => {
@@ -3917,8 +3896,24 @@ window.addEventListener("cart-cleared", (e) => {
         message: messsage,
         type: "success",
     });
+
     document.querySelector("#customerValue").value = "";
     document.querySelector("#customerSearch").value = "";
+
+    const deliverySection = document.getElementById("delivery_section");
+
+    deliverySection.classList.add("hidden");
+
+    document.getElementById("so_customer_type").value = "Take-Away";
+    document.getElementById("so_delivery_dateInput").value = "";
+    document.getElementById("so_delivery_status").value = "N/A";
+    document.getElementById("so_delivery_info_status").value = "";
+    document.getElementById("so_driver_name").value = "";
+    document.getElementById("so_driver_phone").value = "";
+    document.getElementById("so_customer_id_info").value = "";
+    document.getElementById("so_customer_name_info").value = "";
+    document.getElementById("so_customer_phone_info").value = "";
+    document.getElementById("so_customer_address_info").value = "";
 });
 
 window.addEventListener("payment-error", (e) => {
@@ -3969,23 +3964,37 @@ function closeSaleOrderModal() {
 
     modal.classList.add("hidden");
 }
-document
-    .getElementById("sale_order_payment_status")
-    .addEventListener("change", () => {
+
+[
+    "sale_order_status",
+    "sale_order_payment_status",
+    "sale_order_delivery_status",
+    "so_from_posting_dateInput",
+    "so_to_posting_dateInput",
+].forEach((id) => {
+    document.getElementById(id)?.addEventListener("change", () => {
         loadSaleOrders(1);
     });
-
-document.getElementById("sale_order_search").addEventListener("input", () => {
-    loadSaleOrders(1);
 });
 
+["sale_document_search", "sale_order_search"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("input", () => {
+        loadSaleOrders(1);
+    });
+});
 function loadSaleOrders(page = 1) {
-    console.log(123);
-    let status = document.getElementById("sale_order_status").value;
-    let paymentStatus = document.getElementById(
-        "sale_order_payment_status",
-    ).value;
-
+    const status = document.getElementById("sale_order_status")?.value || "";
+    const paymentStatus =
+        document.getElementById("sale_order_payment_status")?.value || "";
+    const deliveryStatus =
+        document.getElementById("sale_order_delivery_status")?.value || "";
+    const fromPostingDate =
+        document.getElementById("so_from_posting_dateInput")?.value || "";
+    const toPostingDate =
+        document.getElementById("so_to_posting_dateInput")?.value || "";
+    const search = document.getElementById("sale_order_search")?.value || "";
+    const search_document =
+        document.getElementById("sale_document_search")?.value || "";
     const modal = document.getElementById("default-modal-sales-order-list");
 
     if (!modal) {
@@ -3993,14 +4002,20 @@ function loadSaleOrders(page = 1) {
         return;
     }
 
-    // open modal
     modal.classList.remove("hidden");
     modal.classList.add("flex");
-    let search = document.getElementById("sale_order_search").value;
+    const params = new URLSearchParams({
+        page: page,
+        status: status,
+        payment_status: paymentStatus,
+        delivery_status: deliveryStatus,
+        from_posting_date: fromPostingDate,
+        to_posting_date: toPostingDate,
+        search: search,
+        search_document: search_document,
+    });
 
-    fetch(
-        `/get-sale-orders?page=${page}&status=${status}&payment_status=${paymentStatus}&search=${search}`,
-    )
+    fetch(`/get-sale-orders?${params.toString()}`)
         .then((res) => res.json())
         .then((res) => {
             let tbody = document.getElementById("Table-sale-order-list");
@@ -4047,10 +4062,10 @@ function loadSaleOrders(page = 1) {
                          <td class="px-4 py-3 text-right">$${parseFloat(row.total_amount ?? 0).toFixed(2)}</td>
                         <td class="px-4 py-3 text-right">$${parseFloat(row.vat_amount ?? 0).toFixed(2)}</td>
                         <td class="px-4 py-3 text-right">$${parseFloat(row.discount_amount ?? 0).toFixed(2)}</td>
-                   
+
                                 <td class="px-4 py-3 text-right">$${parseFloat(row.grand_total ?? 0).toFixed(2)}</td>
                         <td class="px-4 py-3 text-right">$${parseFloat(row.paid_amount ?? 0).toFixed(2)}</td>
-                    
+
 
                <td class="px-4 py-3 text-right ${
                    parseFloat(row.balance_amount ?? 0) > 0
@@ -4080,6 +4095,16 @@ function loadSaleOrders(page = 1) {
             `;
             console.error(err);
         });
+}
+function clearSaleOrderFilters() {
+    document.getElementById("sale_order_status").value = "";
+    document.getElementById("sale_order_payment_status").value = "";
+    document.getElementById("sale_order_delivery_status").value = "";
+    document.getElementById("so_from_posting_dateInput").value = "";
+    document.getElementById("so_to_posting_dateInput").value = "";
+    document.getElementById("sale_order_search").value = "";
+
+    loadSaleOrders(1);
 }
 function getDeliveryBadge(status) {
     const styles = {
@@ -4174,11 +4199,6 @@ function renderSaleOrderPagination(res) {
 }
 function getStatusBadge(status) {
     switch ((status || "").toLowerCase()) {
-        case "draft":
-            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200 shadow-sm">
-                        📝 Draft
-                    </span>`;
-
         case "ordered":
             return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
                         📦 Ordered
@@ -4283,6 +4303,7 @@ function Save_Sale_Order() {
     document.getElementById("so_order_dateInput").value = today;
     document.getElementById("so_delivery_dateInput").value = today;
     // open modal
+    validateSaleOrderPayment();
     document
         .getElementById("default-modal-sales-order-save")
         .classList.remove("hidden");
@@ -4297,92 +4318,97 @@ function moneyNumber(value) {
     );
 }
 function validateSaleOrderPayment(e = null) {
-    const totalAmount = moneyNumber(
-        document.querySelector("#so_display_pay_amount")?.value
-    );
-
-    const oldPaidAmount = moneyNumber(
-        document.querySelector("#paid_amount")?.value
-    );
-
     const payUSDInput = document.getElementById("so_pay_usd");
     const payOtherInput = document.getElementById("so_pay_other");
 
-    const payUSD = moneyNumber(payUSDInput?.value);
-    const payOther = moneyNumber(payOtherInput?.value);
-
-    const factor =
-        moneyNumber(document.querySelector("#currency_display_factor")?.value) || 4000;
-
-    const newPaidAmount = payUSD + payOther / factor;
-
-    const totalPaidAmount = oldPaidAmount + newPaidAmount;
-    const remainUSD = totalAmount - totalPaidAmount;
-
-    if (remainUSD < -0.0001) {
-        showToast({
-            message: "Payment exceeds balance!",
-            type: "error",
-        });
-
-        if (e && e.target.id === "so_pay_usd") {
-            payUSDInput.value = 0;
-        }
-
-        if (e && e.target.id === "so_pay_other") {
-            payOtherInput.value = 0;
-        }
-
-        updateSaleOrderRemaining();
-        return false;
-    }
+    cleanMoneyInput(payUSDInput);
+    cleanMoneyInput(payOtherInput);
 
     updateSaleOrderRemaining();
     return true;
 }
+function cleanMoneyInput(input) {
+    if (!input) return;
+
+    let value = input.value;
+
+    value = value.replace(/[^\d.]/g, "");
+
+    // keep only first dot
+    const parts = value.split(".");
+    if (parts.length > 2) {
+        value = parts[0] + "." + parts.slice(1).join("");
+    }
+
+    if (value === "" || value === "0.") {
+        input.value = value;
+        return;
+    }
+
+    if (value.includes(".")) {
+        let [intPart, decPart] = value.split(".");
+        intPart = intPart.replace(/^0+/, "") || "0";
+        input.value = intPart + "." + decPart;
+    } else {
+        input.value = value.replace(/^0+/, "") || "0";
+    }
+}
 function updateSaleOrderRemaining() {
     const totalAmount = moneyNumber(
-        document.querySelector("#so_display_pay_amount")?.value
+        document.querySelector("#total_amount")?.value ||
+            document.querySelector("#so_display_pay_amount")?.value,
     );
 
     const oldPaidAmount = moneyNumber(
-        document.querySelector("#paid_amount")?.value
+        document.querySelector("#paid_amount")?.value,
     );
 
-    const payUSD = moneyNumber(
-        document.getElementById("so_pay_usd")?.value
-    );
+    const payUSD = moneyNumber(document.getElementById("so_pay_usd")?.value);
 
     const payOther = moneyNumber(
-        document.getElementById("so_pay_other")?.value
+        document.getElementById("so_pay_other")?.value,
     );
 
     const factor =
         moneyNumber(
-            document.querySelector("#currency_display_factor")?.value
+            document.querySelector("#currency_display_factor")?.value,
         ) || 4000;
 
     const newPaidAmount = payUSD + payOther / factor;
-
     const totalPaidAmount = oldPaidAmount + newPaidAmount;
 
-    let remainUSD = totalAmount - totalPaidAmount;
-    let remainRiel = Math.round(remainUSD * factor);
+    let balanceUSD = totalAmount - totalPaidAmount;
 
-    // ignore tiny rounding issue
+    let remainUSD = 0;
+    let returnUSD = 0;
+
+    if (balanceUSD > 0) {
+        remainUSD = balanceUSD;
+    } else if (balanceUSD < 0) {
+        returnUSD = Math.abs(balanceUSD);
+    }
+
+    let remainRiel = Math.round(remainUSD * factor);
+    let returnRiel = Math.round(returnUSD * factor);
+
     if (Math.abs(remainRiel) <= 50) {
         remainUSD = 0;
         remainRiel = 0;
     }
 
-    remainUSD = Math.max(remainUSD, 0);
-    remainRiel = Math.max(remainRiel, 0);
+    if (Math.abs(returnRiel) <= 50) {
+        returnUSD = 0;
+        returnRiel = 0;
+    }
 
     document.getElementById("so_need_more_usd").textContent =
         remainUSD.toFixed(2) + " $";
-
     document.getElementById("so_need_more_other").textContent =
         remainRiel.toLocaleString() + " ៛";
+    document.getElementById("so_return_usd").textContent =
+        returnUSD.toFixed(2) + " $";
+    document.getElementById("so_return_other").textContent =
+        returnRiel.toLocaleString() + " ៛";
 }
 function openDatePromt_Modal(onConfirm) {
     const payUSDInput = document.getElementById("pay_usd");
@@ -4462,6 +4488,7 @@ function selectSaleOrderRow(rowElement, id) {
     const checkbox = rowElement.querySelector(".sale-order-checkbox");
     if (checkbox) checkbox.checked = true;
 }
+
 function viewSelectedSaleOrderLine() {
     if (!selectedSaleOrderId) {
         showToast({
@@ -4515,7 +4542,7 @@ document
             deliverySection.classList.add("hidden");
 
             document.getElementById("so_delivery_dateInput").value = "";
-            document.getElementById("so_delivery_status").value = "PENDING";
+            document.getElementById("so_delivery_status").value = "N/A";
             document.getElementById("so_delivery_info_status").value = "";
             document.getElementById("so_driver_name").value = "";
             document.getElementById("so_driver_phone").value = "";
@@ -4553,7 +4580,23 @@ function changeSaleOrderStatus(status) {
 }
 
 let currentSaleOrderId = null;
+let document_type_for_print = null;
+window.addEventListener("view-line-sale-order", (e) => {
+    let id = e.detail[0].id;
+    viewSaleOrderLine(id);
+});
 
+// Hook for Print
+window.addEventListener("print-sale-order", (e) => {
+    let header = e.detail[0].header;
+
+    print_document(document_type_for_print, header);
+});
+function button_print_click(document_type) {
+    document_type_for_print = document_type;
+    Livewire.dispatch("load-sale-order-print", [currentSaleOrderId]);
+}
+function print(document_type, header) {}
 async function viewSaleOrderLine(id) {
     try {
         currentSaleOrderId = id;
@@ -4667,6 +4710,14 @@ async function viewSaleOrderLine(id) {
                     <td class="px-4 py-2">${line.item_code ?? ""}</td>
                     <td class="px-4 py-2">${line.name ?? ""}</td>
                     <td class="px-4 py-2 text-right">${parseFloat(line.quantity ?? 0).toFixed(2)}</td>
+                     <td class="px-4 py-2 text-right font-bold ${
+                         parseFloat(line.quantity_shiped ?? 0) >=
+                         parseFloat(line.quantity ?? 0)
+                             ? "text-green-500"
+                             : "text-red-500"
+                     }">
+                        ${parseFloat(line.quantity_shiped ?? 0).toFixed(2)}
+                    </td>
                     <td class="px-4 py-2 text-right">$${parseFloat(line.sell_price ?? 0).toFixed(2)}</td>
                     <td class="px-4 py-2 text-right">$${parseFloat(line.sub_total ?? 0).toFixed(2)}</td>
                     <td class="px-4 py-2 text-right">$${parseFloat(line.discount_amount ?? 0).toFixed(2)}</td>
@@ -4711,12 +4762,6 @@ function setStatusColor(id, status) {
     el.className = `px-3 py-1 rounded-full text-sm font-medium ${className}`;
 }
 
-function update_sale_order() {
-    document
-        .getElementById("default-modal-sales-order-save")
-        .classList.remove("hidden");
-}
-
 function Confirm_Save_Sale_Order(document_status) {
     const totalAmount = parseFloat(
         document.querySelector("#total_amount")?.value || 0,
@@ -4735,7 +4780,19 @@ function Confirm_Save_Sale_Order(document_status) {
     );
 
     const paidAmount = payUSD + payOther / factor;
-
+    if (document_status == "Ordered" && paidAmount > 0) {
+        showToast({
+            message: "Order មិនអាចបង់ប្រាក់មុនបានទេ.",
+            type: "error",
+        });
+        return;
+    } else if (document_status == "Completed" && paidAmount < totalAmount) {
+        showToast({
+            message: "សូមបង់ប្រាក់ជាមុនសិន.",
+            type: "error",
+        });
+        return;
+    }
     let paymentData = {
         // Dates
         document_date:
@@ -4778,10 +4835,26 @@ function Confirm_Save_Sale_Order(document_status) {
 
     console.log("Payment Data:", paymentData);
 
-    Livewire.dispatch("confirmSaleOrder", [paymentData]);
-    document.getElementById("so_customer_type").value = "";
+    if (document_status == "Deposit") {
+        // Handled New Deposit
+        Livewire.dispatch("confirmDepositSaleOrder", [paymentData]);
+    } else if (document_status == "Update-Deposit") {
+        // Handled Updat Deposit Header
+        Livewire.dispatch("updateDepositSaleOrder", [paymentData]);
+    } else if (document_status == "Quotation") {
+        // Handled on Quotation
+        Livewire.dispatch("confirmSaleOrder", [paymentData]);
+    } else if (document_status == "Ordered") {
+        // Handled on Quotation
+        Livewire.dispatch("confirmSaleOrder", [paymentData]);
+    } else if (document_status == "Completed") {
+        // Handled on Quotation
+        Livewire.dispatch("confirmSaleOrderPaid", [paymentData]);
+    }
+
+    document.getElementById("so_customer_type").value = "Take-Away";
     document.getElementById("so_delivery_dateInput").value = "";
-    document.getElementById("so_delivery_status").value = "PENDING";
+    document.getElementById("so_delivery_status").value = "N/A";
     document.getElementById("so_delivery_info_status").value = "";
     document.getElementById("so_driver_name").value = "";
     document.getElementById("so_driver_phone").value = "";
@@ -4817,6 +4890,44 @@ window.addEventListener("product_item_prevented", (e) => {
         type: "error",
     });
 });
+window.addEventListener("update-fail", (e) => {
+    const message = e.detail[0].message;
+
+    showToast({
+        message: message,
+        type: "error",
+    });
+});
+
+window.addEventListener("change-document-type", (e) => {
+    const document_type = e.detail[0].document;
+    if (document_type == "Deposit") {
+        document.querySelector("#buttone_update_deposit").style.display =
+            "block";
+        document.querySelector("#save_as_order").style.display = "none";
+    } else if (document_type == "Quotation") {
+        document.querySelector("#save_as_order").style.display = "none";
+        document.querySelector("#buttone_update_deposit").style.display =
+            "none";
+    } else if (document_type == "Ordered") {
+        document.querySelector("#save_as_order").style.display = "block";
+        document.querySelector("#buttone_update_deposit").style.display =
+            "none";
+    } else if (document_type == "Cancelled") {
+        document.querySelector("#save_as_order").style.display = "block";
+        document.querySelector("#buttone_update_deposit").style.display =
+            "none";
+    } else if (document_type == "Completed") {
+        document.querySelector("#save_as_order").style.display = "none";
+        document.querySelector("#buttone_update_deposit").style.display =
+            "none";
+    } else if (document_type == "Returned") {
+        document.querySelector("#save_as_order").style.display = "none";
+        document.querySelector("#buttone_update_deposit").style.display =
+            "none";
+    }
+});
+
 function fillSaleOrderModal(data = {}) {
     document.getElementById("so_sale_order_id").value = data.id ?? "";
 
@@ -4869,9 +4980,8 @@ function fillSaleOrderModal(data = {}) {
         document.querySelector("#customerSearch").value =
             data.contact_name ?? data.customer_name ?? "";
     }
-
-    document.getElementById("so_delivery_status").value =
-        data.delivery_status ?? "PENDING";
+    console.log(data);
+    document.getElementById("so_delivery_status").value = data.delivery_status;
     document.getElementById("so_delivery_info_status").value =
         data.delivery_info ?? "";
     document.getElementById("so_driver_name").value = data.driver_name ?? "";
@@ -4896,7 +5006,24 @@ function fillSaleOrderModal(data = {}) {
     document.querySelector("#update_order").style.display = "block";
 }
 
+function update_sale_order() {
+    validateSaleOrderPayment();
+    document
+        .getElementById("default-modal-sales-order-save")
+        .classList.remove("hidden");
+}
+
 function Confirm_update_Sale_Order() {
+    let hidden_input_document_type = document.querySelector("#document_type");
+
+    if (hidden_input_document_type.value === "Quotation") {
+        showToast({
+            message: `${hidden_input_document_type.value} មិនអាចបង់ប្រាក់បានទេ។`,
+            type: "warning",
+        });
+        return;
+    }
+
     const factor = parseFloat(
         document.querySelector("#currency_display_factor")?.value || 1,
     );
@@ -4955,9 +5082,7 @@ function Confirm_update_Sale_Order() {
         .getElementById("default-modal-sales-order-save")
         .classList.add("hidden");
     console.log(paymentData);
-    Livewire.dispatch("confirmUpdateSaleOrder", {
-        payload: paymentData,
-    });
+    Livewire.dispatch("confirmUpdateSaleOrder", [paymentData]);
 }
 function openExpenseModal() {
     document.getElementById("expenseModal").classList.remove("hidden");

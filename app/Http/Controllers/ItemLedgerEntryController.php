@@ -7,13 +7,13 @@ use Illuminate\Http\Request;
 
 class ItemLedgerEntryController extends Controller
 {
-   public function latest(Request $request)
-{
-    $entries = ItemLedgerEntry::query()
-        ->latest('id')
-        ->limit(50)
-        ->get();
+    public function latest(Request $request)
+    {
+        $entries = ItemLedgerEntry::query()
+            ->latest('id')
+            ->limit(50)
+            ->get();
 
-    return response()->json($entries);
-}
+        return response()->json($entries);
+    }
 }

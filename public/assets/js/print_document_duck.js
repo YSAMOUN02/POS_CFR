@@ -1,6 +1,9 @@
-const input_document_date_value = document.getElementById("document_dateInput");
-function print_document(document_type) {
-    const document_date_value = input_document_date_value.value;
+function print_document(document_type, header) {
+    console.log(header);
+
+    const document_date_value = header.posting_date;
+
+    // Document Date
     const document_date = new Date(document_date_value);
     const options = { day: "2-digit", month: "short", year: "numeric" };
     const formattedDocumentDate = document_date.toLocaleDateString(
@@ -9,13 +12,16 @@ function print_document(document_type) {
     );
 
     // docutment Header
-    const document_header = document.getElementById("document-header");
+    const document_header = header.document_no;
+
     // Title
     let document_title = document.getElementById("document_title");
     document_title.querySelector("h1").textContent = document_type;
+
     let logo = document.getElementById("logo");
     const logo_80mm = document.getElementById("logo_80mm").innerHTML;
     const invoiceContent = document.getElementById("invoice").innerHTML;
+
     // Table
     const table_data = document.getElementById("invoice-table");
     // Shop Info
@@ -28,6 +34,7 @@ function print_document(document_type) {
         "table_footer_description",
     );
 
+    // Shop Info
     const pos_info = {
         company: "ឈូកមាស ផ្គត់ផ្គង់សាច់គ្រប់ប្រភេទ",
         description:
@@ -40,17 +47,7 @@ function print_document(document_type) {
         seller: "016 79 80 87",
         name: "អតិថិជនទូទៅ",
     };
-    //  paymentData = {
-    //             paymentMethod: Payment_Method,
-    //             document_date: document_date ?? null,
-    //             customer_type: customer_type ?? null,
-    //             customer_id: customer_id ?? null,
-    //             customer_name: customer_name ?? null,
-    //             customer_phone: customer_phone ?? null,
-    //             customer_address: customer_address ?? null,
-    //             customer_deposit: customer_deposit ?? null,
-    //             remark: remark ?? null,
-    //         };
+
     // Open new window
     const printWindow = window.open("", "_blank", "width=800,height=600");
 
@@ -74,13 +71,13 @@ function print_document(document_type) {
                     <div class="line"></div>
                     <div class="info-section">
                         <div class="info-box">
-                            <div><span class="label">ឈ្មោះអតិថិជន:</span> <span>${paymentData.customer_name ?? ""}</span></div>
-                            <div><span class="label">លេខទូរស័ព្ទ:</span> <span>${paymentData.customer_phone ?? ""}</span></div>
-                            <div><span class="label">អាសយដ្ឋាន:</span> <span>${paymentData.customer_address ?? ""}</span></div>
+                            <div><span class="label">ឈ្មោះអតិថិជន:</span> <span>${header.contact_name?? ""}</span></div>
+                            <div><span class="label">លេខទូរស័ព្ទ:</span> <span>${header.phone?? ""}</span></div>
+                            <div><span class="label">អាសយដ្ឋាន:</span> <span>${header.address?? ""}</span></div>
                         </div>
 
                         <div class="info-box right-box">
-                            <div><span class="label">លេខវិក្កយបត្រ:</span> <span>${invoice_no}</span></div>
+                            <div><span class="label">លេខវិក្កយបត្រ:</span> <span>${header.document_no}</span></div>
                             <div><span class="label">ថ្ងៃទី:</span> <span>${formattedDocumentDate}</span></div>
                         </div>
                     </div>
@@ -104,7 +101,7 @@ function print_document(document_type) {
                 </body>
                 </html>
     `);
-    } else if (document_type === "Receipt") {
+    } else if (document_type == "Receipt") {
         table_footer_description.innerHTML = `
                     <div class="font-mid" style="line-height:1.5;">
                         <div style="font-weight:bold; text-decoration:underline; margin-bottom:6px;">
@@ -119,95 +116,7 @@ function print_document(document_type) {
                 <html>
                 <head>
                     <title>Receipt</title>
-                    <style>
-
-                        @page {
-                            size: 80mm auto;
-                            margin: 0 !important;
-                        }
-
-                        * {
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            box-sizing: border-box;
-                            font-family: 'Noto Serif Khmer', serif;
-                        }
-                        /* Khmer */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/khmer.woff2') format('woff2');
-                            unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
-                        }
-
-                        /* Latin Extended */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/latinex.woff2') format('woff2');
-                            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-                        }
-
-                        /* Latin */
-                        @font-face {
-                            font-family: 'Noto Serif Khmer';
-                            font-style: normal;
-                            font-weight: 400;
-                            font-stretch: 100%;
-                            font-display: swap;
-                            src: url('/assets/Font/latin.woff2') format('woff2');
-                            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-                        }
-
-                        html, body {
-                            width: 80mm !important;
-                            max-width: 80mm !important;
-                            font-family: 'Noto Serif Khmer', serif;
-                            font-size:11px;
-                            color: black !important;
-                            font-weight: bold;
-
-
-                        }
-                         img {
-                              image-rendering: pixelated; /* tries to make logos sharper */
-                            }
-                        body {
-                            padding: 3mm !important; /* tiny inner safe padding */
-                        }
-
-                        table {
-                            width: 100% !important;
-                            border-collapse: collapse;
-                            margin: 8px 0 !important;
-                            border: 1px solid #000;
-                        }
-                        thead tr{
-                        background-color: black !important;
-                        color:white !important;
-                        }
-                        table th:nth-child(6), table td:nth-child(6) {
-                         display: none;
-                         }
-
-                        th, td {
-                         border: 1px solid #00000050;
-                            padding: 1px 2px !important;
-                            font-size: 10px;
-                            font-weight: bold;
-                            color: black !important;
-                        }
-                        .font-mid{
-                            font-size: 11px;
-                            color: black !important
-                        }
-                        </style>
+                    ${style_reciept}
                 </head>
                 <body onload="window.print(); window.close();">
 
@@ -240,7 +149,7 @@ function print_document(document_type) {
 
                                 <div><b>Reciept No:</b></div>
                                 <div>
-                                 &ensp; ${reciept_no}
+                                 &ensp; ${header.document_no}
 
                                 </div>
 
@@ -250,8 +159,6 @@ function print_document(document_type) {
                     <!-- Table -->
                     ${table_data.innerHTML}
                     <div class="font-mid mt-2">${table_footer.innerHTML} </div>
-
-
                 </body>
                 </html>
                 `);
@@ -717,6 +624,8 @@ function print_document(document_type) {
     }
 
     printWindow.document.close();
+
+    Livewire.dispatch("clearCart_no_message");
 }
 
 let style_invoice = `
@@ -788,4 +697,96 @@ th,td{
     button{display:none}
 }
 </style>
+`;
+let style_reciept = `
+
+  <style>
+
+                        @page {
+                            size: 80mm auto;
+                            margin: 0 !important;
+                        }
+
+                        * {
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            box-sizing: border-box;
+                            font-family: 'Noto Serif Khmer', serif;
+                        }
+                        /* Khmer */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/khmer.woff2') format('woff2');
+                            unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC;
+                        }
+
+                        /* Latin Extended */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/latinex.woff2') format('woff2');
+                            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+                        }
+
+                        /* Latin */
+                        @font-face {
+                            font-family: 'Noto Serif Khmer';
+                            font-style: normal;
+                            font-weight: 400;
+                            font-stretch: 100%;
+                            font-display: swap;
+                            src: url('/assets/Font/latin.woff2') format('woff2');
+                            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+                        }
+
+                        html, body {
+                            width: 80mm !important;
+                            max-width: 80mm !important;
+                            font-family: 'Noto Serif Khmer', serif;
+                            font-size:11px;
+                            color: black !important;
+                            font-weight: bold;
+
+
+                        }
+                         img {
+                              image-rendering: pixelated; /* tries to make logos sharper */
+                            }
+                        body {
+                            padding: 3mm !important; /* tiny inner safe padding */
+                        }
+
+                        table {
+                            width: 100% !important;
+                            border-collapse: collapse;
+                            margin: 8px 0 !important;
+                            border: 1px solid #000;
+                        }
+                        thead tr{
+                        background-color: black !important;
+                        color:white !important;
+                        }
+                        table th:nth-child(6), table td:nth-child(6) {
+                         display: none;
+                         }
+
+                        th, td {
+                         border: 1px solid #00000050;
+                            padding: 1px 2px !important;
+                            font-size: 10px;
+                            font-weight: bold;
+                            color: black !important;
+                        }
+                        .font-mid{
+                            font-size: 11px;
+                            color: black !important
+                        }
+                        </style>
 `;

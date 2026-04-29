@@ -20,7 +20,7 @@ return new class extends Migration
 
             $table->string('document_type');
             // PURCHASE, SALE, SERVICE, EXPENSE, TRANSFER, ADJUSTMENT, RETURN_SALE, RETURN_PURCHASE
-
+            $table->string('source_no')->nullable();
             $table->string('document_no')->index()->nullable();
 
             // source links

@@ -17,7 +17,7 @@ class ItemLedgerEntry extends Model
 
         'document_type',
         'document_no',
-
+        'source_no',
         'source_id',
         'source_table',
 

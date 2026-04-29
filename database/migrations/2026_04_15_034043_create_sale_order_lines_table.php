@@ -25,6 +25,7 @@ return new class extends Migration
             $table->longText('description')->nullable();
 
             $table->decimal('quantity', 15, 4)->default(1);
+            $table->decimal('quantity_shiped', 15, 4)->default(0);
             $table->string('unit')->nullable();
             $table->string('category_name')->nullable();
 

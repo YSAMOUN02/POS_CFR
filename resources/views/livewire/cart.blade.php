@@ -59,32 +59,30 @@
                     <div class="btn_sale_invoice w-full flex items-center justify-between p-2">
                         <div class="flex items-start gap-3">
                             <div class="flex flex-col items-center justify-center">
-                                <span style="font-size:20px" wire:click="toggleItem({{ $loop->index }})"
-                                    class="text-green-500 text-lg transition-transform duration-300 hover:cursor-pointer
+                                @if ($this->document_type == 'Deposit' || $this->document_type == 'Completed' ||  $this->document_type == 'Cancelled' || $this->document_type == 'Returned')
+                                @else
+                                    <span style="font-size:20px" wire:click="toggleItem({{ $loop->index }})"
+                                        class="text-green-500 text-lg transition-transform duration-300 hover:cursor-pointer
                                                 {{ $openIndex === $loop->index ? 'rotate-180' : '' }}">
-                                    ▾
-                                </span>
-                                <button wire:click.stop="removeItem({{ $item['id'] }})" title="Remove item"><span
-                                        class="text-red-500 text-lg transition-transform duration-300 hover:cursor-pointer arrow"><i
-                                            class="fa-solid fa-delete-left fa-flip-horizontal"></i></span></button>
+                                        ▾
+                                    </span>
+                                    <button wire:click.stop="removeItem({{ $item['id'] }})" title="Remove item"><span
+                                            class="text-red-500 text-lg transition-transform duration-300 hover:cursor-pointer arrow"><i
+                                                class="fa-solid fa-delete-left fa-flip-horizontal"></i></span></button>
+                                @endif
+
+
                             </div>
                             <div class="text-left">
                                 <p class="font-semibold number-change">{{ $item['order_no'] }}. {{ $item['name'] }} x
                                     {{ $item['qty'] }} {{ $item['unit'] }}
 
                                 </p>
-                                @if ($item['discount_percent'] != 0)
-                                    <span
-                                        class="inline-flex items-center bg-brand-softer border border-brand-subtle text-fg-brand-strong text-xs font-medium px-1.5 py-0.5 rounded-sm">
-                                        <i class="fa-solid fa-tag"></i>
-                                        ចុះ {{ (float) $item['discount_percent'] }}% Off
-                                    </span>
-                                @endif
-                                @if ($item['stock'] <= $item['qty'])
+                                @if ($item['stock'] < $item['qty'] && strtolower($item['type']) == 'product')
                                     <span
                                         class="inline-flex items-center bg-rose-400 border border-brand-subtle text-white text-xs font-medium px-1.5 py-0.5 rounded-sm">
                                         <i class="fa-solid fa-boxes-stacked"></i>
-                                        អស់់ស្តុក
+                                        ស្តុកមិនគ្រប់
                                     </span>
                                 @endif
                                 <p class="text-sm text-gray-400 number-change">
@@ -260,20 +258,21 @@
                         {{ $this->currency_name }}
                     </p>
 
-                        @if ($this->factor != 1)
-                            <p class="font-semibold">
-                                តម្លៃសរុប USD :
-                                {{ number_format($this->totals['grand_total'], 2) }} $
-                            </p>
-                        @endif
+                    @if ($this->factor != 1)
+                        <p class="font-semibold">
+                            តម្លៃសរុប USD :
+                            {{ number_format($this->totals['grand_total'], 2) }} $
+                        </p>
+                    @endif
                 @endif
 
 
                 <input type="hidden" id="total_amount"
                     value="{{ number_format($this->totals['grand_total'], 2, '.', '') }}">
                 <input type="hidden" id="currency_name" value="{{ $currency_name }}">
-                <input type="hidden" id="currency_display_symbol" value="{{ $this->currency}}">
+                <input type="hidden" id="currency_display_symbol" value="{{ $this->currency }}">
                 <input type="hidden" id="currency_display_factor" value="{{ $this->factor }}">
+                <input type="hidden" id="document_type" value="{{ $this->document_type }}">
 
                 @if ($this->factor != 1)
                     <div class="w-full flex justify-between">
@@ -371,7 +370,7 @@
                     <!-- Saved Order -->
                     <button onclick="openSaleOrderModal()"
                         class="bg-indigo-500 hover:bg-indigo-600 text-white font-small px-4 py-2 rounded-xl shadow-md transition">
-                        <i class="fa-solid fa-folder-open mr-1"></i> Saved
+                       <i class="fa-solid fa-cart-shopping"></i> Orders
                     </button>
                     @if ($this->document_no != 'NA')
                         <!-- Update Sale Order -->
@@ -386,11 +385,11 @@
                             <i class="fa-solid fa-hand-holding-dollar"></i> Pay
                         </button>
                     @endif
-                    @if($this->document_id != 0)
-                    <button onclick="openSaleLine()"
-                        class="bg-gray-500 hover:bg-gray-600 text-white font-small px-4 py-2 rounded-xl shadow-md transition">
-                        <i class="fa-solid fa-circle-info"></i> Info
-                    </button>
+                    @if ($this->document_id != 0)
+                        <button onclick="openSaleLine()"
+                            class="bg-gray-500 hover:bg-gray-600 text-white font-small px-4 py-2 rounded-xl shadow-md transition">
+                            <i class="fa-solid fa-circle-info"></i> Info
+                        </button>
                     @endif
 
                 @endif
