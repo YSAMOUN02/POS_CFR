@@ -12,18 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('expenses', function (Blueprint $table) {
-        $table->id();
-    $table->date('expense_date');
-    $table->unsignedBigInteger('product_id')->nullable();
-    $table->string('expense_code')->nullable();
-    $table->string('expense_name');
-    $table->decimal('qty', 15, 2)->default(1);
-    $table->decimal('unit_price', 15, 2)->default(0);
-    $table->decimal('amount', 15, 2);
-    $table->string('payment_method')->nullable();
-    $table->text('note')->nullable();
-    $table->tinyInteger('status')->default(1);
-    $table->timestamps();
+            $table->id();
+            $table->date('expense_date');
+            $table->unsignedBigInteger('product_id')->nullable();
+            $table->string('expense_code')->nullable();
+            $table->string('expense_name');
+            $table->decimal('qty', 18, 6)->default(1);
+            $table->decimal('unit_price', 18, 6)->default(0);
+            $table->decimal('amount', 18, 6)->default(0);
+            $table->string('payment_method')->nullable();
+            $table->text('note')->nullable();
+            $table->tinyInteger('status')->default(1);
+            $table->timestamps();
         });
     }
 

@@ -25,14 +25,14 @@ return new class extends Migration
             $table->string('variant')->nullable();
             $table->text('description')->nullable();
 
-            $table->decimal('quantity', 10, 2)->default(0);
+            $table->integer('quantity')->default(0);
             $table->string('unit')->nullable();
            $table->string('lot')->nullable();
                $table->date('expire_date')->nullable();
             $table->string('category_name')->nullable();
 
-            $table->decimal('unit_cost', 15, 4)->default(0);
-            $table->decimal('line_amount', 15, 4)->default(0);
+            $table->decimal('unit_cost', 18, 6)->default(0);
+            $table->decimal('line_amount', 18, 6)->default(0);
 
             $table->text('remark')->nullable();
             $table->string('created_by')->nullable();

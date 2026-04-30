@@ -3,6 +3,15 @@ function print_document(document_type, header) {
 
     const document_date_value = header.posting_date;
 
+    const style = document.querySelector("#paper-size").value;
+    let confirm_style_invoice = "";
+
+    if (style == "A4") {
+        confirm_style_invoice = style_invoice_A4;
+    } else if (style == "A5") {
+        confirm_style_invoice = style_invoice_A5;
+    }
+
     // Document Date
     const document_date = new Date(document_date_value);
     const options = { day: "2-digit", month: "short", year: "numeric" };
@@ -41,7 +50,9 @@ function print_document(document_type, header) {
             "មានលក់ដុំនិងរាយ មាន់ ទា ជើងមាន់ ស្លាបមាន់ សាច់ទ្រូងមាន់ និងគ្រឿងប្រឡាក់សាច់",
         address1: "ភ្នំពេញ",
         address2: "",
-        phone: "011 79 80 87 / 097 779 80 87",
+        phone1: "011 79 80 87",
+        phone2 : "097 779 80 87",
+        socail: "",
         email: "",
         telegram: "016 79 80 87",
         seller: "016 79 80 87",
@@ -55,8 +66,8 @@ function print_document(document_type, header) {
         printWindow.document.write(`
                 <html>
                 <head>
-                    <title>Invoice</title>
-                    ${style_invoice}
+                    <title></title>
+                    ${confirm_style_invoice}
                 </head>
                 <body onload="window.print(); window.close();">
 
@@ -69,16 +80,43 @@ function print_document(document_type, header) {
                     <div class="line"></div>
                     <div class="invoice-title">វិក្កយបត្រ</div>
                     <div class="line"></div>
-                    <div class="info-section">
+               <div class="info-section">
                         <div class="info-box">
-                            <div><span class="label">ឈ្មោះអតិថិជន:</span> <span>${header.contact_name?? ""}</span></div>
-                            <div><span class="label">លេខទូរស័ព្ទ:</span> <span>${header.phone?? ""}</span></div>
-                            <div><span class="label">អាសយដ្ឋាន:</span> <span>${header.address?? ""}</span></div>
+                            <div class="row">
+                                <span class="label">ឈ្មោះអតិថិជន:</span>
+                                <span class="value">${header.contact_name ?? "General"}</span>
+                            </div>
+                            <div class="row">
+                                <span class="label">លេខទូរស័ព្ទ:</span>
+                                <span class="value">${header.phone ?? ""}</span>
+                            </div>
+                            <div class="row">
+                                <span class="label">អាសយដ្ឋាន:</span>
+                                <span class="value">${header.address ?? ""}</span>
+                            </div>
                         </div>
 
-                        <div class="info-box right-box">
-                            <div><span class="label">លេខវិក្កយបត្រ:</span> <span>${header.document_no}</span></div>
-                            <div><span class="label">ថ្ងៃទី:</span> <span>${formattedDocumentDate}</span></div>
+                        <div class="info-bo right-box">
+                            <div class="row">
+                                <span class="label">លេខរៀងវិក្កយបត្រ:</span>
+                                <span class="value">${header.document_no ?? "-"}</span>
+                            </div>
+                            <div class="row">
+                                <span class="label">ថ្ងៃ​.ខែ.ឆ្នាំ:</span>
+                                <span class="value">${formattedDocumentDate ?? "-"}</span>
+                            </div>
+                            <div class="row">
+                                <span class="label">លេខទូរស័ព្ទ:</span>
+                                <span   class="value ">${pos_info?.phone1 ?? "-"}</span>
+                            </div>
+                                          <div class="row">
+                                <span class="label"></span>
+                                <span   class="value ">${pos_info?.phone2 ?? "-"}</span>
+                            </div>
+                            <div class="row">
+                                <span class="label">តេឡេក្រាម:</span>
+                                <span class="value">${pos_info?.telegram ?? "-"}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -628,74 +666,241 @@ function print_document(document_type, header) {
     Livewire.dispatch("clearCart_no_message");
 }
 
-let style_invoice = `
+let style_invoice_A4 = `
 <style>
 @font-face{
     font-family:'Noto Serif Khmer';
     src:url('/assets/Font/khmer.woff2') format('woff2');
     unicode-range:U+1780-17FF,U+19E0-19FF,U+200C-200D,U+25CC;
 }
+
 @font-face{
     font-family:'Noto Serif Khmer';
     src:url('/assets/Font/latinex.woff2') format('woff2');
     unicode-range:U+0100-02BA,U+1E00-1EFF,U+2020,U+20A0-20AB;
 }
 
-body{
-    font-family:'Noto Serif Khmer',serif;
-    margin:15px;
+@page {
+    size: A4;
+    margin: 12mm;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family:'Noto Serif Khmer', serif;
+    color: #000;
+    font-size: 13px;
+}
+
+.print-page {
+    width: 100%;
+    min-height: 273mm;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.header-center {
+    text-align: center;
+    line-height: 1.6;
+}
+
+.line {
+    border-top: 2px solid #000;
+    margin: 10px 0;
+}
+
+.invoice-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.info-section {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+    margin-bottom: 10px;
+}
+
+.info-box {
+    width: 48%;
+}
+
+.row {
+    display: flex;
+    margin-bottom: 4px;
+}
+
+.label {
+    min-width: 140px;
+    font-weight: 600;
+}
+
+.value {
+    flex: 1;
+    word-break: break-word;
+}
+
+table {
+    width: calc(100% - 1px);
+    max-width: calc(100% - 1px);
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin-top: 8px;
+    box-sizing: border-box;
+}
+
+th, td {
+    border: 1px solid #000;
+    padding: 5px;
+    text-align: center;
+    font-size: 12px;
+    word-break: break-word;
+    box-sizing: border-box;
+}
+
+.summary td,
+.total_print td {
+    text-align: right;
+    font-weight: bold;
+}
+
+.signature-section {
+    margin-top: auto !important;
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+    padding-top: 20px;
+}
+
+.signature-box {
+    width: 180px;
+}
+
+@media print {
+    button {
+        display: none;
+    }
+}
+</style>
+`;
+
+let style_invoice_A5 = `
+<style>
+
+@font-face{
+    font-family:'Noto Serif Khmer';
+    src:url('/assets/Font/khmer.woff2') format('woff2');
+    unicode-range:U+1780-17FF,U+19E0-19FF,U+200C-200D,U+25CC;
+}
+
+@font-face{
+    font-family:'Noto Serif Khmer';
+    src:url('/assets/Font/latinex.woff2') format('woff2');
+    unicode-range:U+0100-02BA,U+1E00-1EFF,U+2020,U+20A0-20AB;
+}
+@page {
+    size: A5;
+    margin: 8mm;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+ font-family:'Noto Serif Khmer', serif;
     color:#000;
-    font-size:13px;
+    font-size:10px; /* 🔥 smaller base */
 }
-.header-center{text-align:center;line-height:1.6}
-.line{border-top:2px solid #000;margin:10px 0}
-.invoice-title{text-align:center;font-size:24px;font-weight:bold}
-.info-section{
-    display:flex;
-    justify-content:space-between;
-    margin:15px 0;
-    gap:20px;
+
+.print-page {
+    width: 100%;
+    min-height: 190mm; /* A5 usable height */
+    display: flex;
+    flex-direction: column;
 }
-.info-box{
-    width:48%;
+
+.header-center{
+    text-align:center;
+    line-height:1.3;
 }
-.info-box div{
-    display:flex;
-    margin-bottom:6px;
+
+.line{
+    border-top:1px solid #000;
+    margin:5px 0;
 }
-.label{
-    min-width:120px;
+
+.invoice-title{
+    text-align:center;
+    font-size:14px; /* 🔥 reduced */
     font-weight:bold;
 }
-.right-box .label{
-    min-width:100px;
+
+.info-section {
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:5px;
 }
+
+.info-box {
+    width:50%;
+}
+
+.row {
+    display:flex;
+    margin-bottom:2px;
+}
+
+.label {
+    min-width: 90px; /* 🔥 smaller */
+    font-weight:600;
+    font-size:10px;
+}
+
+.value {
+    flex:1;
+    word-break:break-word;
+    font-size:10px;
+}
+
 table{
     width:100%;
     border-collapse:collapse;
-    margin-top:8px;
+    margin-top:5px;
 }
+
 th,td{
     border:1px solid #000;
-    padding:5px;
+    padding:2px; /* 🔥 tighter */
     text-align:center;
-    font-size:12px;
+    font-size:9px; /* 🔥 smaller table */
 }
+
 .summary td{
     text-align:right;
     font-weight:bold;
 }
-.signature-section{
+
+.signature-section {
+    margin-top:auto;
     display:flex;
     justify-content:space-between;
-    margin-top:60px;
     text-align:center;
+    padding-top:15px;
 }
-.signature-box{width:180px}
+
+.signature-box{
+    width:120px;
+    font-size:10px;
+}
 
 @media print{
     button{display:none}
 }
+
 </style>
 `;
 let style_reciept = `

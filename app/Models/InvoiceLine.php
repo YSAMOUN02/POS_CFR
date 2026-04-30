@@ -44,20 +44,20 @@ class InvoiceLine extends Model
 ];
 
 protected $casts = [
-    'quantity'            => 'decimal:4',
+    'quantity'            => 'decimal:6',
 
-    'cost'                => 'decimal:2',
-    'unit_price'          => 'decimal:2',
-    'sell_price'          => 'decimal:2',
+    'cost'                => 'decimal:6',
+    'unit_price'          => 'decimal:6',
+    'sell_price'          => 'decimal:6',
 
-    'discount_percent'    => 'decimal:2',
-    'discount_amount'     => 'decimal:2',
+    'discount_percent'    => 'decimal:4',
+    'discount_amount'     => 'decimal:6',
 
-    'line_amount'         => 'decimal:2',
-    'vat_percent'         => 'decimal:2',
-    'vat_amount'          => 'decimal:2',
-    'net_amount'          => 'decimal:2',
-    'grand_total_amount'  => 'decimal:2',
+    'line_amount'         => 'decimal:6',
+    'vat_percent'         => 'decimal:4',
+    'vat_amount'          => 'decimal:6',
+    'net_amount'          => 'decimal:6',
+    'grand_total_amount'  => 'decimal:6',
 ];
     /*
     |--------------------------------------------------------------------------

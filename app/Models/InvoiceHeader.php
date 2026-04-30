@@ -32,16 +32,15 @@ class InvoiceHeader extends Model
         'remarks',
         'created_by',
     ];
-
-    protected $casts = [
-        'invoice_date'      => 'date',
-        'total_amount'      => 'decimal:2',
-        'vat_amount'        => 'decimal:2',
-        'discount_percent'  => 'decimal:2',
-        'discount_amount'   => 'decimal:2',
-        'grand_total'       => 'decimal:2',
-        'factor'            => 'decimal:6',
-    ];
+protected $casts = [
+    'invoice_date'      => 'date',
+    'total_amount'      => 'decimal:6',
+    'vat_amount'        => 'decimal:6',
+    'discount_percent'  => 'decimal:4',
+    'discount_amount'   => 'decimal:6',
+    'grand_total'       => 'decimal:6',
+    'factor'            => 'decimal:6',
+];
 
     public function lines()
     {

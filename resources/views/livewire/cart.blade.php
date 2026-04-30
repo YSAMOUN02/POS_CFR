@@ -59,7 +59,11 @@
                     <div class="btn_sale_invoice w-full flex items-center justify-between p-2">
                         <div class="flex items-start gap-3">
                             <div class="flex flex-col items-center justify-center">
-                                @if ($this->document_type == 'Deposit' || $this->document_type == 'Completed' ||  $this->document_type == 'Cancelled' || $this->document_type == 'Returned')
+                                @if (
+                                    $this->document_type == 'Deposit' ||
+                                        $this->document_type == 'Completed' ||
+                                        $this->document_type == 'Cancelled' ||
+                                        $this->document_type == 'Returned')
                                 @else
                                     <span style="font-size:20px" wire:click="toggleItem({{ $loop->index }})"
                                         class="text-green-500 text-lg transition-transform duration-300 hover:cursor-pointer
@@ -78,25 +82,46 @@
                                     {{ $item['qty'] }} {{ $item['unit'] }}
 
                                 </p>
-                                @if ($item['stock'] < $item['qty'] && strtolower($item['type']) == 'product')
+                                @if ($this->document_type == 'Deposit')
                                     <span
-                                        class="inline-flex items-center bg-rose-400 border border-brand-subtle text-white text-xs font-medium px-1.5 py-0.5 rounded-sm">
+                                        class="inline-flex items-center bg-green-400 border border-brand-subtle text-white text-xs font-medium px-1.5 py-0.5 rounded-sm">
                                         <i class="fa-solid fa-boxes-stacked"></i>
-                                        ស្តុកមិនគ្រប់
+                                        កាត់ស្តុរូច
                                     </span>
+                                @else
+                                    @if ($item['stock'] < $item['qty'] && strtolower($item['type']) == 'product')
+                                        <span
+                                            class="inline-flex items-center bg-rose-400 border border-brand-subtle text-white text-xs font-medium px-1.5 py-0.5 rounded-sm">
+                                            <i class="fa-solid fa-boxes-stacked"></i>
+                                            ស្តុកមិនគ្រប់
+                                        </span>
+                                    @endif
                                 @endif
+
                                 <p class="text-sm text-gray-400 number-change">
                                     តម្លៃ:
                                     @if ($item['discount_percent'] != 0)
                                         <del>
-                                            {{ number_format((float) $item['price'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
+                                            {{ $this->factor != 1
+                                                ? (abs($item['price'] * $this->factor) < 1 && $item['price'] * $this->factor != 0
+                                                    ? rtrim(rtrim(number_format($item['price'] * $this->factor, 6, '.', ''), '0'), '.')
+                                                    : number_format($item['price'] * $this->factor, 0))
+                                                : rtrim(rtrim(number_format($item['price'], 2, '.', ''), '0'), '.') }}
                                         </del>
                                         {{ $this->currency_name }}
                                         -
-                                        {{ number_format((float) $item['discount_price'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
+                                        {{ $this->factor != 1
+                                            ? (abs($item['discount_price'] * $this->factor) < 1 && $item['discount_price'] * $this->factor != 0
+                                                ? rtrim(rtrim(number_format($item['discount_price'] * $this->factor, 6, '.', ''), '0'), '.')
+                                                : number_format($item['discount_price'] * $this->factor, 0))
+                                            : rtrim(rtrim(number_format($item['discount_price'], 2, '.', ''), '0'), '.') }}
                                         {{ $this->currency_name }}
                                     @else
-                                        {{ number_format((float) $item['price'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
+                                        {{ $this->factor != 1
+                                            ? (abs($item['price'] * $this->factor) < 1 && $item['price'] * $this->factor != 0
+                                                ? rtrim(rtrim(number_format($item['price'] * $this->factor, 6, '.', ''), '0'), '.')
+                                                : number_format($item['price'] * $this->factor, 0))
+                                            : rtrim(rtrim(number_format($item['price'], 2, '.', ''), '0'), '.') }}
                                         {{ $this->currency_name }}
                                     @endif
                                 </p>
@@ -106,14 +131,26 @@
                             <p class="font-semibold number-change">
                                 @if ($item['discount_percent'] != 0)
                                     <del>
-                                        {{ number_format((float) $item['amount_line'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
+                                        {{ $this->factor != 1
+                                            ? (abs($item['amount_line'] * $this->factor) < 1 && $item['amount_line'] * $this->factor != 0
+                                                ? rtrim(rtrim(number_format($item['amount_line'] * $this->factor, 6, '.', ''), '0'), '.')
+                                                : number_format($item['amount_line'] * $this->factor, 0))
+                                            : rtrim(rtrim(number_format($item['amount_line'], 2, '.', ''), '0'), '.') }}
                                         {{ $this->currency_name }}
                                     </del>
                                     -
-                                    {{ number_format((float) $item['net_amount_line'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
+                                    {{ $this->factor != 1
+                                        ? (abs($item['net_amount_line'] * $this->factor) < 1 && $item['net_amount_line'] * $this->factor != 0
+                                            ? rtrim(rtrim(number_format($item['net_amount_line'] * $this->factor, 6, '.', ''), '0'), '.')
+                                            : number_format($item['net_amount_line'] * $this->factor, 0))
+                                        : rtrim(rtrim(number_format($item['net_amount_line'], 2, '.', ''), '0'), '.') }}
                                     {{ $this->currency_name }}
                                 @else
-                                    {{ number_format((float) $item['amount_line'] * $this->factor, $this->factor == 1 ? 2 : 0) }}
+                                    {{ $this->factor != 1
+                                        ? (abs($item['amount_line'] * $this->factor) < 1 && $item['amount_line'] * $this->factor != 0
+                                            ? rtrim(rtrim(number_format($item['amount_line'] * $this->factor, 6, '.', ''), '0'), '.')
+                                            : number_format($item['amount_line'] * $this->factor, 0))
+                                        : rtrim(rtrim(number_format($item['amount_line'], 2, '.', ''), '0'), '.') }}
                                     {{ $this->currency_name }}
                                 @endif
 
@@ -138,9 +175,9 @@
                                 <!-- Unit Price -->
                                 <div class="col-span-2">
                                     <label class="text-sm text-gray-500">តម្លៃ</label>
-                                    <input type="number" min="0" step="0.01"
+                                    <input type="number" min="0" step="0.000001"
                                         wire:key="price-{{ $loop->index }}-{{ $this->cart[$loop->index]['price'] }}-{{ $this->factor }}"
-                                        value="{{ rtrim(rtrim(number_format($item['price'] * $this->factor, 3, '.', ''), '0'), '.') }}"
+                                        value="{{ rtrim(rtrim(number_format($item['price'] * $this->factor, 6, '.', ''), '0'), '.') }}"
                                         wire:change="recalcLine({{ $loop->index }}, 'price', $event.target.value)"
                                         class="w-full mt-1 border rounded px-3 py-2" />
                                 </div>
@@ -166,9 +203,9 @@
                                 <!-- Unit Price -->
                                 <div class="col-span-4">
                                     <label class="text-sm text-gray-500">តម្លៃ</label>
-                                    <input type="number" min="0" step="0.01"
+                                    <input type="number" min="0" step="0.000001"
                                         wire:key="price-{{ $loop->index }}-{{ $this->cart[$loop->index]['price'] }}-{{ $this->factor }}"
-                                        value="{{ rtrim(rtrim(number_format($item['price'] * $this->factor, 3, '.', ''), '0'), '.') }}"
+                                        value="{{ rtrim(rtrim(number_format($item['price'] * $this->factor, 6, '.', ''), '0'), '.') }}"
                                         wire:change="recalcLine({{ $loop->index }}, 'price', $event.target.value)"
                                         class="w-full mt-1 border rounded px-3 py-2" />
                                 </div>
@@ -218,57 +255,62 @@
                 @if ($cart_mode == 'expence')
 
                     <p class="font-semibold">
-                        តម្លៃសរុប : {{ number_format($this->totals['grand_total'] * $this->factor, 0) }}
+                        តម្លៃសរុប :
+                        {{ $this->factor != 1
+                            ? (abs($this->totals['grand_total'] * $this->factor) < 1 && $this->totals['grand_total'] * $this->factor != 0
+                                ? rtrim(rtrim(number_format($this->totals['grand_total'] * $this->factor, 6, '.', ''), '0'), '.')
+                                : number_format($this->totals['grand_total'] * $this->factor, 0))
+                            : rtrim(rtrim(number_format($this->totals['grand_total'], 6, '.', ''), '0'), '.') }}
                         {{ $this->currency_name }}
                     </p>
 
                     @if ($this->currency_name != '$')
                         <p class="font-semibold">
-                            តម្លៃសរុប ជា USD : {{ number_format($this->totals['grand_total'], 2) }} $
+                            តម្លៃសរុប ជា USD :
+                            {{ rtrim(rtrim(number_format($this->totals['grand_total'], 6, '.', ''), '0'), '.') }} $
                         </p>
                     @endif
                 @else
-                    @php
-                        $decimal = $this->factor == 1 ? 2 : 0;
-                    @endphp
-
                     <p class="text-sm">
                         សរុបរង:
-                        {{ number_format($this->totals['total_original'] * $this->factor, $decimal) }}
+                        {{ rtrim(rtrim(number_format($this->totals['total_original'] * $this->factor, 6, '.', ''), '0'), '.') }}
                         {{ $this->currency_name }}
                     </p>
 
                     <p class="text-sm">
                         បញ្ចុះតម្លៃ :
-                        {{ number_format($this->totals['total_discount'] * $this->factor, $decimal) }}
+                        {{ rtrim(rtrim(number_format($this->totals['total_discount'] * $this->factor, 6, '.', ''), '0'), '.') }}
                         {{ $this->currency_name }}
                     </p>
 
                     @if ($this->totals['vat_status'] > 0)
                         <p class="text-sm">
                             VAT {{ (int) $this->totals['vat_status'] }} % :
-                            {{ number_format($this->totals['total_vat_amount'] * $this->factor, $decimal) }}
+
+
+                            {{ rtrim(rtrim(number_format($this->totals['total_vat_amount'] * $this->factor, 6, '.', ''), '0'), '.') }}
                             {{ $this->currency_name }}
                         </p>
                     @endif
 
                     <p class="font-semibold">
                         តម្លៃសរុប :
-                        {{ number_format($this->totals['grand_total'] * $this->factor, $decimal) }}
+
+                        {{ rtrim(rtrim(number_format($this->totals['grand_total'] * $this->factor, 6, '.', ''), '0'), '.') }}
                         {{ $this->currency_name }}
                     </p>
 
                     @if ($this->factor != 1)
                         <p class="font-semibold">
                             តម្លៃសរុប USD :
-                            {{ number_format($this->totals['grand_total'], 2) }} $
+                            {{ rtrim(rtrim(number_format($this->totals['grand_total'], 6, '.', ''), '0'), '.') }} $
                         </p>
                     @endif
                 @endif
 
 
                 <input type="hidden" id="total_amount"
-                    value="{{ number_format($this->totals['grand_total'], 2, '.', '') }}">
+                    value="{{ rtrim(rtrim(number_format($this->totals['grand_total'], 6, '.', ''), '0'), '.') }} ">
                 <input type="hidden" id="currency_name" value="{{ $currency_name }}">
                 <input type="hidden" id="currency_display_symbol" value="{{ $this->currency }}">
                 <input type="hidden" id="currency_display_factor" value="{{ $this->factor }}">
@@ -290,15 +332,13 @@
 
 
                     </div>
+
+
                     <input type="hidden" id="converted_total_amount"
-                        value="{{ floor($this->totals['grand_total'] * $factor) == $this->totals['grand_total'] * $factor
-                            ? number_format($this->totals['grand_total'] * $factor, 0)
-                            : number_format($this->totals['grand_total'] * $factor, 2) }}">
+                        value="{{ rtrim(rtrim(number_format($this->totals['grand_total'] * $factor, 6, '.', ''), '0'), '.') }}">
                 @else
                     <input type="hidden" id="converted_total_amount"
-                        value="{{ floor($this->totals['grand_total'] * $factor) == $this->totals['grand_total'] * $factor
-                            ? number_format($this->totals['grand_total'] * $factor, 0)
-                            : number_format($this->totals['grand_total'] * $factor, 2) }}">
+                        value="{{ rtrim(rtrim(number_format($this->totals['grand_total'] * $factor, 6, '.', ''), '0'), '.') }}">
                 @endif
 
             </div>
@@ -370,7 +410,7 @@
                     <!-- Saved Order -->
                     <button onclick="openSaleOrderModal()"
                         class="bg-indigo-500 hover:bg-indigo-600 text-white font-small px-4 py-2 rounded-xl shadow-md transition">
-                       <i class="fa-solid fa-cart-shopping"></i> Orders
+                        <i class="fa-solid fa-cart-shopping"></i> Orders
                     </button>
                     @if ($this->document_no != 'NA')
                         <!-- Update Sale Order -->
@@ -504,7 +544,7 @@
                 <table style="width:100%; border-collapse:collapse;">
                     <thead>
                         <tr>
-                            <th>ល.រ</th>
+                            <th style="max-width=5%;">ល.រ</th>
                             <th>រាយមុខទំនិញ</th>
                             <th>ឯកតា</th>
                             <th>ចំនួន</th>
@@ -515,18 +555,35 @@
 
                     <tbody>
                         @foreach ($cart as $item)
-                            <tr>
-                                <td style="text-align:center;">{{ $item['order_no'] }}</td>
-                                <td>{{ $item['name'] }}</td>
-                                <td style="text-align:center;">{{ $item['unit'] }}</td>
-                                <td style="text-align:center;">{{ $item['qty'] }}</td>
-                                <td style="text-align:right;">
-                                    {{ number_format($item['price'] * $factor, $factor == 1 ? 2 : 0) }}
-                                </td>
-                                <td style="text-align:right;">
-                                    {{ number_format($item['net_amount_line'] * $factor, $factor == 1 ? 2 : 0) }}
-                                </td>
-                            </tr>
+                            @if ($item['type'] == 'service')
+                                <tr>
+                                    <td colspan="5" style="text-align:end; font-weight:bold ">{{ $item['name'] }}
+                                    </td>
+                                    <td style="text-align:right; font-weight:bold;">
+                                        {{ $factor == 1
+                                            ? rtrim(rtrim(number_format($item['net_amount_line'], 2, '.', ''), '0'), '.')
+                                            : number_format($item['net_amount_line'] * $factor, 0) }}
+                                    </td>
+                                </tr>
+                            @else
+                                <tr>
+                                    <td style="text-align:center;">{{ $item['order_no'] }}</td>
+                                    <td style="text-align:start">{{ $item['name'] }}</td>
+                                    <td style="text-align:center">{{ $item['unit'] }}</td>
+                                    <td style="text-align:center;">{{ $item['qty'] }}</td>
+                                    <td style="text-align:right;">
+                                        {{ $factor == 1
+                                            ? rtrim(rtrim(number_format($item['price'], 6, '.', ''), '0'), '.')
+                                            : number_format($item['price'] * $factor, 0) }}
+                                    </td>
+
+                                    <td style="text-align:right;">
+                                        {{ $factor == 1
+                                            ? rtrim(rtrim(number_format($item['net_amount_line'], 6, '.', ''), '0'), '.')
+                                            : number_format($item['net_amount_line'] * $factor, 0) }}
+                                    </td>
+                                </tr>
+                            @endif
                         @endforeach
                         {{-- Sub Total --}}
                         <tr class="total_print">
@@ -534,18 +591,68 @@
                                 សរុប/Sub Total ({{ $currency }})
                             </td>
                             <td style="text-align:right; font-weight:bold;">
-                                {{ number_format($this->totals['total_original'] * $factor, $factor == 1 ? 2 : 0) }}
+                                {{ $factor == 1
+                                    ? rtrim(rtrim(number_format($this->totals['total_original'], 6, '.', ''), '0'), '.')
+                                    : number_format($this->totals['total_original'] * $factor, 0) }}
                             </td>
                         </tr>
-                        {{-- Discount --}}
+                        {{-- $this->document_type == 'Completed' --}}
+
+
                         <tr class="total_print">
                             <td colspan="5" style="text-align:right; font-weight:bold;">
-                                បញ្ចុះតម្លៃ/Discount ({{ $currency }})
+                                កក់មុន/Deposit ({{ $currency }})
                             </td>
+
                             <td style="text-align:right; font-weight:bold;">
-                                {{ number_format($this->totals['total_discount'] * $factor, $factor == 1 ? 2 : 0) }}
+                                {{ $factor == 1
+                                    ? rtrim(rtrim(number_format($this->deposit, 6, '.', ''), '0'), '.')
+                                    : number_format($this->deposit * $factor, 0) }}
                             </td>
                         </tr>
+                        @php
+                            $deposit = (float) $this->deposit;
+                        @endphp
+
+                        @if ($deposit > 0)
+                            {{-- Balance --}}
+                            <tr class="total_print">
+                                <td colspan="5" style="text-align:right; font-weight:bold;">
+                                    នៅសល់/Balance ({{ $currency }})
+                                </td>
+                                <td style="text-align:right; font-weight:bold;">
+                                    {{ $factor == 1
+                                        ? rtrim(rtrim(number_format($this->balanceAmount_display, 6, '.', ''), '0'), '.')
+                                        : number_format($this->balanceAmount_display * $factor, 0) }}
+                                </td>
+                            </tr>
+                        @else
+                            {{-- Grand Total --}}
+                            <tr class="total_print">
+                                <td colspan="5" style="text-align:right; font-weight:bold;">
+                                    សរុប /Grand Total ({{ $currency }})
+                                </td>
+                                <td style="text-align:right; font-weight:bold;">
+                                    {{ $factor == 1
+                                        ? rtrim(rtrim(number_format($this->totals['grand_total'], 6, '.', ''), '0'), '.')
+                                        : number_format($this->totals['grand_total'] * $factor, 0) }}
+                                </td>
+                            </tr>
+                        @endif
+
+                        @if ($this->totals['total_discount'] != 0)
+                            {{-- Discount --}}
+                            <tr class="total_print">
+                                <td colspan="5" style="text-align:right; font-weight:bold;">
+                                    បញ្ចុះតម្លៃ/Discount ({{ $currency }})
+                                </td>
+                                <td style="text-align:right; font-weight:bold;">
+                                    {{ $factor == 1
+                                        ? rtrim(rtrim(number_format($this->totals['total_discount'], 6, '.', ''), '0'), '.')
+                                        : number_format($this->totals['total_discount'] * $factor, 0) }}
+                                </td>
+                            </tr>
+                        @endif
                         {{-- VAT --}}
                         @if (($this->totals['vat_status'] ?? 0) > 0)
                             <tr class="total_print">
@@ -553,19 +660,14 @@
                                     អាករ/VAT {{ (int) $this->totals['vat_status'] }}% ({{ $currency }})
                                 </td>
                                 <td style="text-align:right; font-weight:bold;">
-                                    {{ number_format($this->totals['total_vat_amount'] * $factor, $factor == 1 ? 2 : 0) }}
+                                    {{ $factor == 1
+                                        ? rtrim(rtrim(number_format($this->totals['total_vat_amount'], 6, '.', ''), '0'), '.')
+                                        : number_format($this->totals['total_vat_amount'] * $factor, 0) }}
                                 </td>
                             </tr>
                         @endif
-                        {{-- Grand Total --}}
-                        <tr class="total_print">
-                            <td colspan="5" style="text-align:right; font-weight:bold;">
-                                សរុបរួម/Grand Total ({{ $currency }})
-                            </td>
-                            <td style="text-align:right; font-weight:bold;">
-                                {{ number_format($this->totals['grand_total'] * $factor, $factor == 1 ? 2 : 0) }}
-                            </td>
-                        </tr>
+
+
                     </tbody>
                 </table>
             </div>

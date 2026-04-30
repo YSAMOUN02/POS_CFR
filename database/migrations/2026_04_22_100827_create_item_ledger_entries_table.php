@@ -45,26 +45,27 @@ return new class extends Migration
             $table->date('expire_date')->nullable();
 
             // quantities
-            $table->decimal('quantity', 15, 4)->default(0);
-            $table->decimal('remaining_quantity', 15, 4)->default(0);
-            // useful for incoming entries like purchase lots
+            $table->integer('quantity')->default(0);
+            $table->integer('remaining_quantity')->default(0);
 
+            // entry type
             $table->enum('entry_type', ['positive', 'negative'])->index();
-            // positive = stock in, negative = stock out
 
             // cost / price / value
-            $table->decimal('unit_cost', 15, 4)->default(0);
-            $table->decimal('unit_price', 15, 4)->default(0)->nullable();  // price set on product with discount and vat
-            $table->decimal('sell_price', 15, 4)->default(0)->nullable(); //actualt selling price, can be different from unit_price due to discounts or promotions
-            $table->decimal('discount_percent', 8, 2)->default(0);
-            $table->decimal('discount_amount', 15, 4)->default(0);
-            $table->decimal('vat', 5, 2)->default(0);
-            $table->decimal('vat_amount', 15, 4)->default(0);
+            $table->decimal('unit_cost', 18, 6)->default(0);
+            $table->decimal('unit_price', 18, 6)->nullable()->default(0);
+            $table->decimal('sell_price', 18, 6)->nullable()->default(0);
 
-            $table->decimal('line_amount', 15, 4)->default(0);  //raw selling value  || grpss
-            $table->decimal('net_amount', 15, 4)->default(0);   //after discount , after discount  👉 before VAT
+            $table->decimal('discount_percent', 8, 4)->default(0); // optional upgrade
+            $table->decimal('discount_amount', 18, 6)->default(0);
 
-            $table->decimal('grand_total_amount', 15, 4)->default(0); // final amount customer pays.
+            $table->decimal('vat',  18, 6)->default(0);
+            $table->decimal('vat_amount', 18, 6)->default(0);
+
+            $table->decimal('line_amount', 18, 6)->default(0);
+            $table->decimal('net_amount', 18, 6)->default(0);
+
+            $table->decimal('grand_total_amount', 18, 6)->default(0);
 
             // total movement value, usually net or costing value depending on your policy
 

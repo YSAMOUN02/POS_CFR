@@ -24,24 +24,24 @@ return new class extends Migration
             $table->string('variant')->nullable();
             $table->longText('description')->nullable();
 
-            $table->decimal('quantity', 15, 4)->default(1);
-            $table->decimal('quantity_shiped', 15, 4)->default(0);
+            $table->integer('quantity')->default(1);
+            $table->decimal('quantity_shiped', 18, 6)->default(0);
             $table->string('unit')->nullable();
             $table->string('category_name')->nullable();
 
-            $table->decimal('cost', 15, 2)->default(0);
-            $table->decimal('unit_price', 15, 2)->default(0);
-            $table->decimal('sell_price', 15, 2)->default(0);
+            $table->decimal('cost', 18, 6)->default(0);
+            $table->decimal('unit_price', 18, 6)->default(0);
+            $table->decimal('sell_price', 18, 6)->default(0);
 
-            $table->decimal('discount_percent', 5, 2)->default(0);
-            $table->decimal('discount_amount', 15, 2)->default(0);
+            $table->decimal('discount_percent', 8, 4)->default(0);
+            $table->decimal('discount_amount', 18, 6)->default(0);
 
-            $table->decimal('line_amount', 15, 2)->default(0);
-            $table->decimal('vat', 5, 2)->default(0);
-            $table->decimal('vat_amount', 15, 2)->default(0);
-            $table->decimal('net_amount', 15, 2)->default(0);
-            $table->decimal('grand_total_amount', 15, 2)->default(0);
-
+            $table->decimal('line_amount', 18, 6)->default(0);
+                        $table->decimal('vat', 8, 4)->default(0);
+            $table->decimal('vat_amount', 18, 6)->default(0);
+            $table->decimal('net_amount', 18, 6)->default(0);
+            $table->decimal('grand_total_amount', 18, 6)->default(0);
+            $table->string('created_by')->nullable();
             $table->timestamps();
         });
     }

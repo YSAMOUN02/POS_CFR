@@ -833,6 +833,89 @@ table th {
 
 
 
+/* ------------------------------------------------------------------------------ */
+
+/* Report Table Base */
+#Table-sale-list {
+    width: 100%;
+    /* Table container min-height */
+    border-collapse: collapse;
+    font-size: 13px;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Table header */
+#Table-sale-list thead th {
+    position: sticky !important;
+    top: 0;
+    z-index: 10;
+    background-color: rgb(0, 0, 129); /* header bg */
+    color: white;
+    font-weight: bold;
+    text-align: left;
+    padding: 8px 10px; /* consistent padding */
+    white-space: nowrap;
+}
+
+/* Table body cells */
+#Table-sale-list tbody td {
+    padding: 8px 10px; /* consistent padding */
+    border-bottom: 1px solid #ccc;
+    vertical-align: middle; /* center content vertically */
+    white-space: nowrap;
+}
+
+/* Table rows */
+#Table-sale-list tbody tr {
+    height: auto; /* allow growth for bigger content */
+}
+
+/* Right-align numeric columns */
+#Table-sale-list tbody td.numeric {
+    text-align: right;
+}
+
+/* Hover effect */
+#Table-sale-list tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+/* Optional: alternate row colors */
+#Table-sale-list tbody tr:nth-child(even) {
+    background-color: #fefefe;
+}
+
+/* Scrollable container (if needed) */
+#Table-sale-list-container {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Optional: fix table width for horizontal scroll */
+#Table-sale-list {
+    table-layout: auto; /* auto or fixed depending on your preference */
+}
+
+#Table-sale-list th:nth-child(3) {
+    position: sticky !important;
+    left: 0;
+    background-color: rgb(0, 0, 129); /* must have background */
+    color: white;
+    font-weight: bold;
+    text-align: left;
+    color: white;
+    z-index: 999 !important;
+}
+#Table-sale-list td:nth-child(3) {
+    position: sticky !important;
+    left: 0;
+    background-color: rgb(255, 255, 255); /* must have background */
+    z-index: 9 !important;
+    
+}
+/* ------------------------------------------------------------------------------ */
+
 
 .hight_index {
     z-index: 10000;

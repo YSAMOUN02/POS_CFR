@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SaleOrderHeader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class SaleOrderController extends Controller
 {
@@ -23,8 +24,7 @@ class SaleOrderController extends Controller
         if ($request->filled('search_document')) {
             $search_document = $request->search_document;
 
-            $query->where('document_no' ,'like','%'.$search_document.'%');
-
+            $query->where('document_no', 'like', '%' . $search_document . '%');
         }
 
 
@@ -86,7 +86,7 @@ class SaleOrderController extends Controller
 
         $lines = $saleOrder->lines->map(function ($line) {
             $quantity = (float) ($line->quantity ?? 0);
-                        $quantity_shiped = (float) ($line->quantity_shiped ?? 0);
+            $quantity_shiped = (float) ($line->quantity_shiped ?? 0);
             $sellPrice = (float) ($line->sell_price ?? 0);
             $discountAmount = (float) ($line->discount_amount ?? 0);
             $vatAmount = (float) ($line->vat_amount ?? 0);
@@ -99,7 +99,7 @@ class SaleOrderController extends Controller
                 'item_code' => $line->item_code ?? '',
                 'name' => $line->name ?? '',
                 'quantity' => $quantity,
-                 'quantity_shiped' => $quantity_shiped,
+                'quantity_shiped' => $quantity_shiped,
                 'unit' => $line->unit ?? '',
                 'sell_price' => $sellPrice,
                 'sub_total' => $subTotal,
@@ -113,7 +113,7 @@ class SaleOrderController extends Controller
             'header' => [
                 'id' => $saleOrder->id,
                 'document_no' => $saleOrder->document_no,
-                                'source_no' => $saleOrder->source_no,
+                'source_no' => $saleOrder->source_no,
                 'contact_name' => $saleOrder->contact_name,
                 'phone' => $saleOrder->phone,
                 'address' => $saleOrder->address,
@@ -138,7 +138,8 @@ class SaleOrderController extends Controller
                 'paid_amount' => $saleOrder->paid_amount,
                 'balance_amount' => $saleOrder->balance_amount,
                 'grand_total' => $saleOrder->grand_total,
-
+                'factor' => $saleOrder->factor,
+                'currency_name' => $saleOrder->currency_name,
                 'remarks' => $saleOrder->remarks,
                 'created_by' => $saleOrder->created_by,
             ],
@@ -197,5 +198,35 @@ class SaleOrderController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+    public function updateDeliveryStatus(Request $request)
+    {
+        $data = $request->validate([
+            'id' => ['required', 'exists:sale_order_headers,id'],
+            'delivery_status' => [
+                'required',
+                Rule::in([
+                    'Pending',
+                    'Processing',
+                    'Shipped',
+                    'Delivered',
+                    'Cancelled',
+                    'Returned',
+                    'N/A',
+                ]),
+            ],
+        ]);
+
+        $saleOrder = SaleOrderHeader::findOrFail($data['id']);
+
+        $saleOrder->update([
+            'delivery_status' => $data['delivery_status'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Delivery status updated',
+            'delivery_status' => $saleOrder->delivery_status,
+        ]);
     }
 }

@@ -3767,6 +3767,7 @@ window.addEventListener("deposit-success", (e) => {
     // Clear after confirmation (whether printed or not)
     Livewire.dispatch("clearAll_after_payment");
     reloadProducts();
+
 });
 window.addEventListener("expense-success", (e) => {
     const message = e.detail[0].message;
@@ -3783,6 +3784,7 @@ window.addEventListener("ordered", (e) => {
         message: message,
         type: "success",
     });
+        reloadProducts();
 });
 window.addEventListener("view-cart-lots", (event) => {
     const { lots, product_name, product_id } = event.detail[0]; // <-- remove [0]
@@ -4052,11 +4054,9 @@ function loadSaleOrders(page = 1) {
                         <td class="px-4 py-3">${row.document_no ?? ""}</td>
                         <td class="px-4 py-3 text-center">${row.posting_date ?? ""}</td>
                         <td class="px-4 py-3 text-center">${row.order_date ?? ""}</td>
-                        <td class="px-4 py-3 text-center">${row.delivery_date ?? ""}</td>
 
-                        <td class="px-4 py-3">${row.contact_name ?? ""}</td>
-                        <td class="px-4 py-3">${row.phone ?? ""}</td>
-                        <td class="px-4 py-3">${row.address ?? ""}</td>
+
+
 
 
                          <td class="px-4 py-3 text-right">$${parseFloat(row.total_amount ?? 0).toFixed(2)}</td>
@@ -4076,10 +4076,16 @@ function loadSaleOrders(page = 1) {
 </td>
                         <td class="px-4 py-3 text-right text-nowrap">${getStatusBadge(row.status)}</td>
                         <td class="px-4 py-3 text-right text-nowrap">${getPaymentBadge(row.payment_status)}</td>
-                        <td class="px-4 py-3 text-center text-nowrap">${getDeliveryBadge(row.delivery_status)}</td>
+               <td class="px-4 py-3 text-center text-nowrap">
+    ${getDeliverySelect(row.delivery_status, row.id)}
+</td>
+      <td class="px-4 py-3 text-center">${row.delivery_date ?? ""}</td>
                         <td class="px-4 py-3 text-center">${row.delivery_info ?? ""}</td>
                         <td class="px-4 py-3">${row.driver_name ?? ""}</td>
                         <td class="px-4 py-3">${row.driver_phone ?? ""}</td>
+                                     <td class="px-4 py-3">${row.contact_name ?? ""}</td>
+                        <td class="px-4 py-3">${row.phone ?? ""}</td>
+                        <td class="px-4 py-3">${row.address ?? ""}</td>
                     </tr>`;
             });
             renderSaleOrderPagination(res);
@@ -4096,6 +4102,15 @@ function loadSaleOrders(page = 1) {
             console.error(err);
         });
 }
+const statusMap = {
+    Pending: { color: "bg-yellow-100 text-yellow-700", emoji: "⏳" },
+    Processing: { color: "bg-blue-100 text-blue-700", emoji: "⚙️" },
+    Shipped: { color: "bg-purple-100 text-purple-700", emoji: "🚚" },
+    Delivered: { color: "bg-green-100 text-green-700", emoji: "✅" },
+    Cancelled: { color: "bg-red-100 text-red-700", emoji: "❌" },
+    Returned: { color: "bg-orange-100 text-orange-700", emoji: "↩️" },
+    "N/A": { color: "bg-gray-100 text-gray-600", emoji: "➖" },
+};
 function clearSaleOrderFilters() {
     document.getElementById("sale_order_status").value = "";
     document.getElementById("sale_order_payment_status").value = "";
@@ -4106,57 +4121,67 @@ function clearSaleOrderFilters() {
 
     loadSaleOrders(1);
 }
-function getDeliveryBadge(status) {
-    const styles = {
-        Pending: {
-            text: "Pending",
-            icon: "⏳",
-            class: "bg-amber-100 text-amber-700",
-        },
-        Processing: {
-            text: "Processing",
-            icon: "⚙️",
-            class: "bg-sky-100 text-sky-700",
-        },
-        Shipped: {
-            text: "Shipped",
-            icon: "🚚",
-            class: "bg-violet-100 text-violet-700",
-        },
-        Delivered: {
-            text: "Delivered",
-            icon: "✅",
-            class: "bg-emerald-100 text-emerald-700",
-        },
-        Cancelled: {
-            text: "Cancelled",
-            icon: "❌",
-            class: "bg-rose-100 text-rose-700",
-        },
-        Returned: {
-            text: "Returned",
-            icon: "↩️",
-            class: "bg-orange-100 text-orange-700",
-        },
-        "N/A": {
-            text: "N/A",
-            icon: "⚪",
-            class: "bg-gray-100 text-gray-700",
-        },
-    };
-
-    const item = styles[status] || {
-        text: "Unknown",
-        icon: "❔",
-        class: "bg-gray-100 text-gray-700",
-    };
+function getDeliverySelect(status, rowId) {
+    const options = Object.keys(statusMap);
 
     return `
-        <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full ${item.class}">
-            <span>${item.icon}</span>
-            <span>${item.text}</span>
-        </span>
+        <select
+            data-id="${rowId}"
+            class="delivery-select px-4 py-1.5 rounded-xl border border-gray-200
+                   bg-white text-gray-700 text-sm font-medium
+                   shadow-sm hover:shadow-md
+                   focus:outline-none focus:ring-2 focus:ring-gray-300
+                   transition duration-150 ease-in-out cursor-pointer"
+            onchange="updateDeliveryStatus(${rowId}, this.value, this)"
+        >
+            ${options
+                .map(
+                    (opt) => `
+                <option value="${opt}" ${opt === status ? "selected" : ""}>
+                    ${statusMap[opt].emoji} ${opt}
+                </option>
+            `,
+                )
+                .join("")}
+        </select>
     `;
+}
+function updateDeliveryStatus(rowId, newStatus) {
+    // ✅ update all delivery selects with same row id instantly
+    document
+        .querySelectorAll(`.delivery-select[data-id="${rowId}"]`)
+        .forEach((select) => {
+            select.value = newStatus;
+        });
+
+    fetch("/sale-order/update-delivery-status", {
+        method: "POST",
+        headers: {
+            "X-CSRF-TOKEN": document.querySelector('input[name="_token"]')
+                .value,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            id: rowId,
+            delivery_status: newStatus,
+        }),
+    })
+        .then((res) => res.json())
+        .then((data) => {
+            if (!data.success) throw new Error(data.message || "Update failed");
+
+            showToast({
+                message: "Delivery status updated 🚚",
+                type: "success",
+            });
+        })
+        .catch((err) => {
+            showToast({
+                message: err.message || "Failed to update status",
+                type: "error",
+            });
+        });
 }
 function renderSaleOrderPagination(res) {
     const container = document.getElementById("paginationContainer_sale_order");
@@ -4198,35 +4223,25 @@ function renderSaleOrderPagination(res) {
     });
 }
 function getStatusBadge(status) {
-    switch ((status || "").toLowerCase()) {
-        case "ordered":
-            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
-                        📦 Ordered
-                    </span>`;
+    const s = (status || "").toLowerCase();
 
-        case "deposit":
-            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
-                        💰 Deposit
-                    </span>`;
+    const map = {
+        ordered: { text: "text-blue-600", emoji: "📦 Ordered" },
+        deposit: { text: "text-amber-600", emoji: "💰 Deposit" },
+        completed: { text: "text-green-600", emoji: "✅ Completed" },
+        cancelled: { text: "text-red-600", emoji: "❌ Cancelled" },
+        returned: { text: "text-purple-600", emoji: "↩️ Returned" },
+    };
 
-        case "completed":
-            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
-                        ✅ Completed
-                    </span>`;
+    const style = map[s] || { text: "text-gray-600", emoji: status };
 
-        case "cancelled":
-            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-rose-50 text-rose-700 border border-rose-200 shadow-sm">
-                        ❌ Cancelled
-                    </span>`;
-        case "returned":
-            return `<span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">
-                        ↩️ Returned
-                    </span>`;
-        default:
-            return `<span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700">${status}</span>`;
-    }
+    return `
+        <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full
+                     bg-gray-100 border border-gray-200 shadow-sm ${style.text}">
+            ${style.emoji}
+        </span>
+    `;
 }
-
 function getPaymentBadge(status) {
     switch ((status || "").toLowerCase()) {
         case "unpaid":
@@ -4586,17 +4601,94 @@ window.addEventListener("view-line-sale-order", (e) => {
     viewSaleOrderLine(id);
 });
 
+
+
 // Hook for Print
 window.addEventListener("print-sale-order", (e) => {
     let header = e.detail[0].header;
 
+    if (document_type_for_print == "Receipt") {
+        console.log(header);
+    }
     print_document(document_type_for_print, header);
 });
 function button_print_click(document_type) {
     document_type_for_print = document_type;
     Livewire.dispatch("load-sale-order-print", [currentSaleOrderId]);
 }
-function print(document_type, header) {}
+
+let currentSaleOrderData = null;
+
+const currencySelect = document.getElementById("currency_sale_line");
+
+if (currencySelect) {
+    currencySelect.addEventListener("change", function () {
+        if (currentSaleOrderData) {
+            renderSaleOrderLine(currentSaleOrderData, this.value);
+        }
+    });
+}
+
+function smartNumber(value, decimals = 6) {
+    value = parseFloat(value || 0);
+    return value.toFixed(decimals).replace(/\.?0+$/, "");
+}
+
+function formatQty(value) {
+    return smartNumber(value, 6);
+}
+
+function formatCurrency(value, factor, currency) {
+    const converted = parseFloat(value || 0) * parseFloat(factor || 1);
+
+    if (currency === "៛") {
+        return Math.abs(converted) < 1 && converted !== 0
+            ? smartNumber(converted, 6)
+            : Math.round(converted).toString();
+    }
+
+    return smartNumber(converted, 6);
+}
+
+function setupCurrencySelect(header) {
+    const select = document.getElementById("currency_sale_line");
+    if (!select) return;
+
+    const headerCurrency = header.currency_name || "$";
+    const headerFactor = parseFloat(header.factor || 1);
+
+    select.innerHTML = `
+        <option value="1|$">USD</option>
+    `;
+
+    if (headerCurrency !== "$" && headerFactor !== 1) {
+        select.innerHTML += `
+            <option value="${headerFactor}|${headerCurrency}">
+                ${headerCurrency}
+            </option>
+        `;
+    }
+
+    // first load select saved header currency
+    select.value = `${headerFactor}|${headerCurrency}`;
+
+    // fallback if value not found
+    if (!select.value) {
+        select.value = "1|$";
+    }
+}
+
+function getSelectedCurrency() {
+    const select = document.getElementById("currency_sale_line");
+    const value = select?.value || "1|$";
+    const [factor, currency] = value.split("|");
+
+    return {
+        factor: parseFloat(factor || 1),
+        currency: currency || "$",
+    };
+}
+
 async function viewSaleOrderLine(id) {
     try {
         currentSaleOrderId = id;
@@ -4609,129 +4701,110 @@ async function viewSaleOrderLine(id) {
         if (!res.ok) throw new Error("Failed to load sale order");
 
         const data = await res.json();
-        const header = data.header ?? {};
+        currentSaleOrderData = data;
 
-        const setText = (id, value = "-") => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = value || "-";
-        };
-        document.querySelector("#sale_order_id").value = id;
-
-        setText("sale-order-no", header.document_no);
-        setText("sale-order-created-by", header.created_by);
-        setText("sale-order-posting-date", header.posting_date);
-
-        setText("sale-order-customer", header.contact_name);
-        setText("sale-order-phone", header.phone);
-        setText("sale-order-address", header.address);
-
-        setText("sale-order-payment-method", header.payment_method);
-        setText("sale-order-delivery-date", header.delivery_date);
-
-        setText("sale-order-delivery-status", header.delivery_status);
-        setText("sale-order-delivery-info", header.delivery_info);
-        setText("sale-order-driver-name", header.driver_name);
-        setText("sale-order-driver-phone", header.driver_phone);
-
-        const deliveryBox = document.getElementById("sale-order-delivery-box");
-        if (deliveryBox) {
-            const isDelivery =
-                header.customer_type === "At-Delivery" ||
-                header.customer_type === "DELIVERY";
-
-            deliveryBox.classList.toggle("hidden", !isDelivery);
-        }
-
-        const statusEl = document.getElementById("sale-order-status");
-        if (statusEl) {
-            statusEl.value = header.status ?? "Ordered";
-            changeSaleOrderStatus(statusEl.value);
-        }
-
-        const paymentEl = document.getElementById("sale-payment-status");
-        if (paymentEl) {
-            paymentEl.textContent = header.payment_status ?? "unpaid";
-            setStatusColor(
-                "sale-payment-status",
-                header.payment_status ?? "unpaid",
-            );
-        }
-
-        setText(
-            "sale-order-total",
-            "$" + parseFloat(header.total_amount ?? 0).toFixed(2),
-        );
-        setText(
-            "sale-order-discount",
-            "$" + parseFloat(header.discount_amount ?? 0).toFixed(2),
-        );
-        setText(
-            "sale-order-vat",
-            "$" + parseFloat(header.vat_amount ?? 0).toFixed(2),
-        );
-        setText(
-            "sale-order-grand-total",
-            "$" + parseFloat(header.grand_total ?? 0).toFixed(2),
-        );
-
-        const factor = parseFloat(
-            document.querySelector("#currency_display_factor")?.value || 1,
-        );
-
-        const currency =
-            document.querySelector("#currency_display_symbol")?.value || "$";
-
-        let convertedTotal = (header.grand_total ?? 0) * factor;
-
-        if (currency === "៛") {
-            convertedTotal = parseFloat(convertedTotal).toFixed(0);
-        } else {
-            convertedTotal = parseFloat(convertedTotal).toFixed(2);
-        }
-
-        setText(
-            "sale-order-grand-total-converted",
-            "តម្លៃសរុប " + currency + " : " + convertedTotal + " " + currency,
-        );
-        if (factor !== 1) {
-            setText(
-                "currency-rate-info",
-                "1$ = " + factor.toLocaleString() + " " + currency,
-            );
-        } else {
-            setText("currency-rate-info", "");
-        }
-        let html = "";
-
-        (data.lines ?? []).forEach((line, index) => {
-            html += `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="px-4 py-2">${index + 1}</td>
-                    <td class="px-4 py-2">${line.item_code ?? ""}</td>
-                    <td class="px-4 py-2">${line.name ?? ""}</td>
-                    <td class="px-4 py-2 text-right">${parseFloat(line.quantity ?? 0).toFixed(2)}</td>
-                     <td class="px-4 py-2 text-right font-bold ${
-                         parseFloat(line.quantity_shiped ?? 0) >=
-                         parseFloat(line.quantity ?? 0)
-                             ? "text-green-500"
-                             : "text-red-500"
-                     }">
-                        ${parseFloat(line.quantity_shiped ?? 0).toFixed(2)}
-                    </td>
-                    <td class="px-4 py-2 text-right">$${parseFloat(line.sell_price ?? 0).toFixed(2)}</td>
-                    <td class="px-4 py-2 text-right">$${parseFloat(line.sub_total ?? 0).toFixed(2)}</td>
-                    <td class="px-4 py-2 text-right">$${parseFloat(line.discount_amount ?? 0).toFixed(2)}</td>
-                    <td class="px-4 py-2 text-right">$${parseFloat(line.vat_amount ?? 0).toFixed(2)}</td>
-                    <td class="px-4 py-2 text-right">$${parseFloat(line.grand_total_amount ?? 0).toFixed(2)}</td>
-                </tr>
-            `;
-        });
-
-        document.getElementById("sale-line-data").innerHTML = html;
+        setupCurrencySelect(data.header ?? {});
+        renderSaleOrderLine(data);
     } catch (e) {
         console.error(e);
         alert("Error loading sale order");
     }
+}
+
+function renderSaleOrderLine(data) {
+    const header = data.header ?? {};
+    const { factor, currency } = getSelectedCurrency();
+
+    const setText = (id, value = "-") => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || "-";
+    };
+
+    document.querySelector("#sale-order-status").innerHTML =
+        getStatusBadge(header.status);
+
+    document.querySelector("#sale-payment-status").innerHTML =
+        getPaymentBadge(header.payment_status);
+
+    document.getElementById("sale-delivery-status").innerHTML =
+        getDeliverySelect(header.delivery_status, header.id);
+
+    document.querySelector("#sale_order_id").value = header.id ?? currentSaleOrderId;
+
+    setText("sale-order-no", header.document_no);
+    setText("sale-order-created-by", header.created_by);
+    setText("sale-order-posting-date", header.posting_date);
+
+    setText("sale-order-customer", header.contact_name);
+    setText("sale-order-phone", header.phone);
+    setText("sale-order-address", header.address);
+
+    setText("sale-order-payment-method", header.payment_method);
+    setText("sale-order-delivery-date", header.delivery_date);
+    // document.getElementById("sale-delivery-status").innerHTML =
+    //     getDeliverySelect(header.delivery_status || "N/A", header.id);
+
+
+    setText("sale-order-delivery-info", header.delivery_info);
+    setText("sale-order-driver-name", header.driver_name);
+    setText("sale-order-driver-phone", header.driver_phone);
+
+    setText("sale-order-total", `${formatCurrency(header.total_amount, factor, currency)} ${currency}`);
+    setText("sale-order-discount", `${formatCurrency(header.discount_amount, factor, currency)} ${currency}`);
+    setText("sale-order-vat", `${formatCurrency(header.vat_amount, factor, currency)} ${currency}`);
+    setText("sale-order-grand-total", `${formatCurrency(header.grand_total, factor, currency)} ${currency}`);
+
+    setText(
+        "sale-order-grand-total-converted",
+        `តម្លៃសរុប ${currency} : ${formatCurrency(header.grand_total, factor, currency)} ${currency}`
+    );
+
+    if (factor !== 1) {
+        setText("currency-rate-info", `1$ = ${factor.toLocaleString()} ${currency}`);
+    } else {
+        setText("currency-rate-info", "");
+    }
+
+    let html = "";
+
+    (data.lines ?? []).forEach((line, index) => {
+        html += `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="px-4 py-2">${index + 1}</td>
+                <td class="px-4 py-2">${line.item_code ?? ""}</td>
+                <td class="px-4 py-2">${line.name ?? ""}</td>
+
+                <td class="px-4 py-2 text-right">${formatQty(line.quantity)}</td>
+
+                <td class="px-4 py-2 text-right font-bold ${
+                    parseFloat(line.quantity_shiped ?? 0) >= parseFloat(line.quantity ?? 0)
+                        ? "text-green-500"
+                        : "text-red-500"
+                }">
+                    ${formatQty(line.quantity_shiped)}
+                </td>
+
+                <td class="px-4 py-2 text-right">${formatCurrency(line.sell_price, factor, currency)} ${currency}</td>
+                <td class="px-4 py-2 text-right">${formatCurrency(line.sub_total, factor, currency)} ${currency}</td>
+                <td class="px-4 py-2 text-right">${formatCurrency(line.discount_amount, factor, currency)} ${currency}</td>
+                <td class="px-4 py-2 text-right">${formatCurrency(line.vat_amount, factor, currency)} ${currency}</td>
+                <td class="px-4 py-2 text-right">${formatCurrency(line.grand_total_amount, factor, currency)} ${currency}</td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("sale-line-data").innerHTML = html;
+}
+function formatMoney(value) {
+    value = parseFloat(value || 0);
+
+    // show more decimals if small value
+    if (Math.abs(value) < 1 && value !== 0) {
+        return value.toFixed(6).replace(/\.?0+$/, "");
+    }
+
+    // normal case
+    return value.toFixed(2).replace(/\.?0+$/, "");
 }
 function openSaleLine() {
     const modal = document.getElementById("saleOrderLineModal");

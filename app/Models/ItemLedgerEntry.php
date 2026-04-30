@@ -62,25 +62,25 @@ class ItemLedgerEntry extends Model
         'created_by',
     ];
 
-    protected $casts = [
-        'posting_date'         => 'date',
-        'expire_date'          => 'date',
+   protected $casts = [
+    'posting_date'         => 'date',
+    'expire_date'          => 'date',
 
-        'quantity'             => 'decimal:4',
-        'remaining_quantity'   => 'decimal:4',
+    'quantity'             => 'decimal:6',
+    'remaining_quantity'   => 'decimal:6',
 
-        'unit_cost'            => 'decimal:4',
-        'unit_price'           => 'decimal:4',
-        'sell_price'           => 'decimal:4',
+    'unit_cost'            => 'decimal:6',
+    'unit_price'           => 'decimal:6',
+    'sell_price'           => 'decimal:6',
 
-        'discount_percent'     => 'decimal:2',
-        'discount_amount'      => 'decimal:4',
+    'discount_percent'     => 'decimal:4',
+    'discount_amount'      => 'decimal:6',
 
-        'vat'                  => 'decimal:2',
-        'vat_amount'           => 'decimal:4',
+    'vat'                  => 'decimal:4',
+    'vat_amount'           => 'decimal:6',
 
-        'line_amount'          => 'decimal:4',
-        'net_amount'           => 'decimal:4',
-        'grand_total_amount'   => 'decimal:4',
-    ];
+    'line_amount'          => 'decimal:6',
+    'net_amount'           => 'decimal:6',
+    'grand_total_amount'   => 'decimal:6',
+];
 }

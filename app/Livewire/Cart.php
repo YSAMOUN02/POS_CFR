@@ -61,6 +61,8 @@ class Cart extends Component
     public $document_no = 'NA';
     public $document_id = 0;
     public $document_type = 'NA';
+    public $deposit = 0 ;
+    public $balanceAmount_display = 0 ;
 
     public function toggleItem($index)
     {
@@ -136,9 +138,9 @@ class Cart extends Component
             $expenseCode = $this->generateExpenseCode();
 
             foreach ($this->cart as $cartItem) {
-                $qty = (float) ($cartItem['qty'] ?? 1);
-                $unitPrice = (float) ($cartItem['price'] ?? 0);
-                $amount = $qty * $unitPrice;
+                $qty = round((float) ($cartItem['qty'] ?? 1), 6);
+                $unitPrice = round((float) ($cartItem['price'] ?? 0), 6);
+                $amount = round($qty * $unitPrice, 6);
 
                 Expense::create([
                     'expense_date'   => $payload['document_date'] ?? now()->toDateString(),
@@ -653,7 +655,7 @@ class Cart extends Component
             'message' => 'Cart has been cleared'
         ]);
     }
-        #[\Livewire\Attributes\On('clearCart_no_message')]
+    #[\Livewire\Attributes\On('clearCart_no_message')]
     public function clearCart_no_message()
     {
         $this->document_no = 'NA';
@@ -668,42 +670,44 @@ class Cart extends Component
     }
     public function getTotalsProperty()
     {
+        $precision = 6;
+
         $totalOriginal = 0;
         $totalDiscount = 0;
-        $totalNet = 0;          // before VAT
-        $totalVatStatus = 0;    // biggest VAT for display only
-        $totalVatAmount = 0;    // sum of each line VAT
+        $totalNet = 0;
+        $totalVatStatus = 0;
+        $totalVatAmount = 0;
 
         foreach ($this->cart as $item) {
-            $lineOriginal  = (float) ($item['amount_line'] ?? 0);
-            $lineDiscount  = (float) ($item['discount_amount_line'] ?? 0);
-            $lineNet       = (float) ($item['net_amount_line'] ?? 0);
-            $lineVat       = (float) ($item['vat'] ?? 0);
-            $lineVatAmount = (float) ($item['vat_amount_line'] ?? 0);
+            $lineOriginal  = round((float) ($item['amount_line'] ?? 0), $precision);
+            $lineDiscount  = round((float) ($item['discount_amount_line'] ?? 0), $precision);
+            $lineNet       = round((float) ($item['net_amount_line'] ?? 0), $precision);
+            $lineVat       = round((float) ($item['vat'] ?? 0), $precision);
+            $lineVatAmount = round((float) ($item['vat_amount_line'] ?? 0), $precision);
 
-            $totalOriginal += $lineOriginal;
-            $totalDiscount += $lineDiscount;
-            $totalNet += $lineNet;
+            $totalOriginal = round($totalOriginal + $lineOriginal, $precision);
+            $totalDiscount = round($totalDiscount + $lineDiscount, $precision);
+            $totalNet = round($totalNet + $lineNet, $precision);
+            $totalVatAmount = round($totalVatAmount + $lineVatAmount, $precision);
 
-            // real VAT logic = sum each line VAT
-            $totalVatAmount += $lineVatAmount;
-
-            // display only = biggest VAT
             if ($lineVat > $totalVatStatus) {
                 $totalVatStatus = $lineVat;
             }
         }
-        $gran_total = $totalNet + $totalVatAmount;
+
+        $grand_total = round($totalNet + $totalVatAmount, $precision);
+
         if ($this->cart_mode === 'expence') {
-            $gran_total = $totalNet; // no VAT for expence
+            $grand_total = $totalNet;
         }
+
         return [
-            'total_original'   => $totalOriginal,
-            'total_discount'   => $totalDiscount,
-            'total_net'        => $totalNet,                  // before VAT
-            'vat_status'       => $totalVatStatus,
-            'total_vat_amount' => $totalVatAmount,            // VAT money
-            'grand_total'      => $gran_total // final total
+            'total_original'   => round($totalOriginal, $precision),
+            'total_discount'   => round($totalDiscount, $precision),
+            'total_net'        => round($totalNet, $precision),
+            'vat_status'       => round($totalVatStatus, $precision),
+            'total_vat_amount' => round($totalVatAmount, $precision),
+            'grand_total'      => round($grand_total, $precision),
         ];
     }
 
@@ -757,43 +761,49 @@ class Cart extends Component
     }
     public function recalcLine($index, $field, $inputValue = null)
     {
-        $qty = floatval($this->cart[$index]['qty'] ?? 1);
-        $discount = floatval($this->cart[$index]['discount_percent'] ?? 0);
-        $vat = floatval($this->cart[$index]['vat'] ?? 0);
+        // 🔒 Use 6 decimal precision everywhere
+        $precision = 6;
 
-        // Price
+        $qty = round(floatval($this->cart[$index]['qty'] ?? 1), $precision);
+        $discount = round(floatval($this->cart[$index]['discount_percent'] ?? 0), $precision);
+        $vat = round(floatval($this->cart[$index]['vat'] ?? 0), $precision);
+
+        // Price input
+
         if ($field === 'price' && $inputValue !== null) {
-            $price = $this->factor != 1 ? floatval($inputValue) / $this->factor : floatval($inputValue);
+            $inputValue = str_replace(',', '', $inputValue);
+
+            $price = $this->factor != 1
+                ? round((float) $inputValue / (float) $this->factor, $precision)
+                : round((float) $inputValue, $precision);
+
             $this->cart[$index]['price'] = $price;
         }
 
-        $price = floatval($this->cart[$index]['price'] ?? 0);
+        $price = round(floatval($this->cart[$index]['price'] ?? 0), $precision);
 
         // Qty changed
         if ($field === 'qty') {
             $qty = max(1, $qty);
-            $this->cart[$index]['qty'] = $qty;
+            $this->cart[$index]['qty'] = round($qty, $precision);
         }
 
-        // Discount percent changed
+        // Discount %
         if ($field === 'discount_percent') {
             $discount = min(max(0, $discount), 100);
-            $this->cart[$index]['discount_percent'] = $discount;
+            $this->cart[$index]['discount_percent'] = round($discount, $precision);
         }
 
-        // Recalculate amounts
-        $discountAmount = ($price * $discount) / 100;
-        $discountPrice = $price - $discountAmount;
-        $vatAmount = ($discountPrice * $vat) / 100;
+        // 🔥 Calculations (ALL 6 decimals)
+        $discountAmount = round(($price * $discount) / 100, $precision);
+        $discountPrice  = round($price - $discountAmount, $precision);
+        $vatAmount      = round(($discountPrice * $vat) / 100, $precision);
 
-        $this->cart[$index]['discount_price'] = $discountPrice;
-        $this->cart[$index]['amount_line'] = $price * $qty;
-        $this->cart[$index]['discount_amount_line'] = $discountAmount * $qty;
-        $this->cart[$index]['net_amount_line'] = $discountPrice * $qty;
-        $this->cart[$index]['vat_amount_line'] = $vatAmount * $qty;
-
-        // optional if you want line total including VAT
-        // $this->cart[$index]['grand_amount_line'] = ($discountPrice + $vatAmount) * $qty;
+        $this->cart[$index]['discount_price']       = $discountPrice;
+        $this->cart[$index]['amount_line']          = round($price * $qty, $precision);
+        $this->cart[$index]['discount_amount_line'] = round($discountAmount * $qty, $precision);
+        $this->cart[$index]['net_amount_line']      = round($discountPrice * $qty, $precision);
+        $this->cart[$index]['vat_amount_line']      = round($vatAmount * $qty, $precision);
 
         $this->cart = array_values($this->cart);
     }
@@ -1145,7 +1155,8 @@ class Cart extends Component
                 $q->whereIn('warehouse_id', $warehouse_ids);
             }
         ])->find($saleOrderId);
-
+        $this->deposit =$saleOrder->paid_amount;
+        $this->balanceAmount_display =$saleOrder->balance_amount;
         if (!$saleOrder) {
             $this->dispatch('error', [
                 'message' => 'Sale order not found'
@@ -2130,18 +2141,19 @@ class Cart extends Component
                     if (!$product) continue;
 
                     $qty = (float) ($cartItem['qty'] ?? 1);
-                    $sellPrice = (float) ($cartItem['price'] ?? $cartItem['sell_price'] ?? 0);
-                    $vatRate = (float) ($cartItem['vat'] ?? 0);
-                    $discountPercent = (float) ($cartItem['discount_percent'] ?? 0);
+                    $sellPrice = (float) ($cartItem['price'] ?? $cartItem['sell_price'] ?? 6);
+                    $vatRate = round(min(max((float) ($cartItem['vat'] ?? 0), 0), 100), 4);
 
-                    $unitCost = (float) ($product->cost ?? 0);
-                    $unitPrice = (float) ($product->sell_price ?? 0);
+                    $discountPercent = (float) ($cartItem['discount_percent'] ?? 6);
 
-                    $lineAmount = round($sellPrice * $qty, 4);
-                    $discountAmount = round(($lineAmount * $discountPercent) / 100, 4);
-                    $netAmount = round($lineAmount - $discountAmount, 4);
-                    $vatAmount = round(($netAmount * $vatRate) / 100, 4);
-                    $lineGrandTotal = round($netAmount + $vatAmount, 4);
+                    $unitCost = (float) ($product->cost ?? 6);
+                    $unitPrice = (float) ($product->sell_price ?? 6);
+
+                    $lineAmount = round($sellPrice * $qty, 6);
+                    $discountAmount = round(($lineAmount * $discountPercent) / 100, 6);
+                    $netAmount = round($lineAmount - $discountAmount, 6);
+                    $vatAmount = round(($netAmount * $vatRate) / 100, 6);
+                    $lineGrandTotal = round($netAmount + $vatAmount, 6);
 
                     $totalAmount += $lineAmount;
                     $totalDiscount += $discountAmount;
@@ -2178,7 +2190,7 @@ class Cart extends Component
                     ]);
                 }
 
-                $grandTotal = round($totalAmount - $totalDiscount + $totalVAT, 4);
+                $grandTotal = round($totalAmount - $totalDiscount + $totalVAT, 6);
 
                 $saleOrder->update([
                     'total_amount'     => $totalAmount,
@@ -2227,18 +2239,18 @@ class Cart extends Component
                     if (!$product) continue;
 
                     $qty = (float) ($cartItem['qty'] ?? 1);
-                    $sellPrice = (float) ($cartItem['price'] ?? $cartItem['sell_price'] ?? 0);
-                    $vatRate = (float) ($cartItem['vat'] ?? 0);
-                    $discountPercent = (float) ($cartItem['discount_percent'] ?? 0);
+                    $sellPrice = (float) ($cartItem['price'] ?? $cartItem['sell_price'] ?? 6);
+                    $vatRate = (float) ($cartItem['vat'] ?? 6);
+                    $discountPercent = (float) ($cartItem['discount_percent'] ??4);
 
-                    $unitCost = (float) ($product->cost ?? 0);
-                    $unitPrice = (float) ($product->sell_price ?? 0);
+                    $unitCost = (float) ($product->cost ?? 6);
+                    $unitPrice = (float) ($product->sell_price ?? 6);
 
-                    $lineAmount = round($sellPrice * $qty, 4);
-                    $discountAmount = round(($lineAmount * $discountPercent) / 100, 4);
-                    $netAmount = round($lineAmount - $discountAmount, 4);
-                    $vatAmount = round(($netAmount * $vatRate) / 100, 4);
-                    $grandTotalLine = round($netAmount + $vatAmount, 4);
+                    $lineAmount = round($sellPrice * $qty, 6);
+                    $discountAmount = round(($lineAmount * $discountPercent) / 100, 6);
+                    $netAmount = round($lineAmount - $discountAmount, 6);
+                    $vatAmount = round(($netAmount * $vatRate) / 100, 6);
+                    $grandTotalLine = round($netAmount + $vatAmount, 6);
 
                     InvoiceLine::create([
                         'sale_invoice_id'    => $invoice->id,
@@ -2357,11 +2369,11 @@ class Cart extends Component
 
                             $warehouseName = Warehouse::where('id', $row['warehouse_id'])->value('name');
 
-                            $rowLineAmount = $saleQty > 0 ? round(($lineAmount / $saleQty) * $rowQty, 4) : 0;
-                            $rowDiscountAmount = $saleQty > 0 ? round(($discountAmount / $saleQty) * $rowQty, 4) : 0;
-                            $rowNetAmount = $saleQty > 0 ? round(($netAmount / $saleQty) * $rowQty, 4) : 0;
-                            $rowVatAmount = $saleQty > 0 ? round(($vatAmount / $saleQty) * $rowQty, 4) : 0;
-                            $rowGrandTotal = $saleQty > 0 ? round(($grandTotalLine / $saleQty) * $rowQty, 4) : 0;
+                            $rowLineAmount = $saleQty > 0 ? round(($lineAmount / $saleQty) * $rowQty, 6) : 0;
+                            $rowDiscountAmount = $saleQty > 0 ? round(($discountAmount / $saleQty) * $rowQty, 6) : 0;
+                            $rowNetAmount = $saleQty > 0 ? round(($netAmount / $saleQty) * $rowQty, 6) : 0;
+                            $rowVatAmount = $saleQty > 0 ? round(($vatAmount / $saleQty) * $rowQty, 6) : 0;
+                            $rowGrandTotal = $saleQty > 0 ? round(($grandTotalLine / $saleQty) * $rowQty, 6) : 0;
 
                             $ledger = $this->createLedgerEntry([
                                 'posting_date'        => $payload['document_date'] ?? now()->toDateString(),

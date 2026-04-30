@@ -31,21 +31,20 @@ return new class extends Migration
             $table->string('category_name')->nullable();
 
             // Pricing snapshot
-            $table->decimal('cost', 15, 2)->default(0);
-            $table->decimal('unit_price', 15, 2)->default(0);
-            $table->decimal('sell_price', 15, 2)->default(0);
+            $table->decimal('cost', 18, 6)->default(0);
+            $table->decimal('unit_price', 18, 6)->default(0);
+            $table->decimal('sell_price', 18, 6)->default(0);
 
             // Discount
-            $table->decimal('discount_percent', 5, 2)->default(0);
-            $table->decimal('discount_amount', 15, 2)->default(0);  //discount value
+            $table->decimal('discount_percent', 8, 4)->default(0);
+            $table->decimal('discount_amount', 18, 6)->default(0);
 
             // Totals
-            $table->decimal('line_amount', 15, 2)->default(0);  // gross amount before discount/VAT
-            $table->decimal('vat', 5, 2)->default(0);
-            $table->decimal('vat_amount', 15, 2)->default(0);  //= tax value
-            $table->decimal('net_amount', 15, 2)->default(0);
-            $table->decimal('grand_total_amount', 15, 2)->default(0);  //grand total after discount + VAT
-
+            $table->decimal('line_amount', 18, 6)->default(0);
+                $table->decimal('vat', 5, 4)->default(0);
+            $table->decimal('vat_amount', 18, 6)->default(0);
+            $table->decimal('net_amount', 18, 6)->default(0);
+            $table->decimal('grand_total_amount', 18, 6)->default(0);
             $table->string('created_by')->nullable();
             $table->text('remarks')->nullable();
             $table->timestamps();

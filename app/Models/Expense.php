@@ -24,13 +24,13 @@ class Expense extends Model
         'status',
     ];
 
-    protected $casts = [
-        'expense_date' => 'date',
-        'qty' => 'decimal:2',
-        'unit_price' => 'decimal:2',
-        'amount' => 'decimal:2',
-        'status' => 'integer',
-    ];
+   protected $casts = [
+    'expense_date' => 'date',
+    'qty' => 'decimal:6',
+    'unit_price' => 'decimal:6',
+    'amount' => 'decimal:6',
+    'status' => 'integer',
+];
 
     public function product()
     {

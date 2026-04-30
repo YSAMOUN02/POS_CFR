@@ -24,16 +24,16 @@ return new class extends Migration
             $table->date('delivery_date')->nullable(); // add
 
             // Amount
-            $table->decimal('total_amount', 15, 2)->default(0);
-            $table->decimal('vat_amount', 15, 2)->default(0);
-            $table->decimal('discount_percent', 12, 2)->default(0);
-            $table->decimal('discount_amount', 15, 2)->default(0);
-            $table->decimal('grand_total', 15, 2)->default(0);
+            $table->decimal('total_amount', 18, 6)->default(0);
+            $table->decimal('vat_amount', 18, 6)->default(0);
+            $table->decimal('discount_percent', 12, 4)->default(0); // optional upgrade
+            $table->decimal('discount_amount', 18, 6)->default(0);
+            $table->decimal('grand_total', 18, 6)->default(0);
 
             // Payment tracking
-            $table->decimal('deposit_amount', 15, 2)->default(0); // add
-            $table->decimal('paid_amount', 15, 2)->default(0); // add
-            $table->decimal('balance_amount', 15, 2)->default(0); // add
+            $table->decimal('deposit_amount', 18, 6)->default(0);
+            $table->decimal('paid_amount', 18, 6)->default(0);
+            $table->decimal('balance_amount', 18, 6)->default(0);
 
             $table->enum('status', [
                 'Draft',

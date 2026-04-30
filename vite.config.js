@@ -1,22 +1,3 @@
-// import { defineConfig } from 'vite';
-// import laravel from 'laravel-vite-plugin';
-// import tailwindcss from '@tailwindcss/vite';
-
-// export default defineConfig({
-//     plugins: [
-//         laravel({
-//             input: ['resources/css/app.css', 'resources/js/app.js'],
-//             refresh: true,
-//         }),
-//         tailwindcss(),
-//     ],
-//     server: {
-//         watch: {
-//             ignored: ['**/storage/framework/views/**'],
-//         },
-//     },
-// });
-
 import { defineConfig } from "vite";
 import laravel from "laravel-vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
@@ -30,10 +11,15 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
-        host: "localhost",
+        host: "0.0.0.0",
         port: 5173,
+        strictPort: true,
         watch: {
             ignored: ["**/storage/framework/views/**"],
+        },
+        hmr: {
+            host: "192.168.9.12",
+            port: 5173,
         },
     },
 });

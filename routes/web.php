@@ -130,4 +130,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/update-sale-order-status', [SaleOrderController::class, 'updateStatus'])
         ->name('sale-order.update-status');
+    // routes/web.php
+    Route::post('/sale-order/update-delivery-status', [SaleOrderController::class, 'updateDeliveryStatus'])
+        ->name('sale-order.update-delivery-status');
 });
