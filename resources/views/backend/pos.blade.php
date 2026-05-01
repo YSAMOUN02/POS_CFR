@@ -1797,14 +1797,14 @@
                             New
                         </button>
 
-                        <button type="button" id="btnPrintProduct"
+                        {{-- <button type="button" id="btnPrintProduct"
                             class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                             Print
-                        </button>
-                        <button type="button" id="btnPrintProductMenu"
+                        </button> --}}
+                        {{-- <button type="button" id="btnPrintProductMenu"
                             class="text-white bg-brand hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium rounded-base text-sm px-4 py-2.5">
                             Print Menu
-                        </button>
+                        </button> --}}
                     </div>
 
                     <div class="flex items-center justify-between mt-4">

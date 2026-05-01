@@ -2287,76 +2287,76 @@ document.getElementById("downloadSales").addEventListener("click", () => {
     exportTableToExcelXLSX("Table-sale-list");
 });
 
-document
-    .getElementById("btnPrintProduct")
-    .addEventListener("click", function () {
-        let table = document.querySelector("#product-list table");
+// document
+//     .getElementById("btnPrintProduct")
+//     .addEventListener("click", function () {
+//         let table = document.querySelector("#product-list table");
 
-        if (!table) {
-            alert("No product data to print.");
-            return;
-        }
+//         if (!table) {
+//             alert("No product data to print.");
+//             return;
+//         }
 
-        let printWindow = window.open("", "", "width=1200,height=800");
+//         let printWindow = window.open("", "", "width=1200,height=800");
 
-        printWindow.document.write(`
-        <html>
-        <head>
-            <title>Product List</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    padding: 20px;
-                }
+//         printWindow.document.write(`
+//         <html>
+//         <head>
+//             <title>Product List</title>
+//             <style>
+//                 body {
+//                     font-family: Arial, sans-serif;
+//                     padding: 20px;
+//                 }
 
-                h2 {
-                    text-align: center;
-                    margin-bottom: 20px;
-                }
+//                 h2 {
+//                     text-align: center;
+//                     margin-bottom: 20px;
+//                 }
 
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    font-size: 12px;
-                }
+//                 table {
+//                     width: 100%;
+//                     border-collapse: collapse;
+//                     font-size: 12px;
+//                 }
 
-                th, td {
-                    border: 1px solid #000;
-                    padding: 6px;
-                    text-align: left;
-                    text-wrap: nowrap;
-                }
+//                 th, td {
+//                     border: 1px solid #000;
+//                     padding: 6px;
+//                     text-align: left;
+//                     text-wrap: nowrap;
+//                 }
 
-                th {
-                    background: #f2f2f2;
-                }
-                   th:first-child, td:first-child {
-                    display: none; /* Hide the first column (ID) */
-                }
-                img {
-                    max-height: 40px;
-                }
+//                 th {
+//                     background: #f2f2f2;
+//                 }
+//                    th:first-child, td:first-child {
+//                     display: none; /* Hide the first column (ID) */
+//                 }
+//                 img {
+//                     max-height: 40px;
+//                 }
 
-                @media print {
-                    button { display: none; }
-                }
-            </style>
-        </head>
-        <body>
-            <h2>Product List</h2>
-            ${table.outerHTML}
-        </body>
-        </html>
-    `);
+//                 @media print {
+//                     button { display: none; }
+//                 }
+//             </style>
+//         </head>
+//         <body>
+//             <h2>Product List</h2>
+//             ${table.outerHTML}
+//         </body>
+//         </html>
+//     `);
 
-        printWindow.document.close();
-        printWindow.focus();
+//         printWindow.document.close();
+//         printWindow.focus();
 
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 500);
-    });
+//         setTimeout(() => {
+//             printWindow.print();
+//             printWindow.close();
+//         }, 500);
+//     });
 
 document
     .getElementById("btnPrintCustomer")
@@ -2714,60 +2714,60 @@ document.getElementById("btnReciept").addEventListener("click", function () {
     }
 });
 
-document.getElementById("btnPrintProductMenu").addEventListener("click", () => {
-    if (!allProducts || !allProducts.length) {
-        alert("No products loaded to print!");
-        return;
-    }
+// document.getElementById("btnPrintProductMenu").addEventListener("click", () => {
+//     if (!allProducts || !allProducts.length) {
+//         alert("No products loaded to print!");
+//         return;
+//     }
 
-    // Group products by category
-    const categories = {};
-    allProducts.forEach((product) => {
-        const category = (product.category && product.category.name) || "Other";
-        if (!categories[category]) categories[category] = [];
-        categories[category].push(product);
-    });
+//     // Group products by category
+//     const categories = {};
+//     allProducts.forEach((product) => {
+//         const category = (product.category && product.category.name) || "Other";
+//         if (!categories[category]) categories[category] = [];
+//         categories[category].push(product);
+//     });
 
-    // Build HTML: categories with underline
-    let html = "";
+//     // Build HTML: categories with underline
+//     let html = "";
 
-    Object.keys(categories).forEach((cat) => {
-        html += `<div class="menu-category-block">
-                    <div class="menu-category-title" contenteditable="true">${cat}</div>`;
+//     Object.keys(categories).forEach((cat) => {
+//         html += `<div class="menu-category-block">
+//                     <div class="menu-category-title" contenteditable="true">${cat}</div>`;
 
-        categories[cat].forEach((item) => {
-            const price = parseFloat(item.sell_price || item.price) || 0;
-            const discount = parseFloat(item.discount_percent || 0);
-            const imgSrc = item.image
-                ? `/assets/startic_img/${encodeURIComponent(item.image)}`
-                : "";
+//         categories[cat].forEach((item) => {
+//             const price = parseFloat(item.sell_price || item.price) || 0;
+//             const discount = parseFloat(item.discount_percent || 0);
+//             const imgSrc = item.image
+//                 ? `/assets/startic_img/${encodeURIComponent(item.image)}`
+//                 : "";
 
-            html += `
-                <div class="menu-card">
-                    ${
-                        imgSrc
-                            ? `<img src="${imgSrc}" class="menu-img">`
-                            : `<div class="menu-img placeholder">No Image</div>`
-                    }
-                    <div class="menu-details">
-                        <div class="menu-name" contenteditable="true">${item.name}</div>
-                        ${
-                            discount > 0
-                                ? `<div class="menu-price" contenteditable="true">
-                                    <del>$${price.toFixed(2)}</del> → $${(price * (1 - discount / 100)).toFixed(2)} (${discount}% Off)
-                               </div>`
-                                : `<div class="menu-price" contenteditable="true">$${price.toFixed(2)}</div>`
-                        }
-                    </div>
-                </div>
-            `;
-        });
+//             html += `
+//                 <div class="menu-card">
+//                     ${
+//                         imgSrc
+//                             ? `<img src="${imgSrc}" class="menu-img">`
+//                             : `<div class="menu-img placeholder">No Image</div>`
+//                     }
+//                     <div class="menu-details">
+//                         <div class="menu-name" contenteditable="true">${item.name}</div>
+//                         ${
+//                             discount > 0
+//                                 ? `<div class="menu-price" contenteditable="true">
+//                                     <del>$${price.toFixed(2)}</del> → $${(price * (1 - discount / 100)).toFixed(2)} (${discount}% Off)
+//                                </div>`
+//                                 : `<div class="menu-price" contenteditable="true">$${price.toFixed(2)}</div>`
+//                         }
+//                     </div>
+//                 </div>
+//             `;
+//         });
 
-        html += `</div>`; // close category block
-    });
+//         html += `</div>`; // close category block
+//     });
 
-    openEditableMenuPreview(html);
-});
+//     openEditableMenuPreview(html);
+// });
 
 function openEditableMenuPreview(content) {
     const win = window.open(
